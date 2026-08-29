@@ -230,12 +230,6 @@ A cross-species summary is generated as:
 results/summary.tsv
 ```
 
-The standardized `peaks_AllSets.bed` files are subsequently combined with the equivalently processed external SCRMshaw predictions by the workflow in:
-
-```text
-../external/
-```
-
 ## Restart and resume behavior
 
 The pipeline is designed to reuse completed work where possible.
