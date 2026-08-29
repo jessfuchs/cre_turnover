@@ -1,20 +1,57 @@
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
-PIPELINE_ROOT="${PIPELINE_ROOT:-$HOME/cre_turnover/project/external_scrmshaw}"
-OG_PIPELINE_ROOT="${OG_PIPELINE_ROOT:-$HOME/cre_turnover/project/scrmshaw_pipeline}"
+
+# ======================================================================
+# Pipeline roots
+# ======================================================================
+
+PIPELINE_ROOT="${PIPELINE_ROOT:-$HOME/cre_turnover/01_scrmshaw/external}"
+OG_PIPELINE_ROOT="${OG_PIPELINE_ROOT:-$HOME/cre_turnover/01_scrmshaw/generation}"
+
+# ======================================================================
+# External SCRMshaw input data
+# ======================================================================
+
 SOURCE_GFF_ROOT="${SOURCE_GFF_ROOT:-$PIPELINE_ROOT/external_data/selected}"
 EXTERNAL_BED_DIR="${EXTERNAL_BED_DIR:-$PIPELINE_ROOT/external_data/scrmshaw_output}"
-FILTERED_BED_DIR="${FILTERED_BED_DIR:-$EXTERNAL_BED_DIR/filtered_adult_muscle_imm}"
+FILTERED_BED_DIR="${FILTERED_BED_DIR:-$PIPELINE_ROOT/external_data/filtered_adult_muscle_imm}"
 EXTERNAL_GFF_DIR="${EXTERNAL_GFF_DIR:-$PIPELINE_ROOT/external_data/external_gffs}"
 EXTERNAL_MANIFEST="${EXTERNAL_MANIFEST:-$PIPELINE_ROOT/external_data/external_manifest.tsv}"
+
+# ======================================================================
+# External SCRMshaw post-processing
+# ======================================================================
+
 EXTERNAL_RUNS_DIR="${EXTERNAL_RUNS_DIR:-$PIPELINE_ROOT/external_runs}"
 EXTERNAL_RESULTS_DIR="${EXTERNAL_RESULTS_DIR:-$PIPELINE_ROOT/external_results}"
+
+# ======================================================================
+# Generated SCRMshaw results
+# ======================================================================
+
 GENERATED_MANIFEST="${GENERATED_MANIFEST:-$OG_PIPELINE_ROOT/data/manifest.tsv}"
 GENERATED_RESULTS_DIR="${GENERATED_RESULTS_DIR:-$OG_PIPELINE_ROOT/results}"
+
+# ======================================================================
+# Combined SCRMshaw results
+# ======================================================================
+
 COMBINED_RESULTS_DIR="${COMBINED_RESULTS_DIR:-$PIPELINE_ROOT/combined_results}"
 COMBINED_MANIFEST="${COMBINED_MANIFEST:-$PIPELINE_ROOT/combined_manifest.tsv}"
+
+# ======================================================================
+# SCRMshaw settings
+# ======================================================================
+
 TRAINING_SET="${TRAINING_SET:-adult_muscle}"
 METHOD="${METHOD:-imm}"
+
+# ======================================================================
+# Conda and post-processing software
+# ======================================================================
+
 CONDA_BASE="${CONDA_BASE:-$HOME/miniforge3}"
 POST_ENV="${POST_ENV:-scrm_postproc}"
-POSTPROC_ROOT="${POSTPROC_ROOT:-$HOME/cre_turnover/project/scrmshaw_pipeline_test/software/post_processing_SCRMshaw_pipeline}"
+POSTPROC_ROOT="${POSTPROC_ROOT:-$OG_PIPELINE_ROOT/software/post_processing_SCRMshaw_pipeline}"
+```
