@@ -1,0 +1,8 @@
+dmel_cre_id	dazt	d_affinis	dmir	dper	pattern_class	tier	discordant_species	discordant_state	consensus_state	n_consensus_species	group_name	group_species	n_group_species
+DMEL_CRE_00078	present	turnover_candidate	present	present	present_vs_turnover	tier1	d_affinis	turnover_candidate	present	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4
+DMEL_CRE_00080	present	turnover_candidate	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dazt	present	turnover_candidate	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4
+DMEL_CRE_00275	turnover_candidate	turnover_candidate	turnover_candidate	present	present_vs_turnover	tier1	dper	present	turnover_candidate	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4
+DMEL_CRE_00309	present	turnover_candidate	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dazt	present	turnover_candidate	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4
+DMEL_CRE_00310	turnover_candidate	present	present	present	present_vs_turnover	tier1	dazt	turnover_candidate	present	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4
+DMEL_CRE_00330	turnover_candidate	present	present	present	present_vs_turnover	tier1	dazt	turnover_candidate	present	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4
+DMEL_CRE_00331	turnover_candidate	present	present	present	present_vs_turnover	tier1	dazt	turnover_candidate	present	3	azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4

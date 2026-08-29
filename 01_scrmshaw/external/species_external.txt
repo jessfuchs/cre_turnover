@@ -1,0 +1,16 @@
+# slug          scientific_name
+d_affinis       Drosophila affinis
+d_arizonae      Drosophila arizonae
+d_bipectinata   Drosophila bipectinata
+d_buzzatii      Drosophila buzzatii
+d_ezoana        Drosophila ezoana
+d_hydei         Drosophila hydei
+d_littoralis    Drosophila littoralis
+d_lutescens     Drosophila lutescens
+d_melanogaster  Drosophila melanogaster
+d_mercatorum    Drosophila mercatorum
+d_mojavensis    Drosophila mojavensis
+d_novamexicana  Drosophila novamexicana
+d_repleta       Drosophila repleta
+d_serrata       Drosophila serrata
+d_simulans      Drosophila simulans

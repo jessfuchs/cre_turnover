@@ -1,0 +1,60 @@
+clade	clade_display	dmel_cre_id	focal_species	discordant_species	discordant_state	consensus_state	is_focal_tier1	focal_direction
+rufa_group	Rufa group	DMEL_CRE_00004	druf	dbun	present	turnover_candidate	False	
+rufa_group	Rufa group	DMEL_CRE_00052	druf	dkik	turnover_candidate	present	False	
+rufa_group	Rufa group	DMEL_CRE_00065	druf	d_serrata	present	turnover_candidate	False	
+rufa_group	Rufa group	DMEL_CRE_00082	druf	dbir	present	turnover_candidate	False	
+rufa_group	Rufa group	DMEL_CRE_00151	druf	druf	turnover_candidate	present	True	focal_turnover
+rufa_group	Rufa group	DMEL_CRE_00154	druf	druf	turnover_candidate	present	True	focal_turnover
+rufa_group	Rufa group	DMEL_CRE_00178	druf	dbun	present	turnover_candidate	False	
+rufa_group	Rufa group	DMEL_CRE_00321	druf	dbir	present	turnover_candidate	False	
+rufa_group	Rufa group	DMEL_CRE_00330	druf	d_serrata	turnover_candidate	present	False	
+rufa_group	Rufa group	DMEL_CRE_00331	druf	d_serrata	present	turnover_candidate	False	
+immigrans_group	Immigrans group	DMEL_CRE_00052	dimm	dimm	turnover_candidate	present	True	focal_turnover
+immigrans_group	Immigrans group	DMEL_CRE_00077	dimm	dimm	present	turnover_candidate	True	focal_present
+immigrans_group	Immigrans group	DMEL_CRE_00080	dimm	dnas	present	turnover_candidate	False	
+immigrans_group	Immigrans group	DMEL_CRE_00186	dimm	dfor	turnover_candidate	present	False	
+subobscura_group	Subobscura group	DMEL_CRE_00003	dsub	dobs	turnover_candidate	present	False	
+subobscura_group	Subobscura group	DMEL_CRE_00038	dsub	dbif	present	turnover_candidate	False	
+subobscura_group	Subobscura group	DMEL_CRE_00042	dsub	dbif	present	turnover_candidate	False	
+subobscura_group	Subobscura group	DMEL_CRE_00052	dsub	dobs	turnover_candidate	present	False	
+subobscura_group	Subobscura group	DMEL_CRE_00065	dsub	dsub	present	turnover_candidate	True	focal_present
+subobscura_group	Subobscura group	DMEL_CRE_00093	dsub	dsub	present	turnover_candidate	True	focal_present
+subobscura_group	Subobscura group	DMEL_CRE_00120	dsub	dobs	present	turnover_candidate	False	
+subobscura_group	Subobscura group	DMEL_CRE_00121	dsub	dsub	turnover_candidate	present	True	focal_turnover
+subobscura_group	Subobscura group	DMEL_CRE_00122	dsub	dsub	turnover_candidate	present	True	focal_turnover
+subobscura_group	Subobscura group	DMEL_CRE_00151	dsub	dbif	present	turnover_candidate	False	
+subobscura_group	Subobscura group	DMEL_CRE_00152	dsub	dsub	turnover_candidate	present	True	focal_turnover
+subobscura_group	Subobscura group	DMEL_CRE_00175	dsub	dbif	present	turnover_candidate	False	
+subobscura_group	Subobscura group	DMEL_CRE_00276	dsub	dsub	turnover_candidate	present	True	focal_turnover
+subobscura_group	Subobscura group	DMEL_CRE_00277	dsub	dbif	turnover_candidate	present	False	
+subobscura_group	Subobscura group	DMEL_CRE_00309	dsub	dsub	present	turnover_candidate	True	focal_present
+azteca_group	Azteca group	DMEL_CRE_00078	dazt	d_affinis	turnover_candidate	present	False	
+azteca_group	Azteca group	DMEL_CRE_00080	dazt	dazt	present	turnover_candidate	True	focal_present
+azteca_group	Azteca group	DMEL_CRE_00275	dazt	dper	present	turnover_candidate	False	
+azteca_group	Azteca group	DMEL_CRE_00309	dazt	dazt	present	turnover_candidate	True	focal_present
+azteca_group	Azteca group	DMEL_CRE_00310	dazt	dazt	turnover_candidate	present	True	focal_turnover
+azteca_group	Azteca group	DMEL_CRE_00330	dazt	dazt	turnover_candidate	present	True	focal_turnover
+azteca_group	Azteca group	DMEL_CRE_00331	dazt	dazt	turnover_candidate	present	True	focal_turnover
+teissieri_group	Teissieri group	DMEL_CRE_00017	dtei	dtei	present	turnover_candidate	True	focal_present
+teissieri_group	Teissieri group	DMEL_CRE_00019	dtei	dsuz	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00021	dtei	d_lutescens	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00029	dtei	dsuz	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00030	dtei	dtei	turnover_candidate	present	True	focal_turnover
+teissieri_group	Teissieri group	DMEL_CRE_00064	dtei	d_simulans	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00072	dtei	d_simulans	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00078	dtei	dsuz	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00083	dtei	d_simulans	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00106	dtei	dtei	present	turnover_candidate	True	focal_present
+teissieri_group	Teissieri group	DMEL_CRE_00115	dtei	dsuz	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00151	dtei	dsuz	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00152	dtei	d_simulans	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00153	dtei	dsuz	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00164	dtei	d_lutescens	present	turnover_candidate	False	
+teissieri_group	Teissieri group	DMEL_CRE_00203	dtei	d_lutescens	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00330	dtei	d_lutescens	turnover_candidate	present	False	
+teissieri_group	Teissieri group	DMEL_CRE_00331	dtei	d_lutescens	turnover_candidate	present	False	
+repleta_group	Repleta group	DMEL_CRE_00255	d_repleta	d_arizonae	present	turnover_candidate	False	
+repleta_group	Repleta group	DMEL_CRE_00275	d_repleta	d_buzzatii	turnover_candidate	present	False	
+repleta_group	Repleta group	DMEL_CRE_00306	d_repleta	d_repleta	turnover_candidate	present	True	focal_turnover
+repleta_group	Repleta group	DMEL_CRE_00310	d_repleta	d_arizonae	present	turnover_candidate	False	
+repleta_group	Repleta group	DMEL_CRE_00331	d_repleta	d_buzzatii	present	turnover_candidate	False	

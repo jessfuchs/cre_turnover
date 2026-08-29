@@ -1,0 +1,15 @@
+name: scrm_postproc
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - pybedtools
+  - bedtools
+  - scipy
+  - numpy
+  - pandas
+  - pysam
+  - pip
+  - pip:
+      - MACS3==3.0.4

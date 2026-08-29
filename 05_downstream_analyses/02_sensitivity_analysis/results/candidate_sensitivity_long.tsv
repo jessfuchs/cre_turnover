@@ -1,0 +1,388 @@
+dmel_cre_id	scenario	n_focal_tier1_clades	focal_tier1_clades	n_secondary_only_tier1_clades	secondary_only_tier1_clades	n_total_tier1_clades	candidate_priority	candidate_retained	primary_candidate_priority	same_priority_as_primary
+DMEL_CRE_00309	ov025_dist12000	1	azteca_affinis_miranda_group	1	obscura_group	2	focal_plus_secondary_recurrent	yes	focal_recurrent	no
+DMEL_CRE_00309	ov025_dist24000	1	azteca_affinis_miranda_group	1	obscura_group	2	focal_plus_secondary_recurrent	yes	focal_recurrent	no
+DMEL_CRE_00309	ov025_dist48000	1	azteca_affinis_miranda_group	1	obscura_group	2	focal_plus_secondary_recurrent	yes	focal_recurrent	no
+DMEL_CRE_00309	ov050_dist12000	2	obscura_group|azteca_affinis_miranda_group	0		2	focal_recurrent	yes	focal_recurrent	yes
+DMEL_CRE_00309	ov050_dist24000	2	obscura_group|azteca_affinis_miranda_group	0		2	focal_recurrent	yes	focal_recurrent	yes
+DMEL_CRE_00309	ov050_dist48000	2	obscura_group|azteca_affinis_miranda_group	0		2	focal_recurrent	yes	focal_recurrent	yes
+DMEL_CRE_00309	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_recurrent	no
+DMEL_CRE_00309	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_recurrent	no
+DMEL_CRE_00309	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_recurrent	no
+DMEL_CRE_00331	ov025_dist12000	1	azteca_affinis_miranda_group	3	rufa_group|teissieri_group|repleta_group	4	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov025_dist24000	1	azteca_affinis_miranda_group	3	rufa_group|teissieri_group|repleta_group	4	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov025_dist48000	1	azteca_affinis_miranda_group	3	rufa_group|teissieri_group|repleta_group	4	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov050_dist12000	1	azteca_affinis_miranda_group	3	rufa_group|teissieri_group|repleta_group	4	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov050_dist24000	1	azteca_affinis_miranda_group	3	rufa_group|teissieri_group|repleta_group	4	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov050_dist48000	1	azteca_affinis_miranda_group	3	rufa_group|teissieri_group|repleta_group	4	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov075_dist12000	1	azteca_affinis_miranda_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov075_dist24000	1	azteca_affinis_miranda_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00331	ov075_dist48000	1	azteca_affinis_miranda_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov025_dist12000	1	immigrans_group	2	rufa_group|obscura_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov025_dist24000	1	immigrans_group	2	rufa_group|obscura_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov025_dist48000	1	immigrans_group	2	rufa_group|obscura_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov050_dist12000	1	immigrans_group	2	rufa_group|obscura_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov050_dist24000	1	immigrans_group	2	rufa_group|obscura_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov050_dist48000	1	immigrans_group	2	rufa_group|obscura_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00052	ov075_dist12000	0		1	obscura_group	1	secondary_single	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00052	ov075_dist24000	0		1	obscura_group	1	secondary_single	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00052	ov075_dist48000	0		1	obscura_group	1	secondary_single	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00151	ov025_dist12000	2	rufa_group|repleta_group	2	obscura_group|teissieri_group	4	focal_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00151	ov025_dist24000	2	rufa_group|repleta_group	2	obscura_group|teissieri_group	4	focal_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00151	ov025_dist48000	2	rufa_group|repleta_group	2	obscura_group|teissieri_group	4	focal_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00151	ov050_dist12000	1	rufa_group	2	obscura_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00151	ov050_dist24000	1	rufa_group	2	obscura_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00151	ov050_dist48000	1	rufa_group	2	obscura_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00151	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_plus_secondary_recurrent	no
+DMEL_CRE_00151	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_plus_secondary_recurrent	no
+DMEL_CRE_00151	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_plus_secondary_recurrent	no
+DMEL_CRE_00330	ov025_dist12000	1	azteca_affinis_miranda_group	2	rufa_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00330	ov025_dist24000	1	azteca_affinis_miranda_group	2	rufa_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00330	ov025_dist48000	1	azteca_affinis_miranda_group	2	rufa_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00330	ov050_dist12000	1	azteca_affinis_miranda_group	2	rufa_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00330	ov050_dist24000	1	azteca_affinis_miranda_group	2	rufa_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00330	ov050_dist48000	1	azteca_affinis_miranda_group	2	rufa_group|teissieri_group	3	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00330	ov075_dist12000	0		2	rufa_group|teissieri_group	2	secondary_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00330	ov075_dist24000	0		2	rufa_group|teissieri_group	2	secondary_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00330	ov075_dist48000	0		2	rufa_group|teissieri_group	2	secondary_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00065	ov025_dist12000	2	obscura_group|teissieri_group	0		2	focal_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00065	ov025_dist24000	2	obscura_group|teissieri_group	0		2	focal_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00065	ov025_dist48000	2	obscura_group|teissieri_group	0		2	focal_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00065	ov050_dist12000	1	obscura_group	1	rufa_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00065	ov050_dist24000	1	obscura_group	1	rufa_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00065	ov050_dist48000	1	obscura_group	1	rufa_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00065	ov075_dist12000	1	obscura_group	0		1	focal_single	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00065	ov075_dist24000	1	obscura_group	0		1	focal_single	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00065	ov075_dist48000	1	obscura_group	0		1	focal_single	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00080	ov025_dist12000	1	azteca_affinis_miranda_group	1	immigrans_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00080	ov025_dist24000	1	azteca_affinis_miranda_group	1	immigrans_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00080	ov025_dist48000	1	azteca_affinis_miranda_group	1	immigrans_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00080	ov050_dist12000	1	azteca_affinis_miranda_group	1	immigrans_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00080	ov050_dist24000	1	azteca_affinis_miranda_group	1	immigrans_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00080	ov050_dist48000	1	azteca_affinis_miranda_group	1	immigrans_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00080	ov075_dist12000	0		2	teissieri_group|repleta_group	2	secondary_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00080	ov075_dist24000	0		2	teissieri_group|repleta_group	2	secondary_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00080	ov075_dist48000	0		2	teissieri_group|repleta_group	2	secondary_recurrent	yes	focal_plus_secondary_recurrent	no
+DMEL_CRE_00152	ov025_dist12000	1	obscura_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00152	ov025_dist24000	1	obscura_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00152	ov025_dist48000	1	obscura_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00152	ov050_dist12000	1	obscura_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00152	ov050_dist24000	1	obscura_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00152	ov050_dist48000	1	obscura_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00152	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_plus_secondary_recurrent	no
+DMEL_CRE_00152	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_plus_secondary_recurrent	no
+DMEL_CRE_00152	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_plus_secondary_recurrent	no
+DMEL_CRE_00310	ov025_dist12000	1	azteca_affinis_miranda_group	1	repleta_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov025_dist24000	1	azteca_affinis_miranda_group	1	repleta_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov025_dist48000	1	azteca_affinis_miranda_group	1	repleta_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov050_dist12000	1	azteca_affinis_miranda_group	1	repleta_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov050_dist24000	1	azteca_affinis_miranda_group	1	repleta_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov050_dist48000	1	azteca_affinis_miranda_group	1	repleta_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov075_dist12000	1	azteca_affinis_miranda_group	1	rufa_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov075_dist24000	1	azteca_affinis_miranda_group	1	rufa_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00310	ov075_dist48000	1	azteca_affinis_miranda_group	1	rufa_group	2	focal_plus_secondary_recurrent	yes	focal_plus_secondary_recurrent	yes
+DMEL_CRE_00078	ov025_dist12000	0		2	azteca_affinis_miranda_group|teissieri_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00078	ov025_dist24000	0		2	azteca_affinis_miranda_group|teissieri_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00078	ov025_dist48000	0		2	azteca_affinis_miranda_group|teissieri_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00078	ov050_dist12000	0		2	azteca_affinis_miranda_group|teissieri_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00078	ov050_dist24000	0		2	azteca_affinis_miranda_group|teissieri_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00078	ov050_dist48000	0		2	azteca_affinis_miranda_group|teissieri_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00078	ov075_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_recurrent	no
+DMEL_CRE_00078	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_recurrent	no
+DMEL_CRE_00078	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_recurrent	no
+DMEL_CRE_00275	ov025_dist12000	0		1	repleta_group	1	secondary_single	yes	secondary_recurrent	no
+DMEL_CRE_00275	ov025_dist24000	0		1	repleta_group	1	secondary_single	yes	secondary_recurrent	no
+DMEL_CRE_00275	ov025_dist48000	0		1	repleta_group	1	secondary_single	yes	secondary_recurrent	no
+DMEL_CRE_00275	ov050_dist12000	0		2	azteca_affinis_miranda_group|repleta_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00275	ov050_dist24000	0		2	azteca_affinis_miranda_group|repleta_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00275	ov050_dist48000	0		2	azteca_affinis_miranda_group|repleta_group	2	secondary_recurrent	yes	secondary_recurrent	yes
+DMEL_CRE_00275	ov075_dist12000	1	teissieri_group	0		1	focal_single	yes	secondary_recurrent	no
+DMEL_CRE_00275	ov075_dist24000	1	teissieri_group	0		1	focal_single	yes	secondary_recurrent	no
+DMEL_CRE_00275	ov075_dist48000	1	teissieri_group	0		1	focal_single	yes	secondary_recurrent	no
+DMEL_CRE_00017	ov025_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00017	ov025_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00017	ov025_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00017	ov050_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00017	ov050_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00017	ov050_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00017	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00017	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00017	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00030	ov025_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov025_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov025_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov050_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov050_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov050_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov075_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov075_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00030	ov075_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov025_dist12000	1	immigrans_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov025_dist24000	1	immigrans_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov025_dist48000	1	immigrans_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov050_dist12000	1	immigrans_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov050_dist24000	1	immigrans_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov050_dist48000	1	immigrans_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00077	ov075_dist12000	1	immigrans_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00077	ov075_dist24000	1	immigrans_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00077	ov075_dist48000	1	immigrans_group	1	teissieri_group	2	focal_plus_secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00093	ov025_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov025_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov025_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov050_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov050_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov050_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov075_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov075_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00093	ov075_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov025_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov025_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov025_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov050_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov050_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov050_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov075_dist12000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov075_dist24000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00106	ov075_dist48000	1	teissieri_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov025_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov025_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov025_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov050_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov050_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov050_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00121	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00121	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00121	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00122	ov025_dist12000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00122	ov025_dist24000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00122	ov025_dist48000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00122	ov050_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00122	ov050_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00122	ov050_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00122	ov075_dist12000	0		2	rufa_group|teissieri_group	2	secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00122	ov075_dist24000	0		2	rufa_group|teissieri_group	2	secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00122	ov075_dist48000	0		2	rufa_group|teissieri_group	2	secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00154	ov025_dist12000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00154	ov025_dist24000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00154	ov025_dist48000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00154	ov050_dist12000	1	rufa_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00154	ov050_dist24000	1	rufa_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00154	ov050_dist48000	1	rufa_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00154	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00154	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00154	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00276	ov025_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00276	ov025_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00276	ov025_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00276	ov050_dist12000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00276	ov050_dist24000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00276	ov050_dist48000	1	obscura_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00276	ov075_dist12000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00276	ov075_dist24000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00276	ov075_dist48000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	focal_single	no
+DMEL_CRE_00306	ov025_dist12000	1	repleta_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00306	ov025_dist24000	1	repleta_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00306	ov025_dist48000	1	repleta_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00306	ov050_dist12000	1	repleta_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00306	ov050_dist24000	1	repleta_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00306	ov050_dist48000	1	repleta_group	0		1	focal_single	yes	focal_single	yes
+DMEL_CRE_00306	ov075_dist12000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00306	ov075_dist24000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00306	ov075_dist48000	0		0		0	not_tier1_candidate	no	focal_single	no
+DMEL_CRE_00003	ov025_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov025_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov025_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov050_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov050_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov050_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov075_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov075_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00003	ov075_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov025_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov025_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov025_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov050_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov050_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov050_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov075_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov075_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00004	ov075_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov075_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00019	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov075_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00021	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov075_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00029	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov025_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov025_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov025_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov050_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov050_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov050_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00038	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00038	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00038	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00042	ov025_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00042	ov025_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00042	ov025_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00042	ov050_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00042	ov050_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00042	ov050_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00042	ov075_dist12000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00042	ov075_dist24000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00042	ov075_dist48000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00064	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov075_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00064	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00072	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00072	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00072	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00082	ov025_dist12000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00082	ov025_dist24000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00082	ov025_dist48000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00082	ov050_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00082	ov050_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00082	ov050_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00082	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00082	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00082	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00083	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov075_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00083	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00115	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00115	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00115	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00120	ov025_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00120	ov025_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00120	ov025_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00120	ov050_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00120	ov050_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00120	ov050_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00120	ov075_dist12000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00120	ov075_dist24000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00120	ov075_dist48000	0		2	rufa_group|obscura_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00153	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00153	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00153	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00153	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00153	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00153	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00153	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00153	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00153	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00164	ov025_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00164	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00164	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00164	ov050_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00164	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00164	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00164	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00164	ov075_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00164	ov075_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00175	ov025_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00175	ov025_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00175	ov025_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00175	ov050_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00175	ov050_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00175	ov050_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00175	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00175	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00175	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00178	ov025_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov025_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov025_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov050_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov050_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov050_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov075_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov075_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00178	ov075_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00186	ov025_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00186	ov025_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00186	ov025_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00186	ov050_dist12000	0		1	immigrans_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00186	ov050_dist24000	0		1	immigrans_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00186	ov050_dist48000	0		1	immigrans_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00186	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00186	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00186	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00203	ov025_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00203	ov025_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00203	ov025_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00203	ov050_dist12000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00203	ov050_dist24000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00203	ov050_dist48000	0		1	teissieri_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00203	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00203	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00203	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00255	ov025_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00255	ov025_dist24000	0		1	repleta_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00255	ov025_dist48000	0		1	repleta_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00255	ov050_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00255	ov050_dist24000	0		1	repleta_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00255	ov050_dist48000	0		1	repleta_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00255	ov075_dist12000	1	obscura_group	1	azteca_affinis_miranda_group	2	focal_plus_secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00255	ov075_dist24000	1	obscura_group	1	azteca_affinis_miranda_group	2	focal_plus_secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00255	ov075_dist48000	1	obscura_group	1	azteca_affinis_miranda_group	2	focal_plus_secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00277	ov025_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00277	ov025_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00277	ov025_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00277	ov050_dist12000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00277	ov050_dist24000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00277	ov050_dist48000	0		1	obscura_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00277	ov075_dist12000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00277	ov075_dist24000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00277	ov075_dist48000	0		0		0	not_tier1_candidate	no	secondary_single	no
+DMEL_CRE_00321	ov025_dist12000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00321	ov025_dist24000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00321	ov025_dist48000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00321	ov050_dist12000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00321	ov050_dist24000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00321	ov050_dist48000	0		1	rufa_group	1	secondary_single	yes	secondary_single	yes
+DMEL_CRE_00321	ov075_dist12000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00321	ov075_dist24000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no
+DMEL_CRE_00321	ov075_dist48000	0		2	rufa_group|azteca_affinis_miranda_group	2	secondary_recurrent	yes	secondary_single	no

@@ -1,0 +1,7 @@
+group_name	group_species	n_group_species	n_reference_cres	n_tier1	n_tier2	n_tier3	n_other_pattern
+azteca_affinis_miranda_group	dazt|d_affinis|dmir|dper	4	337	7	48	30	252
+immigrans_group	dimm|dfor|dsul|dnas	4	337	4	26	31	276
+obscura_group	dsub|dbif|dobs	3	337	15	67	47	208
+repleta_group	d_repleta|d_buzzatii|d_mojavensis|d_arizonae	4	337	5	24	48	260
+rufa_group	druf|dkik|dbun|dbir|d_serrata	5	337	10	72	6	249
+teissieri_group	dtei|d_simulans|d_lutescens|dsuz	4	337	18	108	2	209

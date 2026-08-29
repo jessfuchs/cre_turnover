@@ -1,0 +1,6 @@
+dmel_cre_id	azteca_focal_direction	azteca_pattern	fbgn_target_genes	n_fbgn_target_genes	n_total_tier1_clades	tier1_clades	percent_candidate_retained	robust_candidate_all_9	robustness_class	percent_same_priority_as_primary	robust_priority_all_9	priority_stability
+DMEL_CRE_00331	focal_turnover	Azteca turnover candidate; comparison species present	FBgn0000567|FBgn0036740	2	4	azteca_affinis_miranda_group|repleta_group|rufa_group|teissieri_group	100.0	yes	robust	100.0	yes	stable
+DMEL_CRE_00310	focal_turnover	Azteca turnover candidate; comparison species present	FBgn0003149|FBgn0040828	2	2	azteca_affinis_miranda_group|repleta_group	100.0	yes	robust	100.0	yes	stable
+DMEL_CRE_00330	focal_turnover	Azteca turnover candidate; comparison species present	FBgn0000567|FBgn0086080	2	3	azteca_affinis_miranda_group|rufa_group|teissieri_group	100.0	yes	robust	66.66666666666666	no	variable
+DMEL_CRE_00080	focal_present	Azteca present; comparison species turnover candidates	FBgn0267001|FBgn0030384	2	2	azteca_affinis_miranda_group|immigrans_group	100.0	yes	robust	66.66666666666666	no	variable
+DMEL_CRE_00309	focal_present	Azteca present; comparison species turnover candidates	FBgn0016694|FBgn0052365	2	2	azteca_affinis_miranda_group|obscura_group	66.66666666666666	no	moderate	33.33333333333333	no	variable

@@ -1,0 +1,7 @@
+group_name	focal_species	focal_climate	comparison_species	comparison_climate	n_comparison_species	n_reference_cres	n_tier1	n_tier2	n_tier3	n_comparison_mixed	n_all_same	n_invalid
+rufa_group	druf	TEMP	dkik|dbun|dbir|d_serrata	TROP	4	337	2	18	0	158	159	0
+immigrans_group	dimm	TEMP	dfor|dsul|dnas	TROP	3	337	2	9	4	91	231	0
+obscura_group	dsub	TEMP	dbif|dobs	BORE	2	337	7	24	16	105	185	0
+azteca_affinis_miranda_group	dazt	ARID	d_affinis|dmir|dper	TEMP	3	337	5	11	9	137	175	0
+teissieri_group	dtei	TROP	d_simulans|d_lutescens|dsuz	TEMP	3	337	3	28	0	185	121	0
+repleta_group	d_repleta	TEMP	d_buzzatii|d_mojavensis|d_arizonae	ARID	3	337	1	2	16	112	206	0

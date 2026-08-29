@@ -1,0 +1,5 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dimm	dfor	dsul	dnas
+immigrans_group	DMEL_CRE_00058	tier3	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	uncertain	no_detected_CRE	uncertain	uncertain	uncertain
+immigrans_group	DMEL_CRE_00169	tier3	dimm	TEMP	uncertain	dfor|dsul|dnas	TROP	present	uncertain	present	present	present
+immigrans_group	DMEL_CRE_00250	tier3	dimm	TEMP	uncertain	dfor|dsul|dnas	TROP	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE	no_detected_CRE
+immigrans_group	DMEL_CRE_00309	tier3	dimm	TEMP	uncertain	dfor|dsul|dnas	TROP	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE	no_detected_CRE

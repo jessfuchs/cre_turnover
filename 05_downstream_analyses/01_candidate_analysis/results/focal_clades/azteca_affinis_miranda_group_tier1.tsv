@@ -1,0 +1,6 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dazt	d_affinis	dmir	dper
+azteca_affinis_miranda_group	DMEL_CRE_00080	tier1	dazt	ARID	present	d_affinis|dmir|dper	TEMP	turnover_candidate	present	turnover_candidate	turnover_candidate	turnover_candidate
+azteca_affinis_miranda_group	DMEL_CRE_00309	tier1	dazt	ARID	present	d_affinis|dmir|dper	TEMP	turnover_candidate	present	turnover_candidate	turnover_candidate	turnover_candidate
+azteca_affinis_miranda_group	DMEL_CRE_00310	tier1	dazt	ARID	turnover_candidate	d_affinis|dmir|dper	TEMP	present	turnover_candidate	present	present	present
+azteca_affinis_miranda_group	DMEL_CRE_00330	tier1	dazt	ARID	turnover_candidate	d_affinis|dmir|dper	TEMP	present	turnover_candidate	present	present	present
+azteca_affinis_miranda_group	DMEL_CRE_00331	tier1	dazt	ARID	turnover_candidate	d_affinis|dmir|dper	TEMP	present	turnover_candidate	present	present	present

@@ -1,0 +1,26 @@
+index	slug	species	genome	annotation	annotation_format
+0	dazt	Drosophila azteca	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dazt/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dazt/annotation.gff3	gff3
+1	dbif	Drosophila bifasciata	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dbif/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dbif/annotation.gff3	gff3
+2	dbir	Drosophila birchii	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dbir/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dbir/annotation.gff3	gff3
+3	dbun	Drosophila bunnanda	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dbun/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dbun/annotation.gff3	gff3
+4	dequ	Drosophila equinoxialis	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dequ/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dequ/annotation.gff3	gff3
+5	dfor	Drosophila formosana	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dfor/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dfor/annotation.gff3	gff3
+6	dfun	Drosophila funebris	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dfun/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dfun/annotation.gff3	gff3
+7	dimm	Drosophila immigrans	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dimm/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dimm/annotation.gff3	gff3
+8	dkik	Drosophila kikkawai	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dkik/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dkik/annotation.gff3	gff3
+9	dmir	Drosophila miranda	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dmir/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dmir/annotation.gff3	gff3
+10	dnas	Drosophila nasuta	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dnas/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dnas/annotation.gff3	gff3
+11	dobs	Drosophila obscura	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dobs/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dobs/annotation.gff3	gff3
+12	dper	Drosophila persimilis	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dper/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dper/annotation.gff3	gff3
+13	dpha	Drosophila phalerata	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dpha/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dpha/annotation.gff3	gff3
+14	dpse	Drosophila pseudoananassae	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dpse/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dpse/annotation.gff3	gff3
+15	druf	Drosophila rufa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/druf/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/druf/annotation.gff3	gff3
+16	dsub	Drosophila subobscura	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dsub/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dsub/annotation.gff3	gff3
+17	dsul	Drosophila sulfurigaster	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dsul/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dsul/annotation.gff3	gff3
+18	dsuz	Drosophila suzukii	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dsuz/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dsuz/annotation.gff3	gff3
+19	dtei	Drosophila teissieri	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dtei/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dtei/annotation.gff3	gff3
+20	dtro	Drosophila tropicalis	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dtro/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dtro/annotation.gff3	gff3
+21	dvir	Drosophila virilis	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dvir/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/dvir/annotation.gff3	gff3
+22	zdav	Zaprionus davidi	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/zdav/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/zdav/annotation.gff3	gff3
+23	zind	Zaprionus indianus	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/zind/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/zind/annotation.gff3	gff3
+24	ztub	Zaprionus tuberculatus	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/ztub/genome.fa	/home/jessica/cre_turnover/project/scrmshaw_pipeline/data/selected/ztub/annotation.gff3	gff3

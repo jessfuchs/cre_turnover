@@ -1,0 +1,2 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	d_repleta	d_buzzatii	d_mojavensis	d_arizonae
+repleta_group	DMEL_CRE_00306	tier1	d_repleta	TEMP	turnover_candidate	d_buzzatii|d_mojavensis|d_arizonae	ARID	present	turnover_candidate	present	present	present

@@ -1,0 +1,4 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dtei	d_simulans	d_lutescens	dsuz
+teissieri_group	DMEL_CRE_00017	tier1	dtei	TROP	present	d_simulans|d_lutescens|dsuz	TEMP	turnover_candidate	present	turnover_candidate	turnover_candidate	turnover_candidate
+teissieri_group	DMEL_CRE_00030	tier1	dtei	TROP	turnover_candidate	d_simulans|d_lutescens|dsuz	TEMP	present	turnover_candidate	present	present	present
+teissieri_group	DMEL_CRE_00106	tier1	dtei	TROP	present	d_simulans|d_lutescens|dsuz	TEMP	turnover_candidate	present	turnover_candidate	turnover_candidate	turnover_candidate

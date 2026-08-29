@@ -1,0 +1,2 @@
+test	metric	groups	statistic	p_value	phylogenetically_corrected
+Kruskal-Wallis	turnover_rate_evaluable	TROP,ARID,TEMP,BORE	2.2234949719916286	0.5273354330471263	False

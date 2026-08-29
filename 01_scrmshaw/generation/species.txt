@@ -1,0 +1,36 @@
+# One species per row.
+#
+# Recommended format:
+# slug<TAB>scientific name
+#
+# Slug will be used as file name.
+#
+# Examples:
+# dmel  Drosophila melanogaster
+# dpse	Drosophila pseudoananassae
+#
+dazt	Drosophila azteca
+dbif	Drosophila bifasciata
+dbir	Drosophila birchii
+dbun	Drosophila bunnanda
+dequ	Drosophila equinoxialis
+dfor	Drosophila formosana
+dfun	Drosophila funebris
+dimm	Drosophila immigrans
+dkik	Drosophila kikkawai
+dmir	Drosophila miranda
+dnas	Drosophila nasuta
+dobs	Drosophila obscura
+dper	Drosophila persimilis
+dpha	Drosophila phalerata
+dpse	Drosophila pseudoananassae
+druf	Drosophila rufa
+dsub	Drosophila subobscura
+dsul	Drosophila sulfurigaster
+dsuz	Drosophila suzukii
+dtei	Drosophila teissieri
+dtro	Drosophila tropicalis
+dvir	Drosophila virilis
+zdav	Zaprionus davidi
+zind	Zaprionus indianus
+ztub	Zaprionus tuberculatus

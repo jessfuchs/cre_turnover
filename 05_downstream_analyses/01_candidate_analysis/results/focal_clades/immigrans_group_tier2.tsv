@@ -1,0 +1,10 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dimm	dfor	dsul	dnas
+immigrans_group	DMEL_CRE_00029	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	turnover_candidate	no_detected_CRE	turnover_candidate	turnover_candidate	turnover_candidate
+immigrans_group	DMEL_CRE_00030	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	turnover_candidate	no_detected_CRE	turnover_candidate	turnover_candidate	turnover_candidate
+immigrans_group	DMEL_CRE_00057	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	turnover_candidate	no_detected_CRE	turnover_candidate	turnover_candidate	turnover_candidate
+immigrans_group	DMEL_CRE_00147	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	present	no_detected_CRE	present	present	present
+immigrans_group	DMEL_CRE_00203	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	turnover_candidate	no_detected_CRE	turnover_candidate	turnover_candidate	turnover_candidate
+immigrans_group	DMEL_CRE_00245	tier2	dimm	TEMP	turnover_candidate	dfor|dsul|dnas	TROP	no_detected_CRE	turnover_candidate	no_detected_CRE	no_detected_CRE	no_detected_CRE
+immigrans_group	DMEL_CRE_00265	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	turnover_candidate	no_detected_CRE	turnover_candidate	turnover_candidate	turnover_candidate
+immigrans_group	DMEL_CRE_00266	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	present	no_detected_CRE	present	present	present
+immigrans_group	DMEL_CRE_00318	tier2	dimm	TEMP	no_detected_CRE	dfor|dsul|dnas	TROP	turnover_candidate	no_detected_CRE	turnover_candidate	turnover_candidate	turnover_candidate

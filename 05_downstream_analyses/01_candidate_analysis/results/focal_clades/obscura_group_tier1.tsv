@@ -1,0 +1,8 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dsub	dbif	dobs
+obscura_group	DMEL_CRE_00065	tier1	dsub	TEMP	present	dbif|dobs	BORE	turnover_candidate	present	turnover_candidate	turnover_candidate
+obscura_group	DMEL_CRE_00093	tier1	dsub	TEMP	present	dbif|dobs	BORE	turnover_candidate	present	turnover_candidate	turnover_candidate
+obscura_group	DMEL_CRE_00121	tier1	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	present	turnover_candidate	present	present
+obscura_group	DMEL_CRE_00122	tier1	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	present	turnover_candidate	present	present
+obscura_group	DMEL_CRE_00152	tier1	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	present	turnover_candidate	present	present
+obscura_group	DMEL_CRE_00276	tier1	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	present	turnover_candidate	present	present
+obscura_group	DMEL_CRE_00309	tier1	dsub	TEMP	present	dbif|dobs	BORE	turnover_candidate	present	turnover_candidate	turnover_candidate

@@ -1,0 +1,7 @@
+dmel_cre_id	druf	dkik	dbun	dbir	d_serrata	pattern_class	tier	discordant_species	discordant_state	consensus_state	n_consensus_species	group_name	group_species	n_group_species
+DMEL_CRE_00092	uncertain	uncertain	no_detected_CRE	uncertain	uncertain	other_singleton_contrast	tier3	dbun	no_detected_CRE	uncertain	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00101	uncertain	uncertain	uncertain	uncertain	no_detected_CRE	other_singleton_contrast	tier3	d_serrata	no_detected_CRE	uncertain	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00125	uncertain	no_detected_CRE	uncertain	uncertain	uncertain	other_singleton_contrast	tier3	dkik	no_detected_CRE	uncertain	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00181	uncertain	no_detected_CRE	uncertain	uncertain	uncertain	other_singleton_contrast	tier3	dkik	no_detected_CRE	uncertain	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00246	uncertain	no_detected_CRE	uncertain	uncertain	uncertain	other_singleton_contrast	tier3	dkik	no_detected_CRE	uncertain	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00254	no_detected_CRE	no_detected_CRE	no_detected_CRE	no_detected_CRE	uncertain	other_singleton_contrast	tier3	d_serrata	uncertain	no_detected_CRE	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5

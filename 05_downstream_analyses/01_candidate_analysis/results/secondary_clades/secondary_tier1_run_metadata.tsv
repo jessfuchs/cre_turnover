@@ -1,0 +1,2 @@
+script	run_timestamp	python_version	pandas_version	platform	matrix_input	n_reference_cres	n_clades	n_secondary_tier1_rows	n_unique_secondary_tier1_cres	n_recurrent_secondary_cres
+02_analyze_secondary_tier1.py	2026-08-26T23:12:30.260776+02:00	3.10.20	1.5.3	Linux-6.1.0-52-amd64-x86_64-with-glibc2.36	/ursuppe.data/home/jessica/cre_turnover/project/cre_classification/results/cre_turnover_matrix.tsv	337	6	59	43	11

@@ -1,0 +1,8 @@
+metric	count
+unique_unresolved_identifiers	90
+Dmelanogast_M_identifiers	80
+other_unresolved_identifiers	10
+unresolved_ids_found_literally_in_gff	10
+normalized_Dmelanogast_ids	80
+normalized_Dmelanogast_ids_found_in_gff	80
+unique_FBgn_for_normalized_models	0

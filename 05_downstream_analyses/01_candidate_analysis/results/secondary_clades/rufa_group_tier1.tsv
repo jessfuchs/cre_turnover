@@ -1,0 +1,11 @@
+dmel_cre_id	druf	dkik	dbun	dbir	d_serrata	pattern_class	tier	discordant_species	discordant_state	consensus_state	n_consensus_species	group_name	group_species	n_group_species
+DMEL_CRE_00004	turnover_candidate	turnover_candidate	present	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dbun	present	turnover_candidate	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00052	present	turnover_candidate	present	present	present	present_vs_turnover	tier1	dkik	turnover_candidate	present	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00065	turnover_candidate	turnover_candidate	turnover_candidate	turnover_candidate	present	present_vs_turnover	tier1	d_serrata	present	turnover_candidate	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00082	turnover_candidate	turnover_candidate	turnover_candidate	present	turnover_candidate	present_vs_turnover	tier1	dbir	present	turnover_candidate	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00151	turnover_candidate	present	present	present	present	present_vs_turnover	tier1	druf	turnover_candidate	present	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00154	turnover_candidate	present	present	present	present	present_vs_turnover	tier1	druf	turnover_candidate	present	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00178	turnover_candidate	turnover_candidate	present	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dbun	present	turnover_candidate	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00321	turnover_candidate	turnover_candidate	turnover_candidate	present	turnover_candidate	present_vs_turnover	tier1	dbir	present	turnover_candidate	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00330	present	present	present	present	turnover_candidate	present_vs_turnover	tier1	d_serrata	turnover_candidate	present	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5
+DMEL_CRE_00331	turnover_candidate	turnover_candidate	turnover_candidate	turnover_candidate	present	present_vs_turnover	tier1	d_serrata	present	turnover_candidate	4	rufa_group	druf|dkik|dbun|dbir|d_serrata	5

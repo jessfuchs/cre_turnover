@@ -1,0 +1,52 @@
+Phylogenetically controlled CRE turnover analysis
+=================================================
+
+Response:
+logit((turnover_candidate + 0.5) / (mapped + 1))
+
+Predictor:
+climatic_zone
+
+Number of species: 39
+Estimated Pagel lambda: 0.5137474
+
+MODEL COMPARISON
+----------------
+              Model df       AIC       BIC   logLik   Test  L.Ratio p-value
+model_null        1  3 -5.258744 -0.268059 5.629372                        
+model_climate     2  6 -1.440743  8.540627 6.720372 1 vs 2 2.181999  0.5355
+
+
+FULL CLIMATE MODEL
+------------------
+Generalized least squares fit by maximum likelihood
+  Model: logit_turnover_rate ~ climatic_zone 
+  Data: dat 
+        AIC      BIC   logLik
+  -1.440743 8.540627 6.720372
+
+Correlation Structure: corPagel
+ Formula: ~species_id 
+ Parameter estimate(s):
+   lambda 
+0.5137474 
+
+Coefficients:
+                       Value  Std.Error    t-value p-value
+(Intercept)       -1.1710690 0.09858530 -11.878738  0.0000
+climatic_zoneARID -0.0397910 0.10801697  -0.368377  0.7148
+climatic_zoneTEMP -0.1189431 0.08486722  -1.401519  0.1699
+climatic_zoneBORE -0.0643788 0.11204557  -0.574577  0.5693
+
+ Correlation: 
+                  (Intr) c_ARID c_TEMP
+climatic_zoneARID -0.314              
+climatic_zoneTEMP -0.371  0.460       
+climatic_zoneBORE -0.340  0.412  0.470
+
+Standardized residuals:
+       Min         Q1        Med         Q3        Max 
+-2.5111377 -0.6588692  0.2084225  0.7511987  1.6883424 
+
+Residual standard error: 0.2334011 
+Degrees of freedom: 39 total; 35 residual

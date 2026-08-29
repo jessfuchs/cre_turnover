@@ -1,0 +1,17 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dsub	dbif	dobs
+obscura_group	DMEL_CRE_00016	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00025	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00032	tier3	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	uncertain	turnover_candidate	uncertain	uncertain
+obscura_group	DMEL_CRE_00039	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00045	tier3	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	uncertain	turnover_candidate	uncertain	uncertain
+obscura_group	DMEL_CRE_00048	tier3	dsub	TEMP	no_detected_CRE	dbif|dobs	BORE	uncertain	no_detected_CRE	uncertain	uncertain
+obscura_group	DMEL_CRE_00078	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	turnover_candidate	uncertain	turnover_candidate	turnover_candidate
+obscura_group	DMEL_CRE_00096	tier3	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	uncertain	turnover_candidate	uncertain	uncertain
+obscura_group	DMEL_CRE_00102	tier3	dsub	TEMP	turnover_candidate	dbif|dobs	BORE	uncertain	turnover_candidate	uncertain	uncertain
+obscura_group	DMEL_CRE_00154	tier3	dsub	TEMP	no_detected_CRE	dbif|dobs	BORE	uncertain	no_detected_CRE	uncertain	uncertain
+obscura_group	DMEL_CRE_00163	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00211	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00246	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00284	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00285	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE
+obscura_group	DMEL_CRE_00286	tier3	dsub	TEMP	uncertain	dbif|dobs	BORE	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE

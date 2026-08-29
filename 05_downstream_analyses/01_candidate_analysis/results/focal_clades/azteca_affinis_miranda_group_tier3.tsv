@@ -1,0 +1,10 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dazt	d_affinis	dmir	dper
+azteca_affinis_miranda_group	DMEL_CRE_00001	tier3	dazt	ARID	present	d_affinis|dmir|dper	TEMP	uncertain	present	uncertain	uncertain	uncertain
+azteca_affinis_miranda_group	DMEL_CRE_00008	tier3	dazt	ARID	uncertain	d_affinis|dmir|dper	TEMP	turnover_candidate	uncertain	turnover_candidate	turnover_candidate	turnover_candidate
+azteca_affinis_miranda_group	DMEL_CRE_00015	tier3	dazt	ARID	turnover_candidate	d_affinis|dmir|dper	TEMP	uncertain	turnover_candidate	uncertain	uncertain	uncertain
+azteca_affinis_miranda_group	DMEL_CRE_00124	tier3	dazt	ARID	no_detected_CRE	d_affinis|dmir|dper	TEMP	uncertain	no_detected_CRE	uncertain	uncertain	uncertain
+azteca_affinis_miranda_group	DMEL_CRE_00130	tier3	dazt	ARID	uncertain	d_affinis|dmir|dper	TEMP	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE	no_detected_CRE
+azteca_affinis_miranda_group	DMEL_CRE_00249	tier3	dazt	ARID	uncertain	d_affinis|dmir|dper	TEMP	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE	no_detected_CRE
+azteca_affinis_miranda_group	DMEL_CRE_00253	tier3	dazt	ARID	no_detected_CRE	d_affinis|dmir|dper	TEMP	uncertain	no_detected_CRE	uncertain	uncertain	uncertain
+azteca_affinis_miranda_group	DMEL_CRE_00259	tier3	dazt	ARID	uncertain	d_affinis|dmir|dper	TEMP	no_detected_CRE	uncertain	no_detected_CRE	no_detected_CRE	no_detected_CRE
+azteca_affinis_miranda_group	DMEL_CRE_00334	tier3	dazt	ARID	no_detected_CRE	d_affinis|dmir|dper	TEMP	uncertain	no_detected_CRE	uncertain	uncertain	uncertain

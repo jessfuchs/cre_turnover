@@ -1,0 +1,67 @@
+fbgn	gene_support_score	best_downstream_priority	best_candidate_priority	best_gene_role	n_candidate_cres	candidate_cre_ids	n_primary_cres	primary_cre_ids	n_secondary_cres	secondary_cre_ids	n_recurrent_cres	recurrent_cre_ids	n_focal_supported_cres	focal_supported_cre_ids	n_high_priority_cres	high_priority_cre_ids	n_medium_priority_cres	medium_priority_cre_ids	n_exploratory_cres	exploratory_cre_ids	n_unique_tier1_clades	tier1_clades	max_total_tier1_clades_per_cre	max_focal_tier1_clades_per_cre	max_secondary_only_clades_per_cre	has_primary_assignment	has_secondary_assignment
+FBgn0262127	18	high	focal_plus_secondary_recurrent	primary_candidate	3	DMEL_CRE_00151|DMEL_CRE_00152|DMEL_CRE_00153	3	DMEL_CRE_00151|DMEL_CRE_00152|DMEL_CRE_00153	0		2	DMEL_CRE_00151|DMEL_CRE_00152	2	DMEL_CRE_00151|DMEL_CRE_00152	2	DMEL_CRE_00151|DMEL_CRE_00152	0		1	DMEL_CRE_00153	3	obscura_group|rufa_group|teissieri_group	3	1	2	yes	no
+FBgn0267001	17	high	focal_plus_secondary_recurrent	primary_candidate	3	DMEL_CRE_00077|DMEL_CRE_00078|DMEL_CRE_00080	3	DMEL_CRE_00077|DMEL_CRE_00078|DMEL_CRE_00080	0		2	DMEL_CRE_00078|DMEL_CRE_00080	2	DMEL_CRE_00077|DMEL_CRE_00080	1	DMEL_CRE_00080	2	DMEL_CRE_00077|DMEL_CRE_00078	0		3	azteca_affinis_miranda_group|immigrans_group|teissieri_group	2	1	2	yes	no
+FBgn0000567	16	high	focal_plus_secondary_recurrent	primary_candidate	2	DMEL_CRE_00330|DMEL_CRE_00331	2	DMEL_CRE_00330|DMEL_CRE_00331	0		2	DMEL_CRE_00330|DMEL_CRE_00331	2	DMEL_CRE_00330|DMEL_CRE_00331	2	DMEL_CRE_00330|DMEL_CRE_00331	0		0		4	azteca_affinis_miranda_group|repleta_group|rufa_group|teissieri_group	4	1	3	yes	no
+FBgn0038256	15	high	focal_plus_secondary_recurrent	secondary_candidate	3	DMEL_CRE_00151|DMEL_CRE_00152|DMEL_CRE_00153	0		3	DMEL_CRE_00151|DMEL_CRE_00152|DMEL_CRE_00153	2	DMEL_CRE_00151|DMEL_CRE_00152	2	DMEL_CRE_00151|DMEL_CRE_00152	2	DMEL_CRE_00151|DMEL_CRE_00152	0		1	DMEL_CRE_00153	3	obscura_group|rufa_group|teissieri_group	3	1	2	no	yes
+FBgn0261260	10	high	focal_plus_secondary_recurrent	primary_candidate	2	DMEL_CRE_00064|DMEL_CRE_00065	2	DMEL_CRE_00064|DMEL_CRE_00065	0		1	DMEL_CRE_00065	1	DMEL_CRE_00065	1	DMEL_CRE_00065	0		1	DMEL_CRE_00064	3	obscura_group|rufa_group|teissieri_group	2	1	1	yes	no
+FBgn0266050	8	high	focal_plus_secondary_recurrent	secondary_candidate	2	DMEL_CRE_00064|DMEL_CRE_00065	0		2	DMEL_CRE_00064|DMEL_CRE_00065	1	DMEL_CRE_00065	1	DMEL_CRE_00065	1	DMEL_CRE_00065	0		1	DMEL_CRE_00064	3	obscura_group|rufa_group|teissieri_group	2	1	1	no	yes
+FBgn0016694	8	high	focal_recurrent	primary_candidate	1	DMEL_CRE_00309	1	DMEL_CRE_00309	0		1	DMEL_CRE_00309	1	DMEL_CRE_00309	1	DMEL_CRE_00309	0		0		2	azteca_affinis_miranda_group|obscura_group	2	2	0	yes	no
+FBgn0003149	8	high	focal_plus_secondary_recurrent	primary_candidate	1	DMEL_CRE_00310	1	DMEL_CRE_00310	0		1	DMEL_CRE_00310	1	DMEL_CRE_00310	1	DMEL_CRE_00310	0		0		2	azteca_affinis_miranda_group|repleta_group	2	1	1	yes	no
+FBgn0004198	8	high	focal_plus_secondary_recurrent	primary_candidate	1	DMEL_CRE_00052	1	DMEL_CRE_00052	0		1	DMEL_CRE_00052	1	DMEL_CRE_00052	1	DMEL_CRE_00052	0		0		3	immigrans_group|obscura_group|rufa_group	3	1	2	yes	no
+FBgn0052365	7	high	focal_recurrent	secondary_candidate	1	DMEL_CRE_00309	0		1	DMEL_CRE_00309	1	DMEL_CRE_00309	1	DMEL_CRE_00309	1	DMEL_CRE_00309	0		0		2	azteca_affinis_miranda_group|obscura_group	2	2	0	no	yes
+FBgn0029952	7	high	focal_plus_secondary_recurrent	secondary_candidate	1	DMEL_CRE_00052	0		1	DMEL_CRE_00052	1	DMEL_CRE_00052	1	DMEL_CRE_00052	1	DMEL_CRE_00052	0		0		3	immigrans_group|obscura_group|rufa_group	3	1	2	no	yes
+FBgn0030384	7	high	focal_plus_secondary_recurrent	secondary_candidate	1	DMEL_CRE_00080	0		1	DMEL_CRE_00080	1	DMEL_CRE_00080	1	DMEL_CRE_00080	1	DMEL_CRE_00080	0		0		2	azteca_affinis_miranda_group|immigrans_group	2	1	1	no	yes
+FBgn0036740	7	high	focal_plus_secondary_recurrent	secondary_candidate	1	DMEL_CRE_00331	0		1	DMEL_CRE_00331	1	DMEL_CRE_00331	1	DMEL_CRE_00331	1	DMEL_CRE_00331	0		0		4	azteca_affinis_miranda_group|repleta_group|rufa_group|teissieri_group	4	1	3	no	yes
+FBgn0040828	7	high	focal_plus_secondary_recurrent	secondary_candidate	1	DMEL_CRE_00310	0		1	DMEL_CRE_00310	1	DMEL_CRE_00310	1	DMEL_CRE_00310	1	DMEL_CRE_00310	0		0		2	azteca_affinis_miranda_group|repleta_group	2	1	1	no	yes
+FBgn0086080	7	high	focal_plus_secondary_recurrent	secondary_candidate	1	DMEL_CRE_00330	0		1	DMEL_CRE_00330	1	DMEL_CRE_00330	1	DMEL_CRE_00330	1	DMEL_CRE_00330	0		0		3	azteca_affinis_miranda_group|rufa_group|teissieri_group	3	1	2	no	yes
+FBgn0032602	9	medium	secondary_recurrent	primary_candidate	3	DMEL_CRE_00275|DMEL_CRE_00276|DMEL_CRE_00277	1	DMEL_CRE_00275	2	DMEL_CRE_00276|DMEL_CRE_00277	1	DMEL_CRE_00275	1	DMEL_CRE_00276	0		2	DMEL_CRE_00275|DMEL_CRE_00276	1	DMEL_CRE_00277	3	azteca_affinis_miranda_group|obscura_group|repleta_group	2	1	2	yes	yes
+FBgn0283657	7	medium	focal_single	primary_candidate	3	DMEL_CRE_00017|DMEL_CRE_00019|DMEL_CRE_00021	2	DMEL_CRE_00019|DMEL_CRE_00021	1	DMEL_CRE_00017	0		1	DMEL_CRE_00017	0		1	DMEL_CRE_00017	2	DMEL_CRE_00019|DMEL_CRE_00021	1	teissieri_group	1	1	1	yes	yes
+FBgn0003380	6	medium	focal_single	primary_candidate	2	DMEL_CRE_00120|DMEL_CRE_00121	2	DMEL_CRE_00120|DMEL_CRE_00121	0		0		1	DMEL_CRE_00121	0		1	DMEL_CRE_00121	1	DMEL_CRE_00120	1	obscura_group	1	1	1	yes	no
+FBgn0264695	6	medium	focal_single	primary_candidate	2	DMEL_CRE_00276|DMEL_CRE_00277	2	DMEL_CRE_00276|DMEL_CRE_00277	0		0		1	DMEL_CRE_00276	0		1	DMEL_CRE_00276	1	DMEL_CRE_00277	1	obscura_group	1	1	1	yes	no
+FBgn0266098	6	medium	focal_single	primary_candidate	2	DMEL_CRE_00029|DMEL_CRE_00030	2	DMEL_CRE_00029|DMEL_CRE_00030	0		0		1	DMEL_CRE_00030	0		1	DMEL_CRE_00030	1	DMEL_CRE_00029	1	teissieri_group	1	1	1	yes	no
+FBgn0032601	4	medium	secondary_recurrent	secondary_candidate	1	DMEL_CRE_00275	0		1	DMEL_CRE_00275	1	DMEL_CRE_00275	0		0		1	DMEL_CRE_00275	0		2	azteca_affinis_miranda_group|repleta_group	2	0	2	no	yes
+FBgn0267163	4	medium	secondary_recurrent	secondary_candidate	1	DMEL_CRE_00078	0		1	DMEL_CRE_00078	1	DMEL_CRE_00078	0		0		1	DMEL_CRE_00078	0		2	azteca_affinis_miranda_group|teissieri_group	2	0	2	no	yes
+FBgn0030886	4	medium	focal_single	secondary_candidate	2	DMEL_CRE_00120|DMEL_CRE_00121	0		2	DMEL_CRE_00120|DMEL_CRE_00121	0		1	DMEL_CRE_00121	0		1	DMEL_CRE_00121	1	DMEL_CRE_00120	1	obscura_group	1	1	1	no	yes
+FBgn0003463	4	medium	focal_single	primary_candidate	1	DMEL_CRE_00106	1	DMEL_CRE_00106	0		0		1	DMEL_CRE_00106	0		1	DMEL_CRE_00106	0		1	teissieri_group	1	1	0	yes	no
+FBgn0004169	4	medium	focal_single	primary_candidate	1	DMEL_CRE_00093	1	DMEL_CRE_00093	0		0		1	DMEL_CRE_00093	0		1	DMEL_CRE_00093	0		1	obscura_group	1	1	0	yes	no
+FBgn0015286	4	medium	focal_single	primary_candidate	1	DMEL_CRE_00017	1	DMEL_CRE_00017	0		0		1	DMEL_CRE_00017	0		1	DMEL_CRE_00017	0		1	teissieri_group	1	1	0	yes	no
+FBgn0035719	4	medium	focal_single	primary_candidate	1	DMEL_CRE_00306	1	DMEL_CRE_00306	0		0		1	DMEL_CRE_00306	0		1	DMEL_CRE_00306	0		1	repleta_group	1	1	0	yes	no
+FBgn0262483	4	medium	focal_single	primary_candidate	1	DMEL_CRE_00154	1	DMEL_CRE_00154	0		0		1	DMEL_CRE_00154	0		1	DMEL_CRE_00154	0		1	rufa_group	1	1	0	yes	no
+FBgn0283471	4	medium	focal_single	primary_candidate	1	DMEL_CRE_00122	1	DMEL_CRE_00122	0		0		1	DMEL_CRE_00122	0		1	DMEL_CRE_00122	0		1	obscura_group	1	1	0	yes	no
+FBgn0030377	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00077	0		1	DMEL_CRE_00077	0		1	DMEL_CRE_00077	0		1	DMEL_CRE_00077	0		1	immigrans_group	1	1	0	no	yes
+FBgn0038331	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00154	0		1	DMEL_CRE_00154	0		1	DMEL_CRE_00154	0		1	DMEL_CRE_00154	0		1	rufa_group	1	1	0	no	yes
+FBgn0265596	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00106	0		1	DMEL_CRE_00106	0		1	DMEL_CRE_00106	0		1	DMEL_CRE_00106	0		1	teissieri_group	1	1	0	no	yes
+FBgn0265865	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00093	0		1	DMEL_CRE_00093	0		1	DMEL_CRE_00093	0		1	DMEL_CRE_00093	0		1	obscura_group	1	1	0	no	yes
+FBgn0266097	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00030	0		1	DMEL_CRE_00030	0		1	DMEL_CRE_00030	0		1	DMEL_CRE_00030	0		1	teissieri_group	1	1	0	no	yes
+FBgn0266961	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00306	0		1	DMEL_CRE_00306	0		1	DMEL_CRE_00306	0		1	DMEL_CRE_00306	0		1	repleta_group	1	1	0	no	yes
+FBgn0267165	3	medium	focal_single	secondary_candidate	1	DMEL_CRE_00122	0		1	DMEL_CRE_00122	0		1	DMEL_CRE_00122	0		1	DMEL_CRE_00122	0		1	obscura_group	1	1	0	no	yes
+FBgn0263532	2	exploratory	secondary_single	secondary_candidate	2	DMEL_CRE_00019|DMEL_CRE_00021	0		2	DMEL_CRE_00019|DMEL_CRE_00021	0		0		0		0		2	DMEL_CRE_00019|DMEL_CRE_00021	1	teissieri_group	1	0	1	no	yes
+FBgn0003118	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00178	1	DMEL_CRE_00178	0		0		0		0		0		1	DMEL_CRE_00178	1	rufa_group	1	0	1	yes	no
+FBgn0003575	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00003	1	DMEL_CRE_00003	0		0		0		0		0		1	DMEL_CRE_00003	1	obscura_group	1	0	1	yes	no
+FBgn0004652	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00164	1	DMEL_CRE_00164	0		0		0		0		0		1	DMEL_CRE_00164	1	teissieri_group	1	0	1	yes	no
+FBgn0025390	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00004	1	DMEL_CRE_00004	0		0		0		0		0		1	DMEL_CRE_00004	1	rufa_group	1	0	1	yes	no
+FBgn0029895	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00042	1	DMEL_CRE_00042	0		0		0		0		0		1	DMEL_CRE_00042	1	obscura_group	1	0	1	yes	no
+FBgn0030412	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00082	1	DMEL_CRE_00082	0		0		0		0		0		1	DMEL_CRE_00082	1	rufa_group	1	0	1	yes	no
+FBgn0033627	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00203	1	DMEL_CRE_00203	0		0		0		0		0		1	DMEL_CRE_00203	1	teissieri_group	1	0	1	yes	no
+FBgn0039588	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00186	1	DMEL_CRE_00186	0		0		0		0		0		1	DMEL_CRE_00186	1	immigrans_group	1	0	1	yes	no
+FBgn0041092	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00255	1	DMEL_CRE_00255	0		0		0		0		0		1	DMEL_CRE_00255	1	repleta_group	1	0	1	yes	no
+FBgn0041094	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00321	1	DMEL_CRE_00321	0		0		0		0		0		1	DMEL_CRE_00321	1	rufa_group	1	0	1	yes	no
+FBgn0052666	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00072	1	DMEL_CRE_00072	0		0		0		0		0		1	DMEL_CRE_00072	1	teissieri_group	1	0	1	yes	no
+FBgn0264386	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00038	1	DMEL_CRE_00038	0		0		0		0		0		1	DMEL_CRE_00038	1	obscura_group	1	0	1	yes	no
+FBgn0264490	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00175	1	DMEL_CRE_00175	0		0		0		0		0		1	DMEL_CRE_00175	1	obscura_group	1	0	1	yes	no
+FBgn0265523	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00083	1	DMEL_CRE_00083	0		0		0		0		0		1	DMEL_CRE_00083	1	teissieri_group	1	0	1	yes	no
+FBgn0285944	2	exploratory	secondary_single	primary_candidate	1	DMEL_CRE_00115	1	DMEL_CRE_00115	0		0		0		0		0		1	DMEL_CRE_00115	1	teissieri_group	1	0	1	yes	no
+FBgn0003137	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00186	0		1	DMEL_CRE_00186	0		0		0		0		1	DMEL_CRE_00186	1	immigrans_group	1	0	1	no	yes
+FBgn0015024	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00082	0		1	DMEL_CRE_00082	0		0		0		0		1	DMEL_CRE_00082	1	rufa_group	1	0	1	no	yes
+FBgn0020381	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00003	0		1	DMEL_CRE_00003	0		0		0		0		1	DMEL_CRE_00003	1	obscura_group	1	0	1	no	yes
+FBgn0029747	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00029	0		1	DMEL_CRE_00029	0		0		0		0		1	DMEL_CRE_00029	1	teissieri_group	1	0	1	no	yes
+FBgn0029894	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00042	0		1	DMEL_CRE_00042	0		0		0		0		1	DMEL_CRE_00042	1	obscura_group	1	0	1	no	yes
+FBgn0030756	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00115	0		1	DMEL_CRE_00115	0		0		0		0		1	DMEL_CRE_00115	1	teissieri_group	1	0	1	no	yes
+FBgn0032101	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00255	0		1	DMEL_CRE_00255	0		0		0		0		1	DMEL_CRE_00255	1	repleta_group	1	0	1	no	yes
+FBgn0038919	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00175	0		1	DMEL_CRE_00175	0		0		0		0		1	DMEL_CRE_00175	1	obscura_group	1	0	1	no	yes
+FBgn0041241	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00203	0		1	DMEL_CRE_00203	0		0		0		0		1	DMEL_CRE_00203	1	teissieri_group	1	0	1	no	yes
+FBgn0051122	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00164	0		1	DMEL_CRE_00164	0		0		0		0		1	DMEL_CRE_00164	1	teissieri_group	1	0	1	no	yes
+FBgn0264678	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00083	0		1	DMEL_CRE_00083	0		0		0		0		1	DMEL_CRE_00083	1	teissieri_group	1	0	1	no	yes
+FBgn0265749	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00072	0		1	DMEL_CRE_00072	0		0		0		0		1	DMEL_CRE_00072	1	teissieri_group	1	0	1	no	yes
+FBgn0265928	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00321	0		1	DMEL_CRE_00321	0		0		0		0		1	DMEL_CRE_00321	1	rufa_group	1	0	1	no	yes
+FBgn0267759	1	exploratory	secondary_single	secondary_candidate	1	DMEL_CRE_00178	0		1	DMEL_CRE_00178	0		0		0		0		1	DMEL_CRE_00178	1	rufa_group	1	0	1	no	yes

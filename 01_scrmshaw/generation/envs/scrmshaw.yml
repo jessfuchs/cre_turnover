@@ -1,0 +1,16 @@
+name: scrmshaw
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - biopython
+  - pandas
+  - openpyxl
+  - perl
+  - perl-bioperl
+  - agat
+  - gffread
+  - git
+  - wget
+  - curl

@@ -1,0 +1,95 @@
+# General
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+.DS_Store
+Thumbs.db
+
+*.tmp
+*.temp
+*.bak
+*~
+
+# Logs and interactive session files
+*.log
+*.out
+.RData
+.Rhistory
+
+logs/
+**/logs/
+
+slurm-*.out
+*.err
+
+# Genome / annotation files
+*.fa
+*.fasta
+*.fna
+*.fas
+
+*.fa.gz
+*.fasta.gz
+*.fna.gz
+
+*.gff
+*.gff3
+*.gtf
+
+*.gff.gz
+*.gff3.gz
+*.gtf.gz
+
+# Alignment intermediate formats
+*.2bit
+
+*.axt
+*.axt.gz
+
+*.chain
+*.chain.gz
+
+*.net
+*.net.gz
+
+*.maf
+*.maf.gz
+
+*.lav
+*.lav.gz
+
+# Generic large intermediate files
+*.bigWig
+*.bw
+
+# PDF versions of generated figures; PNG versions are tracked for GitHub
+**/results/figures/*.pdf
+
+# SCRMshaw software, large input data, and redundant/generated outputs
+01_scrmshaw/generation/bin/macs2
+01_scrmshaw/generation/software/
+01_scrmshaw/generation/data/selected/
+01_scrmshaw/generation/results/
+
+01_scrmshaw/external/external_data/
+01_scrmshaw/external/external_runs/
+01_scrmshaw/external/external_results/
+01_scrmshaw/external/combined_results/*/top10_peaks.tsv
+
+# Intermediate ortholog-mapping outputs
+02_mapping_orthologs/ortholog_results/*/SO_all_peaks.bed
+02_mapping_orthologs/ortholog_results/SO_all_species.tsv
+02_mapping_orthologs/ortholog_results/unresolved_dmel_qc/
+
+# Large and generated files from pairwise whole-genome alignment
+03_pairwise_wga/alignments_dmel/
+03_pairwise_wga/twobit/
+03_pairwise_wga/bin/
+03_pairwise_wga/logs/
+03_pairwise_wga/chrom_sizes/
+
+# Per-species and sensitivity-analysis intermediate CRE classification outputs
+04_cre_classification/sensitivity/
+04_cre_classification/results/turnover_by_species/
+

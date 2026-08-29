@@ -1,0 +1,3 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	druf	dkik	dbun	dbir	d_serrata
+rufa_group	DMEL_CRE_00151	tier1	druf	TEMP	turnover_candidate	dkik|dbun|dbir|d_serrata	TROP	present	turnover_candidate	present	present	present	present
+rufa_group	DMEL_CRE_00154	tier1	druf	TEMP	turnover_candidate	dkik|dbun|dbir|d_serrata	TROP	present	turnover_candidate	present	present	present	present

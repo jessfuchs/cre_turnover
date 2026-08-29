@@ -1,0 +1,3 @@
+group_name	dmel_cre_id	category	focal_species	focal_climate	focal_state	comparison_species	comparison_climate	comparison_consensus_state	dimm	dfor	dsul	dnas
+immigrans_group	DMEL_CRE_00052	tier1	dimm	TEMP	turnover_candidate	dfor|dsul|dnas	TROP	present	turnover_candidate	present	present	present
+immigrans_group	DMEL_CRE_00077	tier1	dimm	TEMP	present	dfor|dsul|dnas	TROP	turnover_candidate	present	turnover_candidate	turnover_candidate	turnover_candidate

@@ -1,0 +1,5 @@
+dmel_cre_id	dimm	dfor	dsul	dnas	pattern_class	tier	discordant_species	discordant_state	consensus_state	n_consensus_species	group_name	group_species	n_group_species
+DMEL_CRE_00052	turnover_candidate	present	present	present	present_vs_turnover	tier1	dimm	turnover_candidate	present	3	immigrans_group	dimm|dfor|dsul|dnas	4
+DMEL_CRE_00077	present	turnover_candidate	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dimm	present	turnover_candidate	3	immigrans_group	dimm|dfor|dsul|dnas	4
+DMEL_CRE_00080	turnover_candidate	turnover_candidate	turnover_candidate	present	present_vs_turnover	tier1	dnas	present	turnover_candidate	3	immigrans_group	dimm|dfor|dsul|dnas	4
+DMEL_CRE_00186	present	turnover_candidate	present	present	present_vs_turnover	tier1	dfor	turnover_candidate	present	3	immigrans_group	dimm|dfor|dsul|dnas	4

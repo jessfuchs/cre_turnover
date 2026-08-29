@@ -1,0 +1,16 @@
+dmel_cre_id	dsub	dbif	dobs	pattern_class	tier	discordant_species	discordant_state	consensus_state	n_consensus_species	group_name	group_species	n_group_species
+DMEL_CRE_00003	present	present	turnover_candidate	present_vs_turnover	tier1	dobs	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00038	turnover_candidate	present	turnover_candidate	present_vs_turnover	tier1	dbif	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00042	turnover_candidate	present	turnover_candidate	present_vs_turnover	tier1	dbif	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00052	present	present	turnover_candidate	present_vs_turnover	tier1	dobs	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00065	present	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dsub	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00093	present	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dsub	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00120	turnover_candidate	turnover_candidate	present	present_vs_turnover	tier1	dobs	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00121	turnover_candidate	present	present	present_vs_turnover	tier1	dsub	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00122	turnover_candidate	present	present	present_vs_turnover	tier1	dsub	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00151	turnover_candidate	present	turnover_candidate	present_vs_turnover	tier1	dbif	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00152	turnover_candidate	present	present	present_vs_turnover	tier1	dsub	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00175	turnover_candidate	present	turnover_candidate	present_vs_turnover	tier1	dbif	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00276	turnover_candidate	present	present	present_vs_turnover	tier1	dsub	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00277	present	turnover_candidate	present	present_vs_turnover	tier1	dbif	turnover_candidate	present	2	obscura_group	dsub|dbif|dobs	3
+DMEL_CRE_00309	present	turnover_candidate	turnover_candidate	present_vs_turnover	tier1	dsub	present	turnover_candidate	2	obscura_group	dsub|dbif|dobs	3

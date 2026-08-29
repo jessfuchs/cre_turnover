@@ -1,0 +1,3 @@
+dmel_cre_id	dtei	d_simulans	d_lutescens	dsuz	pattern_class	tier	discordant_species	discordant_state	consensus_state	n_consensus_species	group_name	group_species	n_group_species
+DMEL_CRE_00002	uncertain	no_detected_CRE	uncertain	uncertain	other_singleton_contrast	tier3	d_simulans	no_detected_CRE	uncertain	3	teissieri_group	dtei|d_simulans|d_lutescens|dsuz	4
+DMEL_CRE_00092	no_detected_CRE	no_detected_CRE	uncertain	no_detected_CRE	other_singleton_contrast	tier3	d_lutescens	uncertain	no_detected_CRE	3	teissieri_group	dtei|d_simulans|d_lutescens|dsuz	4
