@@ -17,7 +17,7 @@ PROJECT_ROOT="$(cd "$PIPELINE_ROOT/.." && pwd)"
 
 SCRIPTS_DIR="${PIPELINE_ROOT}/scripts"
 
-ORTHOLOG_RESULTS_DIR="${PIPELINE_ROOT}/ortholog_results"
+RESULTS_DIR="${PIPELINE_ROOT}/results"
 REFERENCE_CRES_DIR="${PIPELINE_ROOT}/reference_cres"
 
 # ======================================================================
@@ -42,14 +42,14 @@ DMEL_GFF="${EXTERNAL_GFF_ROOT}/d_melanogaster/annotation.gff3"
 # Main ortholog-mapping outputs
 # ======================================================================
 
-SO_ALL_SPECIES="${ORTHOLOG_RESULTS_DIR}/SO_all_species.tsv"
-SO_ALL_SPECIES_FBGN="${ORTHOLOG_RESULTS_DIR}/SO_all_species_fbgn.tsv"
+SO_ALL_SPECIES="${RESULTS_DIR}/SO_all_species.tsv"
+SO_ALL_SPECIES_FBGN="${RESULTS_DIR}/SO_all_species_fbgn.tsv"
 
-UNRESOLVED_DMEL="${ORTHOLOG_RESULTS_DIR}/unresolved_dmel_identifiers.tsv"
-UNRESOLVED_QC_SUMMARY="${ORTHOLOG_RESULTS_DIR}/unresolved_dmel_qc_summary.tsv"
-UNRESOLVED_QC_DIR="${ORTHOLOG_RESULTS_DIR}/unresolved_dmel_qc"
+UNRESOLVED_DMEL="${RESULTS_DIR}/unresolved_dmel_identifiers.tsv"
+UNRESOLVED_QC_SUMMARY="${RESULTS_DIR}/unresolved_dmel_qc_summary.tsv"
+UNRESOLVED_QC_DIR="${RESULTS_DIR}/unresolved_dmel_qc"
 
-DMEL_ORTHOLOG_QC="${ORTHOLOG_RESULTS_DIR}/dmel_ortholog_annotation_qc.tsv"
+DMEL_ORTHOLOG_QC="${RESULTS_DIR}/dmel_ortholog_annotation_qc.tsv"
 
 # ======================================================================
 # Reference CRE outputs
@@ -82,7 +82,7 @@ export PIPELINE_ROOT
 export PROJECT_ROOT
 
 export SCRIPTS_DIR
-export ORTHOLOG_RESULTS_DIR
+export RESULTS_DIR
 export REFERENCE_CRES_DIR
 
 export SCRM_GENERATED_ROOT
