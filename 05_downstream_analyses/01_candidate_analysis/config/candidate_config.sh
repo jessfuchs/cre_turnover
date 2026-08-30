@@ -125,6 +125,15 @@ TIER1_GENE_DISTANCE_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_gene_distances
 
 
 # ======================================================================
+# Candidate gene assignment
+# ======================================================================
+
+TIER1_GENE_ASSIGNMENTS="${TIER1_TABLES_DIR}/tier1_candidate_gene_assignments.tsv"
+
+TIER1_GENE_ASSIGNMENT_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_gene_assignments_metadata.tsv"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -169,4 +178,7 @@ export FOCAL_RECURRENCE_MIN_CLADES
 export SO_ALL_SPECIES_FBGN
 export TIER1_GENE_DISTANCES
 export TIER1_GENE_DISTANCE_METADATA
+
+export TIER1_GENE_ASSIGNMENTS
+export TIER1_GENE_ASSIGNMENT_METADATA
 
