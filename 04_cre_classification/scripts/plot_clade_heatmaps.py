@@ -3,209 +3,94 @@
 """
 Plot stringent lineage-specific CRE-state contrasts for six focal clades.
 
-One separate figure is generated for each clade.
+For each focal clade, the script identifies strict singleton contrasts between
+`present` and `turnover_candidate` CRE states, separates focal Tier-1 from
+secondary Tier-1 candidates, orders CREs deterministically, and writes one
+phylogeny/climate/heatmap figure in PNG and PDF format.
 
 Figure structure
 ----------------
-Each figure contains:
-
     phylogeny | species labels | climate strip | gap | CRE-state heatmap
 
-All six figures use identical physical dimensions and identical subplot
-proportions so that they can later be combined consistently in LaTeX.
-
-Candidate categories
---------------------
-1. Focal Tier 1
-
-   The predefined focal species differs from all comparison species,
-   restricted to the contrast:
-
-       present <-> turnover_candidate
-
-   Both directions are retained:
-
-       focal = turnover_candidate
-       comparisons = present
-
-   OR
-
-       focal = present
-       comparisons = turnover_candidate
-
-
-2. Secondary Tier 1
-
-   Exactly one species within the clade differs from all remaining
-   species, again restricted to:
-
-       present <-> turnover_candidate
-
-   Focal Tier-1 CREs are excluded from the secondary set to avoid
-   duplicate display.
-
-
-CRE ordering
-------------
-Focal and Secondary Tier-1 CREs remain separate blocks.
-
-Within each block, CREs are ordered by increasing number of
-turnover_candidate states:
-
-    predominantly present
-        ->
-    predominantly turnover_candidate
-
-For singleton contrasts this corresponds to:
-
-    one turnover_candidate + all other species present
-        ->
-    one present + all other species turnover_candidate
-
-Within the Secondary Tier-1 block, candidates with the same number of
-turnover states are additionally ordered by the discordant species
-according to the displayed phylogenetic order and then by CRE ID.
-
-
-Display
--------
-- No A-F panel letters are added in Python.
-- The clade name is retained as the figure title.
-- The focal species is shown in bold.
-- Species using externally generated SCRMshaw prediction sets receive '*'.
-- Climatic zone is shown as one continuous vertical strip.
-- A dedicated empty spacer separates the climate strip from the heatmap.
-- PDF-safe categorical rendering uses pcolormesh().
-- PNG and PDF versions are written.
-- No bbox_inches="tight" is used, ensuring identical output dimensions.
-
-D. melanogaster is not displayed as a species row. CRE identifiers
-refer to the D. melanogaster reference CRE set.
+D. melanogaster is not displayed as a species row. Heatmap column labels refer
+to the D. melanogaster reference CRE set.
 """
-
 
 # ============================================================
 # Imports
 # ============================================================
 
+import argparse
 from pathlib import Path
-
-import numpy as np
-import pandas as pd
 
 import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, BoundaryNorm
-from matplotlib.patches import Rectangle
-
+import numpy as np
+import pandas as pd
 from Bio import Phylo
+from matplotlib.colors import BoundaryNorm, ListedColormap
+from matplotlib.patches import Rectangle
 
 
 # ============================================================
-# Paths
+# Repository-relative default paths
 # ============================================================
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CLASS_DIR = SCRIPT_DIR.parent
-PROJECT_DIR = CLASS_DIR.parent
+PROJECT_ROOT = CLASS_DIR.parent
 
-PHYLO_DIR = CLASS_DIR / "phylogeny"
-RESULTS_DIR = CLASS_DIR / "results"
-FIG_DIR = RESULTS_DIR / "figures"
-
-FIG_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-
-MATRIX_FILE = (
-    RESULTS_DIR
-    / "cre_turnover_matrix.tsv"
-)
-
-TREE_FILE = (
-    PHYLO_DIR
+DEFAULT_MATRIX_FILE = CLASS_DIR / "results" / "cre_turnover_matrix.tsv"
+DEFAULT_TREE_FILE = (
+    CLASS_DIR
+    / "phylogeny"
     / "results"
     / "301Fly_HOG_UCLDtree_40species.nw"
 )
-
-MANIFEST_FILE = (
-    PROJECT_DIR
-    / "external_scrmshaw"
+DEFAULT_MANIFEST_FILE = (
+    PROJECT_ROOT
+    / "01_scrmshaw"
+    / "external"
     / "combined_manifest.tsv"
 )
-
-TRAITS_FILE = (
-    PHYLO_DIR
-    / "data"
-    / "species_traits.tsv"
-)
-
-OUT_TSV = (
-    RESULTS_DIR
-    / "focal_clade_heatmap_CREs.tsv"
-)
+DEFAULT_TRAITS_FILE = CLASS_DIR / "phylogeny" / "data" / "species_traits.tsv"
+DEFAULT_FIG_DIR = CLASS_DIR / "results" / "figures"
+DEFAULT_OUT_TSV = CLASS_DIR / "results" / "focal_clade_heatmap_CREs.tsv"
 
 
 # ============================================================
 # Figure geometry
 # ============================================================
 
-# All six figures have exactly the same outer dimensions.
+# All six figures use identical physical dimensions.
 FIG_WIDTH = 13.2
 FIG_HEIGHT = 6.6
+FIGSIZE = (FIG_WIDTH, FIG_HEIGHT)
 
-FIGSIZE = (
-    FIG_WIDTH,
-    FIG_HEIGHT,
-)
-
-
-# ------------------------------------------------------------
 # Horizontal structure:
-#
-# tree | species | climate | gap | heatmap
-#
-# These are the main values to adjust if the spacing should
-# later be fine-tuned.
-# ------------------------------------------------------------
-
+# tree | species labels | climate | gap | heatmap
 TREE_WIDTH = 1.60
-
-# Smaller value brings species names + climate strip closer
-# to the tree while retaining their mutual spacing.
-SPECIES_LABEL_WIDTH = 0.75
-
+HEATMAP_SPECIES_LABEL_WIDTH = 0.95
 CLIMATE_STRIP_WIDTH = 0.085
-
-# Controls ONLY the additional space between climate strip
-# and CRE-state heatmap.
 CLIMATE_HEATMAP_GAP_WIDTH = 0.0055
-
 HEATMAP_WIDTH = 4.44
-
 
 GRID_WIDTH_RATIOS = [
     TREE_WIDTH,
-    SPECIES_LABEL_WIDTH,
+    HEATMAP_SPECIES_LABEL_WIDTH,
     CLIMATE_STRIP_WIDTH,
     CLIMATE_HEATMAP_GAP_WIDTH,
     HEATMAP_WIDTH,
 ]
 
-
-# Small general spacing between all GridSpec columns.
 GRID_WSPACE = 0.006
 
-
-# Fixed outer margins.
 FIG_LEFT = 0.028
 FIG_RIGHT = 0.985
 FIG_TOP = 0.855
-FIG_BOTTOM = 0.305
+HEATMAP_BOTTOM_MARGIN = 0.345
 
 
 # ============================================================
@@ -213,15 +98,13 @@ FIG_BOTTOM = 0.305
 # ============================================================
 
 TITLE_FONTSIZE = 15
-
 TREE_AXIS_FONTSIZE = 9
 TREE_TICK_FONTSIZE = 8
 
-SPECIES_FONTSIZE = 10.5
+HEATMAP_SPECIES_FONTSIZE = 11
+HEATMAP_CRE_FONTSIZE = 9
 
-CRE_LABEL_FONTSIZE = 7.5
 CRE_AXIS_FONTSIZE = 10
-
 BLOCK_LABEL_FONTSIZE = 10
 
 
@@ -230,15 +113,14 @@ BLOCK_LABEL_FONTSIZE = 10
 # ============================================================
 
 # Species labels remain right-aligned toward the climate strip.
-# This keeps the species-name <-> climate-strip spacing uniform.
-SPECIES_LABEL_X = 0.89
+HEATMAP_SPECIES_LABEL_X = 0.91
 
-# Tree uses nearly all of its available x-axis width.
+# Preserve branch-length ratios while using almost the entire tree axis.
 TREE_RIGHT_PADDING_FACTOR = 1.01
 
 HEATMAP_BORDER_WIDTH = 0.55
-
 FOCAL_BLOCK_LINEWIDTH = 1.5
+OUTPUT_DPI = 300
 
 
 # ============================================================
@@ -246,7 +128,6 @@ FOCAL_BLOCK_LINEWIDTH = 1.5
 # ============================================================
 
 CLADES = {
-
     "rufa_group": {
         "title": "Rufa group",
         "focal": "druf",
@@ -258,7 +139,6 @@ CLADES = {
             "d_serrata",
         ],
     },
-
     "immigrans_group": {
         "title": "Immigrans group",
         "focal": "dimm",
@@ -269,7 +149,6 @@ CLADES = {
             "dnas",
         ],
     },
-
     "obscura_group": {
         "title": "Subobscura group",
         "focal": "dsub",
@@ -279,7 +158,6 @@ CLADES = {
             "dobs",
         ],
     },
-
     "azteca_affinis_miranda_group": {
         "title": "Azteca group",
         "focal": "dazt",
@@ -290,7 +168,6 @@ CLADES = {
             "dper",
         ],
     },
-
     "teissieri_group": {
         "title": "Teissieri group",
         "focal": "dtei",
@@ -301,7 +178,6 @@ CLADES = {
             "dsuz",
         ],
     },
-
     "repleta_group": {
         "title": "Repleta group",
         "focal": "d_repleta",
@@ -329,19 +205,13 @@ STATE_TO_NUM = {
     "turnover_candidate": 1,
 }
 
-
 STATE_CMAP = ListedColormap([
     STATE_COLORS["present"],
     STATE_COLORS["turnover_candidate"],
 ])
 
-
 STATE_NORM = BoundaryNorm(
-    [
-        -0.5,
-        0.5,
-        1.5,
-    ],
+    [-0.5, 0.5, 1.5],
     STATE_CMAP.N,
 )
 
@@ -357,14 +227,12 @@ CLIMATE_COLORS = {
     "BORE": "#0072B2",
 }
 
-
 CLIMATE_TO_NUM = {
     "TROP": 0,
     "ARID": 1,
     "TEMP": 2,
     "BORE": 3,
 }
-
 
 CLIMATE_CMAP = ListedColormap([
     CLIMATE_COLORS["TROP"],
@@ -373,157 +241,153 @@ CLIMATE_CMAP = ListedColormap([
     CLIMATE_COLORS["BORE"],
 ])
 
-
 CLIMATE_NORM = BoundaryNorm(
-    [
-        -0.5,
-        0.5,
-        1.5,
-        2.5,
-        3.5,
-    ],
+    [-0.5, 0.5, 1.5, 2.5, 3.5],
     CLIMATE_CMAP.N,
 )
 
 
 # ============================================================
-# Helper functions
+# Command-line arguments
+# ============================================================
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Plot strict focal-clade CRE-state contrasts using a "
+            "phylogeny, climate annotations, and the CRE-state matrix."
+        )
+    )
+
+    parser.add_argument(
+        "--matrix",
+        type=Path,
+        default=DEFAULT_MATRIX_FILE,
+        help=f"CRE-state matrix (default: {DEFAULT_MATRIX_FILE})",
+    )
+    parser.add_argument(
+        "--tree",
+        type=Path,
+        default=DEFAULT_TREE_FILE,
+        help=f"Pruned 40-species Newick tree (default: {DEFAULT_TREE_FILE})",
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST_FILE,
+        help=f"Combined SCRMshaw manifest (default: {DEFAULT_MANIFEST_FILE})",
+    )
+    parser.add_argument(
+        "--traits",
+        type=Path,
+        default=DEFAULT_TRAITS_FILE,
+        help=f"Species trait table (default: {DEFAULT_TRAITS_FILE})",
+    )
+    parser.add_argument(
+        "--fig-dir",
+        type=Path,
+        default=DEFAULT_FIG_DIR,
+        help=f"Figure output directory (default: {DEFAULT_FIG_DIR})",
+    )
+    parser.add_argument(
+        "--out-tsv",
+        type=Path,
+        default=DEFAULT_OUT_TSV,
+        help=f"Plotted-CRE summary table (default: {DEFAULT_OUT_TSV})",
+    )
+
+    return parser.parse_args()
+
+
+# ============================================================
+# General helpers
 # ============================================================
 
 def require_file(path):
-    """
-    Stop execution if a required input file does not exist.
-    """
-
-    if not path.exists():
+    if not path.is_file():
         raise SystemExit(
-            f"ERROR: required file not found:\n{path}"
+            f"ERROR: required file not found or not a regular file:\n{path}"
+        )
+
+
+def require_columns(df, required, source_name):
+    missing = sorted(set(required) - set(df.columns))
+    if missing:
+        raise SystemExit(
+            f"ERROR: {source_name} is missing required columns:\n"
+            + "\n".join(missing)
         )
 
 
 def tree_name_from_species(species_name):
+    """Convert a manifest species name to the tree naming convention."""
+    return str(species_name).strip().upper().replace(" ", "_")
+
+
+def short_species_name(slug, manifest_by_slug):
     """
-    Convert manifest species name into the naming convention
-    used by the phylogenetic tree.
+    Return an abbreviated species name.
+
+    Species using externally generated SCRMshaw predictions receive '*'.
     """
-
-    return (
-        str(species_name)
-        .strip()
-        .upper()
-        .replace(
-            " ",
-            "_",
-        )
-    )
-
-
-def short_species_name(
-    slug,
-    manifest,
-):
-    """
-    Return abbreviated species name.
-
-    Species using externally generated SCRMshaw predictions
-    receive an asterisk.
-    """
-
-    hit = manifest.loc[
-        manifest["slug"] == slug
-    ]
-
-
-    if len(hit) != 1:
+    if slug not in manifest_by_slug:
         return slug
 
-
-    row = hit.iloc[0]
-
+    row = manifest_by_slug[slug]
     name = row["species"]
     source = row["source"]
 
-
     if name.startswith("Drosophila "):
-
-        label = (
-            "D. "
-            + name.split(
-                " ",
-                1,
-            )[1]
-        )
-
-
+        label = "D. " + name.split(" ", 1)[1]
     elif name.startswith("Zaprionus "):
-
-        label = (
-            "Z. "
-            + name.split(
-                " ",
-                1,
-            )[1]
-        )
-
-
+        label = "Z. " + name.split(" ", 1)[1]
     else:
-
         label = name
-
 
     if source == "external":
         label += "*"
 
-
     return label
 
 
-def is_focal_tier1(
-    row,
-    focal,
-    comparison_species,
-):
+def count_turnover_states(row):
+    return int((row == "turnover_candidate").sum())
+
+
+def contrast_direction(discordant_state):
+    if discordant_state == "turnover_candidate":
+        return "discordant_turnover"
+    if discordant_state == "present":
+        return "discordant_present"
+    raise ValueError(f"Unexpected discordant state: {discordant_state}")
+
+
+# ============================================================
+# Candidate-selection helpers
+# ============================================================
+
+def is_focal_tier1(row, focal, comparison_species):
     """
-    Test whether the focal species differs from all comparison
+    Test whether the predefined focal species differs from every comparison
     species in a strict present <-> turnover_candidate contrast.
     """
-
     focal_state = row[focal]
+    comparison_states = [row[species] for species in comparison_species]
 
-    comparison_states = [
-        row[species]
-        for species
-        in comparison_species
-    ]
-
-
-    # Focal turnover candidate, all others positional matches.
-    if (
+    focal_turnover = (
         focal_state == "turnover_candidate"
+        and all(state == "present" for state in comparison_states)
+    )
 
-        and all(
-            state == "present"
-            for state
-            in comparison_states
-        )
-    ):
-        return True
-
-
-    # Focal positional match, all others turnover candidates.
-    if (
+    focal_present = (
         focal_state == "present"
-
         and all(
             state == "turnover_candidate"
-            for state
-            in comparison_states
+            for state in comparison_states
         )
-    ):
-        return True
+    )
 
-
-    return False
+    return focal_turnover or focal_present
 
 
 def get_singleton_tier1_info(row):
@@ -533,1209 +397,429 @@ def get_singleton_tier1_info(row):
     Returns
     -------
     tuple or None
-
-        (
-            discordant_species,
-            discordant_state,
-            consensus_state,
-        )
+        (discordant_species, discordant_state, consensus_state)
     """
+    allowed_states = {"present", "turnover_candidate"}
 
-    allowed_states = {
-        "present",
-        "turnover_candidate",
-    }
-
-
-    if not all(
-        state in allowed_states
-        for state
-        in row.values
-    ):
+    if not all(state in allowed_states for state in row.values):
         return None
 
-
     counts = row.value_counts()
-
-
     if len(counts) != 2:
         return None
 
+    singleton_states = counts[counts == 1].index.tolist()
+    consensus_states = counts[counts == len(row) - 1].index.tolist()
 
-    singleton_states = (
-        counts[
-            counts == 1
-        ]
-        .index
-        .tolist()
-    )
-
-
-    consensus_states = (
-        counts[
-            counts == len(row) - 1
-        ]
-        .index
-        .tolist()
-    )
-
-
-    if len(singleton_states) != 1:
+    if len(singleton_states) != 1 or len(consensus_states) != 1:
         return None
 
+    discordant_state = singleton_states[0]
+    consensus_state = consensus_states[0]
+    discordant_species = row.index[row == discordant_state][0]
 
-    if len(consensus_states) != 1:
-        return None
-
-
-    discordant_state = (
-        singleton_states[0]
-    )
-
-    consensus_state = (
-        consensus_states[0]
-    )
+    return discordant_species, discordant_state, consensus_state
 
 
-    discordant_species = (
-        row.index[
-            row == discordant_state
-        ][0]
-    )
+# ============================================================
+# Phylogeny helpers
+# ============================================================
 
-
-    return (
-        discordant_species,
-        discordant_state,
-        consensus_state,
-    )
-
-
-def count_turnover_states(row):
-    """
-    Count turnover_candidate states across one clade.
-    """
-
-    return int(
-        (
-            row
-            == "turnover_candidate"
-        ).sum()
-    )
-
-
-def contrast_direction(
-    discordant_state,
-):
-    """
-    Return compact direction label for the output table.
-    """
-
-    if (
-        discordant_state
-        == "turnover_candidate"
-    ):
-        return "discordant_turnover"
-
-
-    if (
-        discordant_state
-        == "present"
-    ):
-        return "discordant_present"
-
-
-    raise ValueError(
-        f"Unexpected discordant state: "
-        f"{discordant_state}"
-    )
-
-
-def prune_tree_to_species(
-    tree_file,
-    species,
-    slug_to_tree,
-):
-    """
-    Read the full tree and prune it to one focal clade.
-    """
-
-    tree = Phylo.read(
-        tree_file,
-        "newick",
-    )
-
+def prune_tree_to_species(tree_file, species, slug_to_tree):
+    tree = Phylo.read(tree_file, "newick")
 
     wanted_tree_names = {
         slug_to_tree[species_name]
-        for species_name
-        in species
+        for species_name in species
     }
-
 
     available_tree_names = {
         tip.name
-        for tip
-        in tree.get_terminals()
+        for tip in tree.get_terminals()
     }
 
-
-    missing = sorted(
-        wanted_tree_names
-        - available_tree_names
-    )
-
-
+    missing = sorted(wanted_tree_names - available_tree_names)
     if missing:
-
         raise SystemExit(
-            "ERROR: focal-clade species missing "
-            "from phylogenetic tree:\n"
-            + "\n".join(
-                missing
-            )
+            "ERROR: focal-clade species missing from phylogenetic tree:\n"
+            + "\n".join(missing)
         )
 
-
-    for tip in list(
-        tree.get_terminals()
-    ):
-
-        if (
-            tip.name
-            not in wanted_tree_names
-        ):
-            tree.prune(
-                tip
-            )
-
+    for tip in list(tree.get_terminals()):
+        if tip.name not in wanted_tree_names:
+            tree.prune(tip)
 
     return tree
 
 
 # ============================================================
-# Input checks
+# Input loading and validation
 # ============================================================
 
-for path in [
-    MATRIX_FILE,
-    TREE_FILE,
-    MANIFEST_FILE,
-    TRAITS_FILE,
-]:
-    require_file(
-        path
+def load_manifest(path):
+    manifest = pd.read_csv(path, sep="\t", dtype=str).fillna("")
+    require_columns(
+        manifest,
+        {"slug", "species", "source"},
+        "combined_manifest.tsv",
     )
 
+    for column in ("slug", "species", "source"):
+        manifest[column] = manifest[column].astype(str).str.strip()
 
-# ============================================================
-# Load manifest
-# ============================================================
+    if manifest["slug"].eq("").any():
+        raise SystemExit("ERROR: empty species slug in combined_manifest.tsv")
 
-manifest = pd.read_csv(
-    MANIFEST_FILE,
-    sep="\t",
-    dtype=str,
-).fillna("")
+    if manifest["species"].eq("").any():
+        raise SystemExit("ERROR: empty species name in combined_manifest.tsv")
 
-
-required_manifest_columns = {
-    "slug",
-    "species",
-    "source",
-}
-
-
-missing_manifest_columns = (
-    required_manifest_columns
-    - set(
-        manifest.columns
-    )
-)
-
-
-if missing_manifest_columns:
-
-    raise SystemExit(
-        "ERROR: combined_manifest.tsv "
-        "missing required columns:\n"
-        + "\n".join(
-            sorted(
-                missing_manifest_columns
-            )
+    if manifest["slug"].duplicated().any():
+        duplicates = sorted(
+            manifest.loc[
+                manifest["slug"].duplicated(keep=False),
+                "slug",
+            ].unique()
         )
-    )
-
-
-for column in [
-    "slug",
-    "species",
-    "source",
-]:
-
-    manifest[column] = (
-        manifest[column]
-        .astype(str)
-        .str.strip()
-    )
-
-
-manifest["tree_name"] = (
-    manifest["species"]
-    .map(
-        tree_name_from_species
-    )
-)
-
-
-# ============================================================
-# Validate manifest uniqueness
-# ============================================================
-
-if manifest["slug"].duplicated().any():
-
-    duplicates = sorted(
-        manifest.loc[
-            manifest["slug"].duplicated(
-                keep=False
-            ),
-            "slug",
-        ]
-        .unique()
-        .tolist()
-    )
-
-
-    raise SystemExit(
-        "ERROR: duplicate species slugs "
-        "in combined_manifest.tsv:\n"
-        + "\n".join(
-            duplicates
+        raise SystemExit(
+            "ERROR: duplicate species slugs in combined_manifest.tsv:\n"
+            + "\n".join(duplicates)
         )
-    )
 
+    manifest["tree_name"] = manifest["species"].map(tree_name_from_species)
 
-if manifest["tree_name"].duplicated().any():
-
-    duplicates = sorted(
-        manifest.loc[
-            manifest["tree_name"].duplicated(
-                keep=False
-            ),
-            "tree_name",
-        ]
-        .unique()
-        .tolist()
-    )
-
-
-    raise SystemExit(
-        "ERROR: duplicate inferred tree names "
-        "in combined_manifest.tsv:\n"
-        + "\n".join(
-            duplicates
+    if manifest["tree_name"].duplicated().any():
+        duplicates = sorted(
+            manifest.loc[
+                manifest["tree_name"].duplicated(keep=False),
+                "tree_name",
+            ].unique()
         )
-    )
-
-
-slug_to_tree = dict(
-    zip(
-        manifest["slug"],
-        manifest["tree_name"],
-    )
-)
-
-
-tree_to_slug = dict(
-    zip(
-        manifest["tree_name"],
-        manifest["slug"],
-    )
-)
-
-
-# ============================================================
-# Load climate annotations
-# ============================================================
-
-traits = pd.read_csv(
-    TRAITS_FILE,
-    sep="\t",
-    dtype=str,
-).fillna("")
-
-
-required_trait_columns = {
-    "tree_name",
-    "climatic_zone",
-}
-
-
-missing_trait_columns = (
-    required_trait_columns
-    - set(
-        traits.columns
-    )
-)
-
-
-if missing_trait_columns:
-
-    raise SystemExit(
-        "ERROR: species_traits.tsv "
-        "missing required columns:\n"
-        + "\n".join(
-            sorted(
-                missing_trait_columns
-            )
+        raise SystemExit(
+            "ERROR: duplicate inferred tree names in combined_manifest.tsv:\n"
+            + "\n".join(duplicates)
         )
+
+    return manifest
+
+
+def load_traits(path):
+    traits = pd.read_csv(path, sep="\t", dtype=str).fillna("")
+    require_columns(
+        traits,
+        {"tree_name", "climatic_zone"},
+        "species_traits.tsv",
     )
 
+    for column in ("tree_name", "climatic_zone"):
+        traits[column] = traits[column].astype(str).str.strip()
 
-for column in [
-    "tree_name",
-    "climatic_zone",
-]:
-
-    traits[column] = (
-        traits[column]
-        .astype(str)
-        .str.strip()
-    )
-
-
-tree_to_climate = dict(
-    zip(
-        traits["tree_name"],
-        traits["climatic_zone"],
-    )
-)
-
-
-# ============================================================
-# Load CRE-state matrix
-# ============================================================
-
-matrix = pd.read_csv(
-    MATRIX_FILE,
-    sep="\t",
-    index_col=0,
-)
-
-
-if matrix.index.duplicated().any():
-
-    duplicates = (
-        matrix.index[
-            matrix.index.duplicated()
-        ]
-        .unique()
-        .tolist()
-    )
-
-
-    raise SystemExit(
-        "ERROR: duplicated CRE IDs:\n"
-        + "\n".join(
-            duplicates
+    if traits["tree_name"].duplicated().any():
+        duplicates = sorted(
+            traits.loc[
+                traits["tree_name"].duplicated(keep=False),
+                "tree_name",
+            ].unique()
         )
-    )
-
-
-# ============================================================
-# Validate focal-clade species
-# ============================================================
-
-all_clade_species = sorted({
-    species
-    for config
-    in CLADES.values()
-    for species
-    in config["species"]
-})
-
-
-missing_from_matrix = [
-    species
-    for species
-    in all_clade_species
-    if species
-    not in matrix.columns
-]
-
-
-if missing_from_matrix:
-
-    raise SystemExit(
-        "ERROR: focal-clade species missing "
-        "from cre_turnover_matrix.tsv:\n"
-        + "\n".join(
-            missing_from_matrix
+        raise SystemExit(
+            "ERROR: duplicate tree_name values in species_traits.tsv:\n"
+            + "\n".join(duplicates)
         )
-    )
+
+    return traits
 
 
-missing_from_manifest = [
-    species
-    for species
-    in all_clade_species
-    if species
-    not in slug_to_tree
-]
+def load_matrix(path):
+    matrix = pd.read_csv(path, sep="\t", index_col=0, dtype=str).fillna("")
 
-
-if missing_from_manifest:
-
-    raise SystemExit(
-        "ERROR: focal-clade species missing "
-        "from combined_manifest.tsv:\n"
-        + "\n".join(
-            missing_from_manifest
+    if matrix.index.duplicated().any():
+        duplicates = sorted(
+            matrix.index[matrix.index.duplicated()].unique().tolist()
         )
-    )
+        raise SystemExit(
+            "ERROR: duplicated CRE IDs in cre_turnover_matrix.tsv:\n"
+            + "\n".join(duplicates)
+        )
+
+    return matrix
 
 
-# ============================================================
-# Candidate selection and sorting
-# ============================================================
-
-clade_data = {}
-summary_rows = []
-
-
-for clade_name, config in CLADES.items():
-
-    focal = config["focal"]
-    declared_species = config["species"]
-
-
-    # --------------------------------------------------------
-    # Determine phylogenetic display order first.
-    #
-    # This is also used as the secondary sorting order for
-    # discordant species.
-    # --------------------------------------------------------
-
-    clade_tree = prune_tree_to_species(
-        TREE_FILE,
-        declared_species,
-        slug_to_tree,
-    )
-
-
-    tree_tip_names = [
-        tip.name
-        for tip
-        in clade_tree.get_terminals()
-    ]
-
-
-    species_order = [
-        tree_to_slug[tree_name]
-        for tree_name
-        in tree_tip_names
-    ]
-
-
-    comparison_species = [
+def validate_clades(matrix, slug_to_tree):
+    all_clade_species = sorted({
         species
-        for species
-        in declared_species
-        if species != focal
+        for config in CLADES.values()
+        for species in config["species"]
+    })
+
+    missing_from_matrix = [
+        species
+        for species in all_clade_species
+        if species not in matrix.columns
     ]
-
-
-    sub = (
-        matrix[
-            declared_species
-        ]
-        .copy()
-    )
-
-
-    # ========================================================
-    # Focal Tier 1
-    # ========================================================
-
-    focal_mask = sub.apply(
-        lambda row: is_focal_tier1(
-            row,
-            focal,
-            comparison_species,
-        ),
-        axis=1,
-    )
-
-
-    focal_ids = (
-        sub.index[
-            focal_mask
-        ]
-        .tolist()
-    )
-
-
-    # Predominantly positional -> predominantly turnover.
-    focal_ids = sorted(
-        focal_ids,
-        key=lambda cre_id: (
-            count_turnover_states(
-                sub.loc[
-                    cre_id,
-                    declared_species,
-                ]
-            ),
-            cre_id,
-        ),
-    )
-
-
-    # ========================================================
-    # All singleton Tier-1 contrasts
-    # ========================================================
-
-    singleton_info = {}
-
-
-    for cre_id, row in sub.iterrows():
-
-        info = (
-            get_singleton_tier1_info(
-                row
-            )
-        )
-
-
-        if info is not None:
-
-            singleton_info[
-                cre_id
-            ] = info
-
-
-    # ========================================================
-    # Secondary Tier 1
-    # ========================================================
-
-    secondary_ids = [
-        cre_id
-        for cre_id
-        in singleton_info
-        if cre_id
-        not in focal_ids
-    ]
-
-
-    def secondary_sort_key(
-        cre_id,
-    ):
-
-        (
-            discordant_species,
-            discordant_state,
-            consensus_state,
-        ) = singleton_info[
-            cre_id
-        ]
-
-
-        n_turnover = (
-            count_turnover_states(
-                sub.loc[
-                    cre_id,
-                    declared_species,
-                ]
-            )
-        )
-
-
-        return (
-            # Positional -> turnover.
-            n_turnover,
-
-            # Follow displayed phylogenetic species order.
-            species_order.index(
-                discordant_species
-            ),
-
-            # Stable deterministic tie-break.
-            cre_id,
-        )
-
-
-    secondary_ids = sorted(
-        secondary_ids,
-        key=secondary_sort_key,
-    )
-
-
-    # ========================================================
-    # Final CRE order
-    # ========================================================
-
-    cre_order = (
-        focal_ids
-        + secondary_ids
-    )
-
-
-    if not cre_order:
-
+    if missing_from_matrix:
         raise SystemExit(
-            f"ERROR: no Tier-1 CREs found "
-            f"for {clade_name}."
+            "ERROR: focal-clade species missing from cre_turnover_matrix.tsv:\n"
+            + "\n".join(missing_from_matrix)
         )
 
-
-    selected = (
-        sub.loc[
-            cre_order
-        ]
-        .copy()
-    )
-
-
-    clade_data[
-        clade_name
-    ] = {
-        "matrix": selected,
-        "focal_ids": focal_ids,
-        "secondary_ids": secondary_ids,
-        "singleton_info": singleton_info,
-        "species_order": species_order,
-    }
-
-
-    # ========================================================
-    # Summary rows
-    # ========================================================
-
-    for plot_order, cre_id in enumerate(
-        cre_order,
-        start=1,
-    ):
-
-
-        category = (
-            "focal_tier1"
-            if cre_id in focal_ids
-            else "secondary_tier1"
+    missing_from_manifest = [
+        species
+        for species in all_clade_species
+        if species not in slug_to_tree
+    ]
+    if missing_from_manifest:
+        raise SystemExit(
+            "ERROR: focal-clade species missing from combined_manifest.tsv:\n"
+            + "\n".join(missing_from_manifest)
         )
 
+    for clade_name, config in CLADES.items():
+        declared_species = config["species"]
+        focal = config["focal"]
 
-        (
-            discordant_species,
-            discordant_state,
-            consensus_state,
-        ) = singleton_info[
-            cre_id
-        ]
-
-
-        n_turnover = (
-            count_turnover_states(
-                sub.loc[
-                    cre_id,
-                    declared_species,
-                ]
+        if focal not in declared_species:
+            raise SystemExit(
+                f"ERROR: focal species {focal!r} is not listed in "
+                f"clade {clade_name!r}."
             )
+
+        if len(declared_species) != len(set(declared_species)):
+            raise SystemExit(
+                f"ERROR: duplicate species in clade definition {clade_name!r}."
+            )
+
+
+# ============================================================
+# Candidate selection
+# ============================================================
+
+def build_clade_data(matrix, tree_file, slug_to_tree, tree_to_slug):
+    clade_data = {}
+    summary_rows = []
+
+    for clade_name, config in CLADES.items():
+        focal = config["focal"]
+        declared_species = config["species"]
+
+        clade_tree = prune_tree_to_species(
+            tree_file,
+            declared_species,
+            slug_to_tree,
         )
 
+        tree_tip_names = [
+            tip.name
+            for tip in clade_tree.get_terminals()
+        ]
 
-        summary_rows.append({
+        missing_reverse_mapping = [
+            name
+            for name in tree_tip_names
+            if name not in tree_to_slug
+        ]
+        if missing_reverse_mapping:
+            raise SystemExit(
+                "ERROR: tree tips could not be mapped back to species slugs:\n"
+                + "\n".join(sorted(missing_reverse_mapping))
+            )
 
-            "clade":
-                clade_name,
+        species_order = [
+            tree_to_slug[tree_name]
+            for tree_name in tree_tip_names
+        ]
 
-            "clade_title":
-                config["title"],
+        comparison_species = [
+            species
+            for species in declared_species
+            if species != focal
+        ]
 
-            "plot_order":
-                plot_order,
+        sub = matrix[declared_species].copy()
 
-            "cre_id":
-                cre_id,
-
-            "category":
-                category,
-
-            "focal_species":
+        # Focal Tier 1.
+        focal_mask = sub.apply(
+            lambda row: is_focal_tier1(
+                row,
                 focal,
+                comparison_species,
+            ),
+            axis=1,
+        )
 
-            "discordant_species":
-                discordant_species,
+        focal_ids = sub.index[focal_mask].tolist()
+        focal_ids = sorted(
+            focal_ids,
+            key=lambda cre_id: (
+                count_turnover_states(sub.loc[cre_id, declared_species]),
+                cre_id,
+            ),
+        )
 
-            "discordant_state":
-                discordant_state,
+        # All strict singleton Tier-1 contrasts.
+        singleton_info = {}
+        for cre_id, row in sub.iterrows():
+            info = get_singleton_tier1_info(row)
+            if info is not None:
+                singleton_info[cre_id] = info
 
-            "consensus_state":
-                consensus_state,
-
-            "contrast_direction":
-                contrast_direction(
-                    discordant_state
-                ),
-
-            "n_turnover_states":
-                n_turnover,
-
-            "n_present_states":
-                (
-                    len(
-                        declared_species
-                    )
-                    - n_turnover
-                ),
-        })
-
-
-# ============================================================
-# Write summary table
-# ============================================================
-
-summary_df = pd.DataFrame(
-    summary_rows
-)
-
-
-summary_df.to_csv(
-    OUT_TSV,
-    sep="\t",
-    index=False,
-)
-
-
-# ============================================================
-# Plot each clade separately
-# ============================================================
-
-written_pngs = []
-written_pdfs = []
-
-
-for clade_name, config in CLADES.items():
-
-    focal = config["focal"]
-    declared_species = config["species"]
-
-
-    selected = (
-        clade_data[
-            clade_name
-        ]["matrix"]
-    )
-
-
-    focal_ids = (
-        clade_data[
-            clade_name
-        ]["focal_ids"]
-    )
-
-
-    secondary_ids = (
-        clade_data[
-            clade_name
-        ]["secondary_ids"]
-    )
-
-
-    species_order = (
-        clade_data[
-            clade_name
-        ]["species_order"]
-    )
-
-
-    n_focal = len(
-        focal_ids
-    )
-
-
-    n_secondary = len(
-        secondary_ids
-    )
-
-
-    # ========================================================
-    # Heatmap matrix
-    # ========================================================
-
-    heatmap = (
-        selected[
-            species_order
+        # Secondary Tier 1 excludes focal Tier-1 candidates.
+        secondary_ids = [
+            cre_id
+            for cre_id in singleton_info
+            if cre_id not in focal_ids
         ]
-        .T
-    )
 
+        species_rank = {
+            species: index
+            for index, species in enumerate(species_order)
+        }
 
-    invalid_states = sorted(
-        set(
-            pd.unique(
-                heatmap
-                .values
-                .ravel()
+        def secondary_sort_key(cre_id):
+            discordant_species, _, _ = singleton_info[cre_id]
+            return (
+                count_turnover_states(sub.loc[cre_id, declared_species]),
+                species_rank[discordant_species],
+                cre_id,
             )
-        )
-        - set(
-            STATE_TO_NUM
-        )
-    )
 
+        secondary_ids = sorted(secondary_ids, key=secondary_sort_key)
+        cre_order = focal_ids + secondary_ids
 
-    if invalid_states:
-
-        raise SystemExit(
-            f"ERROR: invalid states in Tier-1 heatmap "
-            f"for {clade_name}:\n"
-            + "\n".join(
-                invalid_states
+        if not cre_order:
+            raise SystemExit(
+                f"ERROR: no Tier-1 CREs found for {clade_name}."
             )
-        )
+
+        selected = sub.loc[cre_order].copy()
+
+        clade_data[clade_name] = {
+            "matrix": selected,
+            "focal_ids": focal_ids,
+            "secondary_ids": secondary_ids,
+            "singleton_info": singleton_info,
+            "species_order": species_order,
+        }
+
+        for plot_order, cre_id in enumerate(cre_order, start=1):
+            discordant_species, discordant_state, consensus_state = (
+                singleton_info[cre_id]
+            )
+            n_turnover = count_turnover_states(
+                sub.loc[cre_id, declared_species]
+            )
+
+            summary_rows.append({
+                "clade": clade_name,
+                "clade_title": config["title"],
+                "plot_order": plot_order,
+                "cre_id": cre_id,
+                "category": (
+                    "focal_tier1"
+                    if cre_id in focal_ids
+                    else "secondary_tier1"
+                ),
+                "focal_species": focal,
+                "discordant_species": discordant_species,
+                "discordant_state": discordant_state,
+                "consensus_state": consensus_state,
+                "contrast_direction": contrast_direction(discordant_state),
+                "n_turnover_states": n_turnover,
+                "n_present_states": len(declared_species) - n_turnover,
+            })
+
+    return clade_data, pd.DataFrame(summary_rows)
 
 
-    numeric = (
-        heatmap
-        .replace(
-            STATE_TO_NUM
-        )
-        .astype(float)
-    )
+# ============================================================
+# Plot helpers
+# ============================================================
 
-
-    n_species = len(
-        species_order
-    )
-
-
-    n_cre = (
-        numeric
-        .shape[1]
-    )
-
-
-    # ========================================================
-    # IMPORTANT: shared y-axis coordinates
-    #
-    # This is defined BEFORE any plotting code that uses it.
-    # ========================================================
-
-    shared_ylim = (
-        n_species + 0.5,
-        0.5,
-    )
-
-
-    y_edges = (
-        np.arange(
-            n_species + 1
-        )
-        + 0.5
-    )
-
-
-    # ========================================================
-    # Species labels
-    # ========================================================
-
-    species_labels = [
-        short_species_name(
-            species,
-            manifest,
-        )
-        for species
-        in species_order
-    ]
-
-
-    # ========================================================
-    # Climate values
-    # ========================================================
-
-    climate_numeric = []
-
+def climate_array(species_order, slug_to_tree, tree_to_climate):
+    values = []
 
     for species in species_order:
-
-        tree_name = (
-            slug_to_tree[
-                species
-            ]
-        )
-
-
-        climate = (
-            tree_to_climate.get(
-                tree_name,
-                "",
-            )
-        )
-
+        tree_name = slug_to_tree[species]
+        climate = tree_to_climate.get(tree_name, "")
 
         if not climate:
-
             raise SystemExit(
-                f"ERROR: missing climate annotation "
-                f"for {species}."
+                f"ERROR: missing climate annotation for {species}."
             )
-
 
         if climate not in CLIMATE_TO_NUM:
-
             raise SystemExit(
-                f"ERROR: unknown climatic zone "
-                f"'{climate}' for {species}."
+                f"ERROR: unknown climatic zone {climate!r} for {species}."
             )
 
+        values.append(CLIMATE_TO_NUM[climate])
 
-        climate_numeric.append(
-            CLIMATE_TO_NUM[
-                climate
-            ]
-        )
+    return np.asarray(values, dtype=float).reshape(-1, 1)
 
 
-    climate_numeric = (
-        np.asarray(
-            climate_numeric,
-            dtype=float,
-        )
-        .reshape(
-            -1,
-            1,
-        )
-    )
-
-
-    # ========================================================
-    # Figure and axes
-    # ========================================================
-
-    fig = plt.figure(
-        figsize=FIGSIZE
-    )
-
-
-    grid = fig.add_gridspec(
-        nrows=1,
-        ncols=5,
-        width_ratios=GRID_WIDTH_RATIOS,
-        wspace=GRID_WSPACE,
-    )
-
-
-    ax_tree = fig.add_subplot(
-        grid[
-            0,
-            0,
-        ]
-    )
-
-
-    ax_labels = fig.add_subplot(
-        grid[
-            0,
-            1,
-        ]
-    )
-
-
-    ax_climate = fig.add_subplot(
-        grid[
-            0,
-            2,
-        ]
-    )
-
-
-    # Dedicated blank column between climatic strip and heatmap.
-    ax_spacer = fig.add_subplot(
-        grid[
-            0,
-            3,
-        ]
-    )
-
-    ax_spacer.axis(
-        "off"
-    )
-
-
-    ax_heat = fig.add_subplot(
-        grid[
-            0,
-            4,
-        ]
-    )
-
-
-    # ========================================================
-    # Draw phylogeny
-    # ========================================================
-
-    tree = prune_tree_to_species(
-        TREE_FILE,
-        declared_species,
-        slug_to_tree,
-    )
-
-
-    # Species labels are drawn in the dedicated neighbouring axis.
-    for tip in tree.get_terminals():
-        tip.name = ""
-
-
-    Phylo.draw(
-        tree,
-        axes=ax_tree,
-        do_show=False,
-        show_confidence=False,
-    )
-
-
-    ax_tree.set_ylim(
-        *shared_ylim
-    )
-
+def style_tree_axis(ax_tree, tree, shared_ylim):
+    ax_tree.set_ylim(*shared_ylim)
 
     depths = tree.depths()
+    terminal_depths = [depths[tip] for tip in tree.get_terminals()]
+    max_tree_depth = max(terminal_depths)
 
-
-    terminal_depths = [
-        depths[
-            tip
-        ]
-        for tip
-        in tree.get_terminals()
-    ]
-
-
-    max_tree_depth = max(
-        terminal_depths
-    )
-
-
-    # Use almost the complete x-axis width.
-    # Branch-length ratios themselves remain unchanged.
     ax_tree.set_xlim(
         0,
-        max_tree_depth
-        * TREE_RIGHT_PADDING_FACTOR,
+        max_tree_depth * TREE_RIGHT_PADDING_FACTOR,
     )
 
-
-    ax_tree.set_ylabel(
-        ""
-    )
-
-
+    ax_tree.set_ylabel("")
     ax_tree.set_xlabel(
         "Branch length",
         fontsize=TREE_AXIS_FONTSIZE,
         labelpad=4,
     )
-
-
     ax_tree.tick_params(
         axis="x",
         labelsize=TREE_TICK_FONTSIZE,
     )
-
-
     ax_tree.tick_params(
         axis="y",
         left=False,
         labelleft=False,
     )
 
-
-    for spine in [
-        "top",
-        "right",
-        "left",
-    ]:
-
-        ax_tree.spines[
-            spine
-        ].set_visible(
-            False
-        )
+    for spine in ("top", "right", "left"):
+        ax_tree.spines[spine].set_visible(False)
 
 
-    # ========================================================
-    # Species labels
-    # ========================================================
+def draw_species_labels(
+    ax_labels,
+    species_order,
+    species_labels,
+    focal,
+    shared_ylim,
+):
+    ax_labels.set_xlim(0, 1)
+    ax_labels.set_ylim(*shared_ylim)
 
-    ax_labels.set_xlim(
-        0,
-        1,
-    )
-
-
-    ax_labels.set_ylim(
-        *shared_ylim
-    )
-
-
-    for row_index, (
-        species,
-        label,
-    ) in enumerate(
-        zip(
-            species_order,
-            species_labels,
-        ),
+    for row_index, (species, label) in enumerate(
+        zip(species_order, species_labels),
         start=1,
     ):
-
-
-        # Right-aligned toward climate strip:
-        # preserves species-name <-> climate-strip spacing.
         ax_labels.text(
-            SPECIES_LABEL_X,
+            HEATMAP_SPECIES_LABEL_X,
             row_index,
             label,
             ha="right",
             va="center",
-            fontsize=SPECIES_FONTSIZE,
-            fontweight=(
-                "bold"
-                if species == focal
-                else "normal"
-            ),
+            fontsize=HEATMAP_SPECIES_FONTSIZE,
+            fontweight="bold" if species == focal else "normal",
         )
 
+    ax_labels.set_xticks([])
+    ax_labels.set_yticks([])
 
-    ax_labels.set_xticks(
-        []
-    )
-
-
-    ax_labels.set_yticks(
-        []
-    )
+    for spine in ax_labels.spines.values():
+        spine.set_visible(False)
 
 
-    for spine in (
-        ax_labels
-        .spines
-        .values()
-    ):
-
-        spine.set_visible(
-            False
-        )
-
-
-    # ========================================================
-    # Continuous climate strip
-    # ========================================================
-
-    climate_x_edges = np.array([
-        -0.5,
-        0.5,
-    ])
-
+def draw_climate_strip(ax_climate, climate_numeric, y_edges, shared_ylim):
+    climate_x_edges = np.array([-0.5, 0.5])
 
     ax_climate.pcolormesh(
         climate_x_edges,
@@ -1748,50 +832,26 @@ for clade_name, config in CLADES.items():
         antialiased=False,
     )
 
+    ax_climate.set_xlim(-0.5, 0.5)
+    ax_climate.set_ylim(*shared_ylim)
+    ax_climate.set_xticks([])
+    ax_climate.set_yticks([])
 
-    ax_climate.set_xlim(
-        -0.5,
-        0.5,
-    )
-
-
-    ax_climate.set_ylim(
-        *shared_ylim
-    )
+    for spine in ax_climate.spines.values():
+        spine.set_visible(False)
 
 
-    ax_climate.set_xticks(
-        []
-    )
-
-
-    ax_climate.set_yticks(
-        []
-    )
-
-
-    for spine in (
-        ax_climate
-        .spines
-        .values()
-    ):
-
-        spine.set_visible(
-            False
-        )
-
-
-    # ========================================================
-    # CRE-state heatmap
-    # ========================================================
-
-    cre_x_edges = (
-        np.arange(
-            n_cre + 1
-        )
-        - 0.5
-    )
-
+def draw_heatmap(
+    ax_heat,
+    numeric,
+    n_species,
+    n_focal,
+    n_secondary,
+    shared_ylim,
+):
+    n_cre = numeric.shape[1]
+    y_edges = np.arange(n_species + 1) + 0.5
+    cre_x_edges = np.arange(n_cre + 1) - 0.5
 
     ax_heat.pcolormesh(
         cre_x_edges,
@@ -1805,54 +865,24 @@ for clade_name, config in CLADES.items():
         antialiased=False,
     )
 
+    ax_heat.set_xlim(-0.5, n_cre - 0.5)
+    ax_heat.set_ylim(*shared_ylim)
+    ax_heat.set_yticks([])
+    ax_heat.set_ylabel("")
 
-    ax_heat.set_xlim(
-        -0.5,
-        n_cre - 0.5,
-    )
-
-
-    ax_heat.set_ylim(
-        *shared_ylim
-    )
-
-
-    ax_heat.set_yticks(
-        []
-    )
-
-
-    ax_heat.set_ylabel(
-        ""
-    )
-
-
-    # ========================================================
-    # CRE labels
-    # ========================================================
-
-    ax_heat.set_xticks(
-        np.arange(
-            n_cre
-        )
-    )
-
-
+    ax_heat.set_xticks(np.arange(n_cre))
     ax_heat.set_xticklabels(
         numeric.columns,
         rotation=90,
-        fontsize=CRE_LABEL_FONTSIZE,
+        fontsize=HEATMAP_CRE_FONTSIZE,
         ha="center",
         va="top",
     )
-
-
     ax_heat.tick_params(
         axis="x",
         length=3,
         pad=3,
     )
-
 
     ax_heat.set_xlabel(
         r"$D.\ melanogaster$ reference CRE",
@@ -1860,18 +890,9 @@ for clade_name, config in CLADES.items():
         labelpad=10,
     )
 
-
-    # ========================================================
-    # Focal Tier-1 block outline
-    # ========================================================
-
     if n_focal > 0:
-
         focal_rectangle = Rectangle(
-            (
-                -0.5,
-                0.5,
-            ),
+            (-0.5, 0.5),
             n_focal,
             n_species,
             fill=False,
@@ -1879,22 +900,9 @@ for clade_name, config in CLADES.items():
             linewidth=FOCAL_BLOCK_LINEWIDTH,
             zorder=10,
         )
+        ax_heat.add_patch(focal_rectangle)
 
-
-        ax_heat.add_patch(
-            focal_rectangle
-        )
-
-
-    # ========================================================
-    # Focal / Secondary block boundary
-    # ========================================================
-
-    if (
-        n_focal > 0
-        and n_secondary > 0
-    ):
-
+    if n_focal > 0 and n_secondary > 0:
         ax_heat.axvline(
             n_focal - 0.5,
             color="#222222",
@@ -1902,61 +910,139 @@ for clade_name, config in CLADES.items():
             zorder=11,
         )
 
-
-    # ========================================================
-    # Block labels
-    # ========================================================
-
     if n_focal > 0:
-
-        focal_center = (
-            n_focal - 1
-        ) / 2
-
-
+        focal_center = (n_focal - 1) / 2
         ax_heat.text(
             focal_center,
             1.045,
             "Focal Tier 1",
-            transform=(
-                ax_heat
-                .get_xaxis_transform()
-            ),
+            transform=ax_heat.get_xaxis_transform(),
             ha="center",
             va="bottom",
             fontsize=BLOCK_LABEL_FONTSIZE,
             fontweight="bold",
         )
 
-
     if n_secondary > 0:
-
-        secondary_start = n_focal
-        secondary_end = n_cre - 1
-
-        secondary_center = (
-            secondary_start
-            + secondary_end
-        ) / 2
-
-
+        secondary_center = (n_focal + n_cre - 1) / 2
         ax_heat.text(
             secondary_center,
             1.045,
             "Secondary Tier 1",
-            transform=(
-                ax_heat
-                .get_xaxis_transform()
-            ),
+            transform=ax_heat.get_xaxis_transform(),
             ha="center",
             va="bottom",
             fontsize=BLOCK_LABEL_FONTSIZE,
         )
 
 
-    # ========================================================
-    # Clade title
-    # ========================================================
+def plot_clade(
+    clade_name,
+    config,
+    clade_info,
+    tree_file,
+    slug_to_tree,
+    manifest_by_slug,
+    tree_to_climate,
+    fig_dir,
+):
+    focal = config["focal"]
+    declared_species = config["species"]
+
+    selected = clade_info["matrix"]
+    focal_ids = clade_info["focal_ids"]
+    secondary_ids = clade_info["secondary_ids"]
+    species_order = clade_info["species_order"]
+
+    n_focal = len(focal_ids)
+    n_secondary = len(secondary_ids)
+
+    heatmap = selected[species_order].T
+
+    invalid_states = sorted(
+        set(pd.unique(heatmap.values.ravel()))
+        - set(STATE_TO_NUM)
+    )
+    if invalid_states:
+        raise SystemExit(
+            f"ERROR: invalid states in Tier-1 heatmap for {clade_name}:\n"
+            + "\n".join(str(x) for x in invalid_states)
+        )
+
+    numeric = heatmap.apply(
+        lambda column: column.map(STATE_TO_NUM)
+    ).astype(float)
+    n_species, n_cre = numeric.shape
+
+    shared_ylim = (n_species + 0.5, 0.5)
+    y_edges = np.arange(n_species + 1) + 0.5
+
+    species_labels = [
+        short_species_name(species, manifest_by_slug)
+        for species in species_order
+    ]
+
+    climate_numeric = climate_array(
+        species_order,
+        slug_to_tree,
+        tree_to_climate,
+    )
+
+    fig = plt.figure(figsize=FIGSIZE)
+    grid = fig.add_gridspec(
+        nrows=1,
+        ncols=5,
+        width_ratios=GRID_WIDTH_RATIOS,
+        wspace=GRID_WSPACE,
+    )
+
+    ax_tree = fig.add_subplot(grid[0, 0])
+    ax_labels = fig.add_subplot(grid[0, 1])
+    ax_climate = fig.add_subplot(grid[0, 2])
+    ax_spacer = fig.add_subplot(grid[0, 3])
+    ax_heat = fig.add_subplot(grid[0, 4])
+
+    ax_spacer.axis("off")
+
+    tree = prune_tree_to_species(
+        tree_file,
+        declared_species,
+        slug_to_tree,
+    )
+
+    # Tip labels are drawn in the dedicated species-label axis.
+    for tip in tree.get_terminals():
+        tip.name = ""
+
+    Phylo.draw(
+        tree,
+        axes=ax_tree,
+        do_show=False,
+        show_confidence=False,
+    )
+
+    style_tree_axis(ax_tree, tree, shared_ylim)
+    draw_species_labels(
+        ax_labels,
+        species_order,
+        species_labels,
+        focal,
+        shared_ylim,
+    )
+    draw_climate_strip(
+        ax_climate,
+        climate_numeric,
+        y_edges,
+        shared_ylim,
+    )
+    draw_heatmap(
+        ax_heat,
+        numeric,
+        n_species,
+        n_focal,
+        n_secondary,
+        shared_ylim,
+    )
 
     fig.suptitle(
         config["title"],
@@ -1965,126 +1051,65 @@ for clade_name, config in CLADES.items():
         y=0.975,
     )
 
-
-    # ========================================================
-    # Fixed margins
-    # ========================================================
-
     fig.subplots_adjust(
         left=FIG_LEFT,
         right=FIG_RIGHT,
         top=FIG_TOP,
-        bottom=FIG_BOTTOM,
+        bottom=HEATMAP_BOTTOM_MARGIN,
     )
 
+    stem = f"focal_clade_tier1_heatmap_{clade_name}"
+    out_png = fig_dir / f"{stem}.png"
+    out_pdf = fig_dir / f"{stem}.pdf"
 
-    # ========================================================
-    # Output files
-    # ========================================================
-
-    stem = (
-        "focal_clade_tier1_heatmap_"
-        f"{clade_name}"
-    )
-
-
-    out_png = (
-        FIG_DIR
-        / f"{stem}.png"
-    )
-
-
-    out_pdf = (
-        FIG_DIR
-        / f"{stem}.pdf"
-    )
-
-
-    # Deliberately no bbox_inches="tight".
-    # This keeps all exported figures exactly the same size.
-
+    # Deliberately no bbox_inches="tight": all figures retain identical size.
     fig.savefig(
         out_png,
-        dpi=300,
+        dpi=OUTPUT_DPI,
         facecolor="white",
     )
-
-
     fig.savefig(
         out_pdf,
         facecolor="white",
     )
+    plt.close(fig)
+
+    return {
+        "png": out_png,
+        "pdf": out_pdf,
+        "n_cre": n_cre,
+        "n_focal": n_focal,
+        "n_secondary": n_secondary,
+        "species_order": species_order,
+        "selected": selected,
+    }
 
 
-    plt.close(
-        fig
-    )
+# ============================================================
+# Reporting
+# ============================================================
 
-
-    written_pngs.append(
-        out_png
-    )
-
-
-    written_pdfs.append(
-        out_pdf
-    )
-
-
-    # ========================================================
-    # Per-clade QC
-    # ========================================================
-
+def report_clade(config, result, declared_species):
     print()
     print("=" * 72)
-    print(
-        config["title"]
-    )
+    print(config["title"])
     print("=" * 72)
-
-
+    print("Tree order: " + ", ".join(result["species_order"]))
     print(
-        "Tree order: "
-        + ", ".join(
-            species_order
-        )
+        f"Displayed CREs: {result['n_cre']} "
+        f"({result['n_focal']} focal Tier 1 + "
+        f"{result['n_secondary']} secondary Tier 1)"
     )
+    print("CRE display order:")
 
+    selected = result["selected"]
+    focal_ids = set(selected.index[: result["n_focal"]])
 
-    print(
-        f"Displayed CREs: "
-        f"{n_cre} "
-        f"({n_focal} focal Tier 1 + "
-        f"{n_secondary} secondary Tier 1)"
-    )
-
-
-    print(
-        "CRE display order:"
-    )
-
-
-    for display_index, cre_id in enumerate(
-        selected.index,
-        start=1,
-    ):
-
-        n_turnover = (
-            count_turnover_states(
-                selected.loc[
-                    cre_id,
-                    declared_species,
-                ]
-            )
+    for display_index, cre_id in enumerate(selected.index, start=1):
+        n_turnover = count_turnover_states(
+            selected.loc[cre_id, declared_species]
         )
-
-
-        category = (
-            "focal"
-            if cre_id in focal_ids
-            else "secondary"
-        )
-
+        category = "focal" if cre_id in focal_ids else "secondary"
 
         print(
             f"  {display_index:>2}. "
@@ -2093,147 +1118,142 @@ for clade_name, config in CLADES.items():
             f"turnover states = {n_turnover}"
         )
 
-
     print()
+    print(f"Wrote PNG:\n{result['png']}")
+    print(f"Wrote PDF:\n{result['pdf']}")
 
 
+def report_final(written_pngs, written_pdfs, summary_df, out_tsv):
+    print()
+    print("=" * 72)
+    print("FOCAL-CLADE HEATMAPS COMPLETE")
+    print("=" * 72)
+    print(f"Focal clades: {len(CLADES)}")
+    print(f"PNG figures written: {len(written_pngs)}")
+    print(f"PDF figures written: {len(written_pdfs)}")
+    print()
+    print(f"Fixed figure dimensions: {FIG_WIDTH} x {FIG_HEIGHT} inches")
+    print(f"Species-label fontsize: {HEATMAP_SPECIES_FONTSIZE}")
+    print(f"CRE-label fontsize: {HEATMAP_CRE_FONTSIZE}")
+    print(f"Species-label width ratio: {HEATMAP_SPECIES_LABEL_WIDTH}")
+    print(f"Species-label x position: {HEATMAP_SPECIES_LABEL_X}")
+    print(f"Bottom margin: {HEATMAP_BOTTOM_MARGIN}")
+    print("Heatmap renderer: pcolormesh")
+    print("PDF-safe categorical rendering: YES")
+    print("Continuous climate strip: YES")
+    print("Dedicated climate-to-heatmap spacer: YES")
     print(
-        f"Wrote PNG:\n"
-        f"{out_png}"
+        "Climate-to-heatmap gap width ratio: "
+        f"{CLIMATE_HEATMAP_GAP_WIDTH}"
     )
-
-
+    print("Species labels right-aligned before climate strip: YES")
+    print("Tree branch lengths modified: NO")
+    print("Panel letters A-F: NO")
+    print("Legends in individual figures: NO")
+    print()
+    print("CRE ordering:")
+    print("  Focal Tier 1 -> Secondary Tier 1")
     print(
-        f"Wrote PDF:\n"
-        f"{out_pdf}"
+        "  within blocks: increasing number of "
+        "turnover_candidate states"
+    )
+    print(
+        "  Secondary tie-break: discordant species in displayed "
+        "tree order -> CRE ID"
+    )
+    print()
+    print(f"Wrote plotted-CRE table:\n{out_tsv}")
+    print(
+        "Total clade-specific CRE occurrences: "
+        f"{len(summary_df)}"
     )
 
 
 # ============================================================
-# Final summary
+# Main
 # ============================================================
 
-print()
-print("=" * 72)
-print("FOCAL-CLADE HEATMAPS COMPLETE")
-print("=" * 72)
+def main():
+    args = parse_args()
+
+    matrix_file = args.matrix.resolve()
+    tree_file = args.tree.resolve()
+    manifest_file = args.manifest.resolve()
+    traits_file = args.traits.resolve()
+    fig_dir = args.fig_dir.resolve()
+    out_tsv = args.out_tsv.resolve()
+
+    for path in (
+        matrix_file,
+        tree_file,
+        manifest_file,
+        traits_file,
+    ):
+        require_file(path)
+
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    out_tsv.parent.mkdir(parents=True, exist_ok=True)
+
+    manifest = load_manifest(manifest_file)
+    traits = load_traits(traits_file)
+    matrix = load_matrix(matrix_file)
+
+    manifest_by_slug = (
+        manifest
+        .set_index("slug")[["species", "source"]]
+        .to_dict(orient="index")
+    )
+
+    slug_to_tree = dict(zip(manifest["slug"], manifest["tree_name"]))
+    tree_to_slug = dict(zip(manifest["tree_name"], manifest["slug"]))
+    tree_to_climate = dict(zip(traits["tree_name"], traits["climatic_zone"]))
+
+    validate_clades(matrix, slug_to_tree)
+
+    clade_data, summary_df = build_clade_data(
+        matrix,
+        tree_file,
+        slug_to_tree,
+        tree_to_slug,
+    )
+
+    summary_df.to_csv(
+        out_tsv,
+        sep="\t",
+        index=False,
+    )
+
+    written_pngs = []
+    written_pdfs = []
+
+    for clade_name, config in CLADES.items():
+        result = plot_clade(
+            clade_name,
+            config,
+            clade_data[clade_name],
+            tree_file,
+            slug_to_tree,
+            manifest_by_slug,
+            tree_to_climate,
+            fig_dir,
+        )
+
+        written_pngs.append(result["png"])
+        written_pdfs.append(result["pdf"])
+
+        report_clade(
+            config,
+            result,
+            config["species"],
+        )
+
+    report_final(
+        written_pngs,
+        written_pdfs,
+        summary_df,
+        out_tsv,
+    )
 
 
-print(
-    f"Focal clades: "
-    f"{len(CLADES)}"
-)
-
-
-print(
-    f"PNG figures written: "
-    f"{len(written_pngs)}"
-)
-
-
-print(
-    f"PDF figures written: "
-    f"{len(written_pdfs)}"
-)
-
-
-print()
-
-
-print(
-    f"Fixed figure dimensions: "
-    f"{FIG_WIDTH} x "
-    f"{FIG_HEIGHT} inches"
-)
-
-
-print(
-    "Heatmap renderer: "
-    "pcolormesh"
-)
-
-
-print(
-    "PDF-safe categorical rendering: YES"
-)
-
-
-print(
-    "Continuous climate strip: YES"
-)
-
-
-print(
-    "Dedicated climate-to-heatmap spacer: YES"
-)
-
-
-print(
-    f"Climate-to-heatmap gap width ratio: "
-    f"{CLIMATE_HEATMAP_GAP_WIDTH}"
-)
-
-
-print(
-    "Species labels right-aligned before climate strip: YES"
-)
-
-
-print(
-    "Tree horizontally expanded: YES"
-)
-
-
-print(
-    "Tree branch lengths modified: NO"
-)
-
-
-print(
-    "Panel letters A-F: NO"
-)
-
-
-print(
-    "Legends in individual figures: NO"
-)
-
-
-print()
-
-
-print(
-    "CRE ordering:"
-)
-
-
-print(
-    "  Focal Tier 1 -> Secondary Tier 1"
-)
-
-
-print(
-    "  within blocks: "
-    "increasing number of turnover_candidate states"
-)
-
-
-print(
-    "  Secondary tie-break: "
-    "discordant species in displayed tree order -> CRE ID"
-)
-
-
-print()
-
-
-print(
-    f"Wrote plotted-CRE table:\n"
-    f"{OUT_TSV}"
-)
-
-
-print(
-    f"Total clade-specific CRE occurrences: "
-    f"{len(summary_df)}"
-)
+if __name__ == "__main__":
+    main()
