@@ -81,10 +81,19 @@ PRIMARY_SENSITIVITY_SCENARIO="${PRIMARY_SENSITIVITY_SCENARIO:-ov050_dist24000}"
 
 # Regression-check outputs.
 PRIMARY_REGRESSION_SUMMARY="${RESULTS_DIR}/primary_regression_check.tsv"
-
 PRIMARY_REGRESSION_CHANGES="${RESULTS_DIR}/primary_regression_state_changes.tsv"
-
 PRIMARY_REGRESSION_METADATA="${RESULTS_DIR}/primary_regression_metadata.tsv"
+
+
+# ======================================================================
+# Global sensitivity summary
+# ======================================================================
+
+GLOBAL_SENSITIVITY_SUMMARY="${RESULTS_DIR}/sensitivity_global_summary.tsv"
+SENSITIVITY_SPECIES_STABILITY="${RESULTS_DIR}/sensitivity_species_stability.tsv"
+SENSITIVITY_STATE_TRANSITIONS="${RESULTS_DIR}/sensitivity_state_transitions.tsv"
+SENSITIVITY_CRE_STABILITY="${RESULTS_DIR}/sensitivity_cre_stability.tsv"
+GLOBAL_SENSITIVITY_METADATA="${RESULTS_DIR}/sensitivity_global_summary_metadata.tsv"
 
 
 # ======================================================================
@@ -117,3 +126,9 @@ export PRIMARY_SENSITIVITY_SCENARIO
 export PRIMARY_REGRESSION_SUMMARY
 export PRIMARY_REGRESSION_CHANGES
 export PRIMARY_REGRESSION_METADATA
+
+export GLOBAL_SENSITIVITY_SUMMARY
+export SENSITIVITY_SPECIES_STABILITY
+export SENSITIVITY_STATE_TRANSITIONS
+export SENSITIVITY_CRE_STABILITY
+export GLOBAL_SENSITIVITY_METADATA
