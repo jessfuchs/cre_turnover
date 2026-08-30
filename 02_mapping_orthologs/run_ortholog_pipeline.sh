@@ -96,14 +96,14 @@ echo
 # ============================================================
 
 echo "============================================================"
-echo "[01/06] QC of Dmel ortholog annotations"
+echo "[1/6] QC of Dmel ortholog annotations"
 echo "============================================================"
 echo
 
 bash "$SCRIPTS_DIR/01_qc_dmel_orthologs.sh"
 
 echo
-echo "[01/06] PASSED"
+echo "[1/6] PASSED"
 echo
 
 
@@ -112,7 +112,7 @@ echo
 # ============================================================
 
 echo "============================================================"
-echo "[02/06] Mapping peak-associated genes to Dmel orthologs"
+echo "[2/6] Mapping peak-associated genes to Dmel orthologs"
 echo "============================================================"
 echo
 
@@ -167,7 +167,7 @@ if [[ "$EMPTY_SO" -ne 0 ]]; then
 fi
 
 echo
-echo "[02/06] PASSED"
+echo "[2/6] PASSED"
 echo
 
 
@@ -176,7 +176,7 @@ echo
 # ============================================================
 
 echo "============================================================"
-echo "[03/06] Combining species-specific SO BED files"
+echo "[3/6] Combining species-specific SO BED files"
 echo "============================================================"
 echo
 
@@ -237,7 +237,7 @@ if [[ "$N_COMBINED_SPECIES" -ne "$EXPECTED_SPECIES" ]]; then
 fi
 
 echo
-echo "[03/06] PASSED"
+echo "[3/6] PASSED"
 echo
 
 
@@ -246,7 +246,7 @@ echo
 # ============================================================
 
 echo "============================================================"
-echo "[04/06] Mapping Dmel identifiers to FBgn"
+echo "[4/6] Mapping Dmel identifiers to FBgn"
 echo "============================================================"
 echo
 
@@ -273,7 +273,7 @@ python3 "$SCRIPTS_DIR/04_map_dmel_ids_to_fbgn.py" \
 }
 
 echo
-echo "[04/06] PASSED"
+echo "[4/6] PASSED"
 echo
 
 
@@ -282,7 +282,7 @@ echo
 # ============================================================
 
 echo "============================================================"
-echo "[05/06] QC of unresolved Dmel identifiers"
+echo "[5/6] QC of unresolved Dmel identifiers"
 echo "============================================================"
 echo
 
@@ -297,7 +297,7 @@ bash "$SCRIPTS_DIR/05_qc_unresolved_dmel_ids.sh"
 }
 
 echo
-echo "[05/06] PASSED"
+echo "[5/6] PASSED"
 echo
 
 
@@ -306,7 +306,7 @@ echo
 # ============================================================
 
 echo "============================================================"
-echo "[06/06] Building final Dmel reference CRE set"
+echo "[6/6] Building final Dmel reference CRE set"
 echo "============================================================"
 echo
 
@@ -368,7 +368,7 @@ if [[ "$N_REF" -ne "$EXPECTED_REFERENCE_CRES" ]]; then
 fi
 
 echo
-echo "[06/06] PASSED"
+echo "[6/6] PASSED"
 echo
 
 
