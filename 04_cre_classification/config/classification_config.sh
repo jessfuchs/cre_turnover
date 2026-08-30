@@ -73,12 +73,10 @@ PHYLOGENY_SCRIPTS_DIR="${PHYLOGENY_ROOT}/scripts"
 # Adjust filenames to the files actually present in your project.
 TREE_FILE="${PHYLOGENY_RESULTS_DIR}/301Fly_HOG_UCLDtree_40species.nw"
 
-# Climate zone for each species.
+# Species-level trait annotations, e.g. climate zone.
 SPECIES_TRAITS="${PHYLOGENY_ROOT}/data/species_traits.tsv"
 
 SPECIES_ORDER_FILE="${PHYLOGENY_RESULTS_DIR}/species_order_40_tree_names.txt"
-
-SPECIES_METADATA="${PHYLOGENY_DATA_DIR}/species_metadata.tsv"
 
 # ======================================================================
 # Species-level QC parameters
@@ -133,7 +131,6 @@ export PHYLOGENY_SCRIPTS_DIR
 export TREE_FILE
 export SPECIES_TRAITS
 export SPECIES_ORDER_FILE
-export SPECIES_METADATA
 
 export QC_MIN_MAPPING_RATE
 export QC_MIN_SCRMSHAW_PEAKS
