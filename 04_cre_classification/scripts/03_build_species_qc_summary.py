@@ -1,86 +1,205 @@
 #!/usr/bin/env python3
 
+# ============================================================
+# 03 - Build species-level CRE classification QC summary
+#
+# Purpose:
+#   Summarize mapping quality, sequence-ID compatibility,
+#   positional overlap, CRE-state counts, and potential
+#   technical QC issues for each target species.
+#
+# Input:
+#   - SO_all_species_fbgn.tsv
+#   - target_species.txt
+#   - species-specific CRE classifications
+#   - lifted reference CRE BED files
+#
+# Output:
+#   - species_qc_summary.tsv
+#
+# Configuration:
+#   Paths and QC thresholds are supplied by the pipeline wrapper
+#   using config/classification_config.sh.
+# ============================================================
+
+
+import argparse
 import csv
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
-CLASS = Path.home() / "cre_turnover/project/cre_classification"
-RESULTS = CLASS / "results"
 
-WGA = Path.home() / "cre_turnover/project/pairwise_wga"
-MAP = Path.home() / "cre_turnover/project/mapping_orthologs"
+# ============================================================
+# Arguments
+# ============================================================
 
-PREDICTIONS = MAP / "ortholog_results/SO_all_species_fbgn.tsv"
-TARGETS = WGA / "target_species.txt"
+parser = argparse.ArgumentParser()
 
-TURNOVER_DIR = RESULTS / "turnover_by_species"
-LIFTED_DIR = WGA / "lifted_cres_dmel"
+parser.add_argument("--predictions", required=True)
+parser.add_argument("--targets", required=True)
+parser.add_argument("--turnover-dir", required=True)
+parser.add_argument("--lifted-dir", required=True)
+parser.add_argument("--out", required=True)
 
-OUT = RESULTS / "species_qc_summary.tsv"
+parser.add_argument(
+    "--overlap-threshold",
+    type=float,
+    default=0.50,
+)
 
-RESULTS.mkdir(parents=True, exist_ok=True)
+parser.add_argument(
+    "--min-mapping-rate",
+    type=float,
+    default=0.50,
+)
+
+parser.add_argument(
+    "--min-scrmshaw-peaks",
+    type=int,
+    default=50,
+)
+
+parser.add_argument(
+    "--min-seqid-overlap",
+    type=float,
+    default=0.25,
+)
+
+parser.add_argument(
+    "--min-mapped-for-overlap-check",
+    type=int,
+    default=100,
+)
+
+parser.add_argument(
+    "--high-mapping-rate",
+    type=float,
+    default=0.90,
+)
+
+args = parser.parse_args()
+
+
+PREDICTIONS = Path(args.predictions)
+TARGETS = Path(args.targets)
+TURNOVER_DIR = Path(args.turnover_dir)
+LIFTED_DIR = Path(args.lifted_dir)
+OUT = Path(args.out)
+
+
+# ============================================================
+# Input checks
+# ============================================================
+
+for path in (
+    PREDICTIONS,
+    TARGETS,
+):
+    if not path.is_file():
+        raise SystemExit(
+            f"ERROR: required input file does not exist: {path}"
+        )
+
+for path in (
+    TURNOVER_DIR,
+    LIFTED_DIR,
+):
+    if not path.is_dir():
+        raise SystemExit(
+            f"ERROR: required input directory does not exist: {path}"
+        )
+
+OUT.parent.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+
+# ============================================================
+# Read target species
+# ============================================================
 
 species = [
-    x.strip()
-    for x in TARGETS.read_text().splitlines()
-    if x.strip()
+    line.strip()
+    for line in TARGETS.read_text().splitlines()
+    if line.strip()
+    and not line.lstrip().startswith("#")
 ]
 
-# ------------------------------------------------------------
-# Count SCRMshaw peaks and collect prediction chromosomes
-# ------------------------------------------------------------
+
+# ============================================================
+# Count SCRMshaw peaks and prediction sequence IDs
+# ============================================================
 
 n_peaks = defaultdict(int)
 prediction_chroms = defaultdict(set)
 
-with PREDICTIONS.open() as f:
-    reader = csv.DictReader(f, delimiter="\t")
+with PREDICTIONS.open(
+    encoding="utf-8-sig",
+    newline=""
+) as handle:
+
+    reader = csv.DictReader(
+        handle,
+        delimiter="\t"
+    )
 
     for row in reader:
+
         sp = row["species_key"]
 
         if sp not in species:
             continue
 
         n_peaks[sp] += 1
-        prediction_chroms[sp].add(row["chrom"])
+        prediction_chroms[sp].add(
+            row["chrom"]
+        )
 
+
+# ============================================================
+# Build species-level QC summary
+# ============================================================
 
 rows_out = []
 
 for sp in species:
 
     turnover_file = (
-        TURNOVER_DIR /
-        f"dmel_to_{sp}_cre_turnover.tsv"
+        TURNOVER_DIR
+        / f"dmel_to_{sp}_cre_turnover.tsv"
     )
 
     lifted_file = (
-        LIFTED_DIR /
-        sp /
-        f"dmel_reference_cres.{sp}.bed"
+        LIFTED_DIR
+        / sp
+        / f"dmel_reference_cres.{sp}.bed"
     )
 
-    if not turnover_file.exists():
+
+    if not turnover_file.is_file():
         raise SystemExit(
-            f"Missing turnover table for {sp}: "
+            f"ERROR: missing turnover table for {sp}: "
             f"{turnover_file}"
         )
 
-    if not lifted_file.exists():
+    if not lifted_file.is_file():
         raise SystemExit(
-            f"Missing lifted BED for {sp}: "
+            f"ERROR: missing lifted BED for {sp}: "
             f"{lifted_file}"
         )
 
+
     # --------------------------------------------------------
-    # Lifted chromosome set
+    # Sequence-ID compatibility
     # --------------------------------------------------------
 
     lifted_chroms = set()
 
-    with lifted_file.open() as f:
-        for line in f:
+    with lifted_file.open() as handle:
+
+        for line in handle:
+
             if not line.strip() or line.startswith("#"):
                 continue
 
@@ -88,10 +207,12 @@ for sp in species:
                 line.split("\t", 1)[0]
             )
 
+
     pred_chroms = prediction_chroms[sp]
 
     common_chroms = (
-        pred_chroms & lifted_chroms
+        pred_chroms
+        & lifted_chroms
     )
 
     n_pred_chroms = len(pred_chroms)
@@ -110,8 +231,9 @@ for sp in species:
         else 0
     )
 
+
     # --------------------------------------------------------
-    # Read classification results
+    # Classification results
     # --------------------------------------------------------
 
     mapped = 0
@@ -132,9 +254,14 @@ for sp in species:
 
     unique_turnover_peaks = set()
 
-    with turnover_file.open() as f:
+
+    with turnover_file.open(
+        encoding="utf-8-sig",
+        newline=""
+    ) as handle:
+
         reader = csv.DictReader(
-            f,
+            handle,
             delimiter="\t",
         )
 
@@ -142,8 +269,10 @@ for sp in species:
 
             if row["alignment_status"] == "mapped":
                 mapped += 1
+
             elif row["alignment_status"] == "unmapped":
                 unmapped += 1
+
 
             try:
                 overlap_bp = float(
@@ -152,23 +281,22 @@ for sp in species:
             except ValueError:
                 overlap_bp = 0
 
+
             try:
                 frac_lift = float(
-                    row[
-                        "best_overlap_fraction_lifted"
-                    ]
+                    row["best_overlap_fraction_lifted"]
                 )
             except ValueError:
                 frac_lift = 0
 
+
             try:
                 frac_peak = float(
-                    row[
-                        "best_overlap_fraction_peak"
-                    ]
+                    row["best_overlap_fraction_peak"]
                 )
             except ValueError:
                 frac_peak = 0
+
 
             if (
                 row["alignment_status"] == "mapped"
@@ -176,60 +304,63 @@ for sp in species:
             ):
                 any_overlap += 1
 
+
             if (
                 row["alignment_status"] == "mapped"
-                and frac_lift >= 0.50
+                and frac_lift >= args.overlap_threshold
             ):
                 lifted50 += 1
 
-            if (
-                row["alignment_status"] == "mapped"
-                and frac_peak >= 0.50
-            ):
-                peak50 += 1
 
             if (
                 row["alignment_status"] == "mapped"
-                and frac_lift >= 0.50
-                and frac_peak >= 0.50
+                and frac_peak >= args.overlap_threshold
+            ):
+                peak50 += 1
+
+
+            if (
+                row["alignment_status"] == "mapped"
+                and frac_lift >= args.overlap_threshold
+                and frac_peak >= args.overlap_threshold
             ):
                 reciprocal50 += 1
+
 
             cls = row["class"]
 
             if cls == "present":
                 present += 1
+
             elif cls == "turnover_candidate":
                 turnover_candidate += 1
+
             elif cls == "no_detected_CRE":
                 no_detected += 1
+
             elif cls == "uncertain":
                 uncertain += 1
 
-            if (
-                row["same_fbgn_peak_anywhere"]
-                == "yes"
-            ):
+
+            if row["same_fbgn_peak_anywhere"] == "yes":
                 same_fbgn_anywhere += 1
 
-            if (
-                row["same_fbgn_peak_local"]
-                == "yes"
-            ):
+            if row["same_fbgn_peak_local"] == "yes":
                 same_fbgn_local += 1
+
 
             if (
                 cls == "turnover_candidate"
-                and
-                row[
-                    "local_same_fbgn_peak_id"
-                ] != "NA"
+                and row["local_same_fbgn_peak_id"] != "NA"
             ):
                 unique_turnover_peaks.add(
-                    row[
-                        "local_same_fbgn_peak_id"
-                    ]
+                    row["local_same_fbgn_peak_id"]
                 )
+
+
+    # --------------------------------------------------------
+    # Rates
+    # --------------------------------------------------------
 
     n_ref = mapped + unmapped
 
@@ -263,57 +394,65 @@ for sp in species:
         else 0
     )
 
+
     # --------------------------------------------------------
-    # Simple QC flags
+    # QC flags
     # --------------------------------------------------------
 
     flags = []
 
-    if mapping_rate < 0.50:
+    if mapping_rate < args.min_mapping_rate:
         flags.append("LOW_MAPPING")
 
-    if n_peaks[sp] < 50:
-        flags.append("LOW_SCRMSHAW_PEAK_COUNT")
+    if n_peaks[sp] < args.min_scrmshaw_peaks:
+        flags.append(
+            "LOW_SCRMSHAW_PEAK_COUNT"
+        )
 
     if n_common_chroms == 0:
         flags.append("NO_COMMON_SEQIDS")
 
     elif (
-        pred_chrom_overlap_fraction < 0.25
+        pred_chrom_overlap_fraction
+        < args.min_seqid_overlap
         and
-        lifted_chrom_overlap_fraction < 0.25
+        lifted_chrom_overlap_fraction
+        < args.min_seqid_overlap
     ):
         flags.append("LOW_SEQID_OVERLAP")
 
-    if (
-        mapped >= 100
-        and
-        any_overlap == 0
-    ):
-        flags.append("NO_POSITIONAL_OVERLAPS")
 
     if (
-        mapping_rate >= 0.90
-        and
-        reciprocal50 == 0
+        mapped >= args.min_mapped_for_overlap_check
+        and any_overlap == 0
+    ):
+        flags.append(
+            "NO_POSITIONAL_OVERLAPS"
+        )
+
+
+    if (
+        mapping_rate >= args.high_mapping_rate
+        and reciprocal50 == 0
     ):
         flags.append(
             "HIGH_MAPPING_ZERO_PRESENT"
         )
 
+
     if (
-        n_peaks[sp] < 50
-        and
-        mapping_rate >= 0.90
-        and
-        reciprocal50 == 0
+        n_peaks[sp] < args.min_scrmshaw_peaks
+        and mapping_rate >= args.high_mapping_rate
+        and reciprocal50 == 0
     ):
         flags.append(
             "LIKELY_PREDICTION_LIMITED"
         )
 
+
     if not flags:
         flags = ["OK"]
+
 
     rows_out.append({
         "species": sp,
@@ -336,11 +475,13 @@ for sp in species:
             lifted_chrom_overlap_fraction,
 
         "any_positional_overlap": any_overlap,
+
         "any_overlap_rate_evaluable":
             any_overlap_rate_evaluable,
 
         "lifted_overlap_ge_50pct": lifted50,
         "peak_overlap_ge_50pct": peak50,
+
         "reciprocal_overlap_ge_50pct":
             reciprocal50,
 
@@ -348,20 +489,25 @@ for sp in species:
             reciprocal50_rate_evaluable,
 
         "present": present,
+
         "turnover_candidate":
             turnover_candidate,
+
         "unique_turnover_target_peaks":
             len(unique_turnover_peaks),
+
         "no_detected_CRE": no_detected,
         "uncertain": uncertain,
 
         "same_fbgn_peak_anywhere":
             same_fbgn_anywhere,
+
         "same_fbgn_peak_local":
             same_fbgn_local,
 
         "present_rate_evaluable":
             present_rate_evaluable,
+
         "turnover_rate_evaluable":
             turnover_rate_evaluable,
 
@@ -369,10 +515,13 @@ for sp in species:
     })
 
 
+# ============================================================
+# Write summary
+# ============================================================
+
 fields = [
     "species",
     "n_reference_cres",
-
     "n_scrmshaw_peaks",
 
     "mapped",
@@ -382,6 +531,7 @@ fields = [
     "n_prediction_seqids",
     "n_lifted_seqids",
     "n_common_seqids",
+
     "prediction_seqid_overlap_fraction",
     "lifted_seqid_overlap_fraction",
 
@@ -409,9 +559,14 @@ fields = [
 ]
 
 
-with OUT.open("w", newline="") as f:
+with OUT.open(
+    "w",
+    encoding="utf-8",
+    newline=""
+) as handle:
+
     writer = csv.DictWriter(
-        f,
+        handle,
         delimiter="\t",
         fieldnames=fields,
         lineterminator="\n",
@@ -420,9 +575,10 @@ with OUT.open("w", newline="") as f:
     writer.writeheader()
 
     for row in rows_out:
-        out = dict(row)
 
-        for key in [
+        output_row = dict(row)
+
+        for key in (
             "mapping_rate",
             "prediction_seqid_overlap_fraction",
             "lifted_seqid_overlap_fraction",
@@ -430,19 +586,29 @@ with OUT.open("w", newline="") as f:
             "reciprocal_overlap_rate_evaluable",
             "present_rate_evaluable",
             "turnover_rate_evaluable",
-        ]:
-            out[key] = f"{out[key]:.6f}"
+        ):
 
-        writer.writerow(out)
+            output_row[key] = (
+                f"{output_row[key]:.6f}"
+            )
 
+        writer.writerow(
+            output_row
+        )
+
+
+# ============================================================
+# Report
+# ============================================================
 
 print(f"Wrote: {OUT}")
 print()
 
 for row in rows_out:
+
     print(
-        f"{row['species']:8s} "
-        f"peaks={row['n_scrmshaw_peaks']:4d} "
+        f"{row['species']:20s} "
+        f"peaks={row['n_scrmshaw_peaks']:5d} "
         f"mapped={row['mapped']:3d} "
         f"any={row['any_positional_overlap']:3d} "
         f"present={row['present']:3d} "
