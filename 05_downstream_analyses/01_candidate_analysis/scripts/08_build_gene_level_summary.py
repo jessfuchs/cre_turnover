@@ -1,51 +1,76 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# ============================================================
+# Build gene-level Tier-1 candidate summary
+#
+# Purpose:
+#   Aggregate CRE x FBgn candidate evidence into one row per
+#   unique D. melanogaster gene.
+#
+# Summary:
+#   Gene-level support is described by:
+#   - number of associated Tier-1 CREs
+#   - primary and secondary candidate-gene assignments
+#   - original SCRMshaw target-gene support
+#   - recurrent and focal CRE support
+#   - strongest CRE-level candidate priority
+#   - Tier-1 clade support
+#   - carried-forward gene-assignment QC
+#
+# Notes:
+#   Gene-assignment QC flags are retained as descriptive
+#   evidence and are not used as automatic exclusion criteria.
+#
+#   No weighted gene-level score is calculated. Candidate genes
+#   are instead ordered by transparent evidence variables.
+#
+# Input/output paths:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
+import hashlib
+from pathlib import Path
+import platform
+import sys
 
 import pandas as pd
 
 
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
+def parse_args():
 
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Build a gene-level summary of Tier-1 CRE "
+            "candidates from the exploded CRE x FBgn table."
+        )
+    )
 
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
+    parser.add_argument(
+        "--input",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR = (
-    RESULTS_DIR
-    / "tables"
-)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
 
-DEFAULT_INPUT = (
-    TABLE_DIR
-    / "tier1_candidate_fbgn_exploded.tsv"
-)
-
-DEFAULT_OUTPUT = (
-    TABLE_DIR
-    / "tier1_gene_level_summary.tsv"
-)
+    return parser.parse_args()
 
 
 # ============================================================
@@ -57,6 +82,7 @@ REQUIRED_COLUMNS = {
     "fbgn",
 
     "gene_role",
+    "assignment_evidence",
 
     "candidate_priority",
     "downstream_priority",
@@ -67,6 +93,7 @@ REQUIRED_COLUMNS = {
 
     "tier1_clades",
 
+    "is_reference_target",
     "is_primary_candidate",
     "is_secondary_candidate",
 
@@ -75,7 +102,7 @@ REQUIRED_COLUMNS = {
 
 
 # ============================================================
-# Priority rankings
+# Priority definitions
 # ============================================================
 
 CANDIDATE_PRIORITY_ORDER = {
@@ -86,11 +113,13 @@ CANDIDATE_PRIORITY_ORDER = {
     "secondary_single": 5,
 }
 
+
 DOWNSTREAM_PRIORITY_ORDER = {
     "high": 1,
     "medium": 2,
     "exploratory": 3,
 }
+
 
 GENE_ROLE_ORDER = {
     "primary_candidate": 1,
@@ -99,40 +128,38 @@ GENE_ROLE_ORDER = {
 }
 
 
-# ============================================================
-# Arguments
-# ============================================================
+RECURRENT_CANDIDATE_PRIORITIES = {
+    "focal_recurrent",
+    "focal_plus_secondary_recurrent",
+    "secondary_recurrent",
+}
 
-def parse_args():
 
-    parser = argparse.ArgumentParser(
-        description=(
-            "Build a gene-level summary of Tier-1 CRE candidates "
-            "from the exploded CRE x FBgn table."
-        )
-    )
+EXPECTED_DOWNSTREAM_PRIORITY = {
+    "focal_recurrent":
+        "high",
 
-    parser.add_argument(
-        "--input",
-        type=Path,
-        default=DEFAULT_INPUT,
-        help=(
-            "Exploded CRE x FBgn candidate table "
-            "(default: %(default)s)"
-        ),
-    )
+    "focal_plus_secondary_recurrent":
+        "high",
 
-    parser.add_argument(
-        "--out",
-        type=Path,
-        default=DEFAULT_OUTPUT,
-        help=(
-            "Gene-level candidate summary output "
-            "(default: %(default)s)"
-        ),
-    )
+    "secondary_recurrent":
+        "medium",
 
-    return parser.parse_args()
+    "focal_single":
+        "medium",
+
+    "secondary_single":
+        "exploratory",
+}
+
+
+VALID_ASSIGNMENT_EVIDENCE = {
+    "primary_and_reference_target",
+    "secondary_and_reference_target",
+    "primary_not_reference_target",
+    "secondary_not_reference_target",
+    "reference_target_only",
+}
 
 
 # ============================================================
@@ -140,8 +167,12 @@ def parse_args():
 # ============================================================
 
 def require_file(path):
+    """
+    Abort if a required input file is missing.
+    """
 
-    if not path.exists():
+    if not path.is_file():
+
         raise SystemExit(
             "ERROR: required input file not found:\n"
             f"{path}"
@@ -153,6 +184,9 @@ def require_columns(
     required,
     label,
 ):
+    """
+    Verify that all required columns are present.
+    """
 
     missing = sorted(
         set(required)
@@ -160,13 +194,19 @@ def require_columns(
     )
 
     if missing:
+
         raise SystemExit(
             f"ERROR: required columns missing from {label}:\n"
-            + "\n".join(missing)
+            + "\n".join(
+                missing
+            )
         )
 
 
 def normalize_missing(value):
+    """
+    Convert missing or empty textual values to 'NA'.
+    """
 
     if pd.isna(value):
         return "NA"
@@ -189,18 +229,32 @@ def join_unique(values):
     Join unique non-missing values in deterministic order.
     """
 
-    clean = sorted({
-        normalize_missing(value)
-        for value in values
-        if normalize_missing(value) != "NA"
-    })
+    clean = set()
 
-    return "|".join(clean)
+    for value in values:
+
+        value = normalize_missing(
+            value
+        )
+
+        if value != "NA":
+            clean.add(
+                value
+            )
+
+    return "|".join(
+        sorted(
+            clean
+        )
+    )
 
 
-def split_pipe_values(values):
+def split_delimited_values(
+    values,
+    delimiter,
+):
     """
-    Collect unique values from one or more pipe-separated cells.
+    Collect unique values from delimited cells.
     """
 
     result = set()
@@ -214,11 +268,21 @@ def split_pipe_values(values):
         if value == "NA":
             continue
 
-        for item in value.split("|"):
+        for item in value.split(
+            delimiter
+        ):
 
             item = item.strip()
 
-            if item:
+            if (
+                item
+                and item.lower()
+                not in {
+                    "na",
+                    "nan",
+                    "none",
+                }
+            ):
                 result.add(
                     item
                 )
@@ -226,6 +290,33 @@ def split_pipe_values(values):
     return sorted(
         result
     )
+
+
+def file_sha256(path):
+    """
+    Calculate SHA256 checksum for reproducibility metadata.
+    """
+
+    sha = hashlib.sha256()
+
+    with open(
+        path,
+        "rb",
+    ) as handle:
+
+        for block in iter(
+            lambda:
+                handle.read(
+                    1024 * 1024
+                ),
+            b"",
+        ):
+
+            sha.update(
+                block
+            )
+
+    return sha.hexdigest()
 
 
 def best_priority(
@@ -237,9 +328,14 @@ def best_priority(
     """
 
     clean = [
-        normalize_missing(value)
+        normalize_missing(
+            value
+        )
         for value in values
-        if normalize_missing(value) != "NA"
+        if normalize_missing(
+            value
+        )
+        != "NA"
     ]
 
     if not clean:
@@ -252,6 +348,7 @@ def best_priority(
     })
 
     if unknown:
+
         raise SystemExit(
             "ERROR: unknown priority values encountered:\n"
             + "\n".join(
@@ -262,7 +359,9 @@ def best_priority(
     return min(
         clean,
         key=lambda value:
-            ranking[value],
+            ranking[
+                value
+            ],
     )
 
 
@@ -272,9 +371,14 @@ def best_gene_role(values):
     """
 
     clean = [
-        normalize_missing(value)
+        normalize_missing(
+            value
+        )
         for value in values
-        if normalize_missing(value) != "NA"
+        if normalize_missing(
+            value
+        )
+        != "NA"
     ]
 
     if not clean:
@@ -287,6 +391,7 @@ def best_gene_role(values):
     })
 
     if unknown:
+
         raise SystemExit(
             "ERROR: unknown gene_role values encountered:\n"
             + "\n".join(
@@ -297,8 +402,92 @@ def best_gene_role(values):
     return min(
         clean,
         key=lambda value:
-            GENE_ROLE_ORDER[value],
+            GENE_ROLE_ORDER[
+                value
+            ],
     )
+
+
+def validate_vocabulary(
+    df,
+    column,
+    allowed,
+):
+    """
+    Validate categorical values against an allowed vocabulary.
+    """
+
+    observed = {
+        normalize_missing(
+            value
+        )
+        for value in df[
+            column
+        ]
+    }
+
+    invalid = sorted(
+        observed
+        - set(
+            allowed
+        )
+    )
+
+    if invalid:
+
+        raise SystemExit(
+            f"ERROR: unexpected values in {column}:\n"
+            + "\n".join(
+                invalid
+            )
+        )
+
+
+def validate_cre_level_consistency(
+    df,
+    columns,
+):
+    """
+    Ensure CRE-level attributes are identical across all
+    exploded FBgn rows belonging to the same CRE.
+    """
+
+    for column in columns:
+
+        counts = (
+            df.groupby(
+                "dmel_cre_id",
+                sort=False,
+            )[
+                column
+            ]
+            .nunique(
+                dropna=False
+            )
+        )
+
+        inconsistent = counts.loc[
+            counts
+            > 1
+        ]
+
+        if not inconsistent.empty:
+
+            bad_ids = (
+                inconsistent.index
+                .astype(str)
+                .tolist()
+            )
+
+            raise SystemExit(
+                "ERROR: inconsistent CRE-level values for "
+                f"column '{column}' in:\n"
+                + "\n".join(
+                    sorted(
+                        bad_ids
+                    )
+                )
+            )
 
 
 # ============================================================
@@ -314,6 +503,11 @@ def main():
     )
 
     args.out.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    args.metadata_out.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
@@ -335,9 +529,66 @@ def main():
         "exploded CRE x FBgn table",
     )
 
+    if df.empty:
+
+        raise SystemExit(
+            "ERROR: exploded CRE x FBgn table contains no rows."
+        )
+
+
+    # ========================================================
+    # Normalize key categorical columns
+    # ========================================================
+
+    categorical_columns = [
+        "dmel_cre_id",
+        "fbgn",
+        "gene_role",
+        "assignment_evidence",
+        "candidate_priority",
+        "downstream_priority",
+        "is_reference_target",
+        "is_primary_candidate",
+        "is_secondary_candidate",
+        "gene_assignment_qc",
+    ]
+
+    for column in categorical_columns:
+
+        df[
+            column
+        ] = df[
+            column
+        ].apply(
+            normalize_missing
+        )
+
+
+    # ========================================================
+    # Basic identifier QC
+    # ========================================================
+
+    for column in [
+        "dmel_cre_id",
+        "fbgn",
+    ]:
+
+        invalid = (
+            df[
+                column
+            ]
+            == "NA"
+        )
+
+        if invalid.any():
+
+            raise SystemExit(
+                f"ERROR: missing values detected in {column}."
+            )
+
 
     # --------------------------------------------------------
-    # Validate CRE x FBgn uniqueness
+    # Each CRE x FBgn pair must be unique
     # --------------------------------------------------------
 
     if df.duplicated(
@@ -372,33 +623,82 @@ def main():
         )
 
 
-    # --------------------------------------------------------
-    # Validate gene assignment QC
-    # --------------------------------------------------------
+    # ========================================================
+    # Validate categorical vocabularies
+    # ========================================================
 
-    non_pass_qc = (
-        df[
-            "gene_assignment_qc"
-        ]
-        != "PASS"
+    validate_vocabulary(
+        df,
+        "candidate_priority",
+        CANDIDATE_PRIORITY_ORDER,
     )
 
-    if non_pass_qc.any():
+    validate_vocabulary(
+        df,
+        "downstream_priority",
+        DOWNSTREAM_PRIORITY_ORDER,
+    )
 
-        bad = (
-            df.loc[
-                non_pass_qc,
-                [
-                    "dmel_cre_id",
-                    "fbgn",
-                    "gene_assignment_qc",
-                ],
-            ]
+    validate_vocabulary(
+        df,
+        "gene_role",
+        GENE_ROLE_ORDER,
+    )
+
+    validate_vocabulary(
+        df,
+        "assignment_evidence",
+        VALID_ASSIGNMENT_EVIDENCE,
+    )
+
+    for column in [
+        "is_reference_target",
+        "is_primary_candidate",
+        "is_secondary_candidate",
+    ]:
+
+        validate_vocabulary(
+            df,
+            column,
+            {
+                "yes",
+                "no",
+            },
         )
 
+
+    # ========================================================
+    # Validate candidate/downstream priority consistency
+    # ========================================================
+
+    expected_downstream = df[
+        "candidate_priority"
+    ].map(
+        EXPECTED_DOWNSTREAM_PRIORITY
+    )
+
+    inconsistent_priority = (
+        expected_downstream
+        != df[
+            "downstream_priority"
+        ]
+    )
+
+    if inconsistent_priority.any():
+
+        bad = df.loc[
+            inconsistent_priority,
+            [
+                "dmel_cre_id",
+                "fbgn",
+                "candidate_priority",
+                "downstream_priority",
+            ],
+        ].drop_duplicates()
+
         raise SystemExit(
-            "ERROR: non-PASS gene assignments found.\n"
-            "Resolve them before building gene-level summary:\n\n"
+            "ERROR: candidate_priority and downstream_priority "
+            "are inconsistent:\n\n"
             + bad.to_string(
                 index=False
             )
@@ -406,14 +706,165 @@ def main():
 
 
     # ========================================================
-    # Numeric columns
-    # ============================================================
+    # Validate gene roles against role flags
+    # ========================================================
 
-    for column in [
+    both_primary_secondary = (
+        (
+            df[
+                "is_primary_candidate"
+            ]
+            == "yes"
+        )
+        &
+        (
+            df[
+                "is_secondary_candidate"
+            ]
+            == "yes"
+        )
+    )
+
+    if both_primary_secondary.any():
+
+        bad = df.loc[
+            both_primary_secondary,
+            [
+                "dmel_cre_id",
+                "fbgn",
+                "gene_role",
+            ],
+        ]
+
+        raise SystemExit(
+            "ERROR: CRE x FBgn rows marked as both primary "
+            "and secondary candidates:\n\n"
+            + bad.to_string(
+                index=False
+            )
+        )
+
+
+    invalid_primary_role = (
+        (
+            df[
+                "gene_role"
+            ]
+            == "primary_candidate"
+        )
+        !=
+        (
+            df[
+                "is_primary_candidate"
+            ]
+            == "yes"
+        )
+    )
+
+    if invalid_primary_role.any():
+
+        bad = df.loc[
+            invalid_primary_role,
+            [
+                "dmel_cre_id",
+                "fbgn",
+                "gene_role",
+                "is_primary_candidate",
+            ],
+        ]
+
+        raise SystemExit(
+            "ERROR: primary gene-role flags are inconsistent:\n\n"
+            + bad.to_string(
+                index=False
+            )
+        )
+
+
+    invalid_secondary_role = (
+        (
+            df[
+                "gene_role"
+            ]
+            == "secondary_candidate"
+        )
+        !=
+        (
+            df[
+                "is_secondary_candidate"
+            ]
+            == "yes"
+        )
+    )
+
+    if invalid_secondary_role.any():
+
+        bad = df.loc[
+            invalid_secondary_role,
+            [
+                "dmel_cre_id",
+                "fbgn",
+                "gene_role",
+                "is_secondary_candidate",
+            ],
+        ]
+
+        raise SystemExit(
+            "ERROR: secondary gene-role flags are inconsistent:\n\n"
+            + bad.to_string(
+                index=False
+            )
+        )
+
+
+    # ========================================================
+    # Numeric CRE-support columns
+    # ========================================================
+
+    numeric_columns = [
         "n_total_tier1_clades",
         "n_focal_tier1_clades",
         "n_secondary_only_clades",
-    ]:
+    ]
+
+    for column in numeric_columns:
+
+        missing = (
+            df[
+                column
+            ]
+            .astype(str)
+            .str.strip()
+            .isin({
+                "",
+                "NA",
+                "na",
+                "nan",
+                "None",
+            })
+        )
+
+        if missing.any():
+
+            bad = (
+                df.loc[
+                    missing,
+                    [
+                        "dmel_cre_id",
+                        "fbgn",
+                        column,
+                    ],
+                ]
+                .drop_duplicates()
+            )
+
+            raise SystemExit(
+                f"ERROR: missing values in required numeric "
+                f"column '{column}':\n\n"
+                + bad.to_string(
+                    index=False
+                )
+            )
 
         df[
             column
@@ -421,22 +872,120 @@ def main():
             df[
                 column
             ],
-            errors="coerce",
+            errors="raise",
+        )
+
+        non_integer = (
+            df[
+                column
+            ]
+            % 1
+            != 0
+        )
+
+        if non_integer.any():
+
+            raise SystemExit(
+                "ERROR: non-integer values found in "
+                f"{column}."
+            )
+
+        if (
+            df[
+                column
+            ]
+            < 0
+        ).any():
+
+            raise SystemExit(
+                "ERROR: negative values found in "
+                f"{column}."
+            )
+
+        df[
+            column
+        ] = df[
+            column
+        ].astype(
+            int
+        )
+
+
+    # --------------------------------------------------------
+    # Total support must equal focal + secondary-only support
+    # --------------------------------------------------------
+
+    inconsistent_counts = (
+        df[
+            "n_total_tier1_clades"
+        ]
+        !=
+        (
+            df[
+                "n_focal_tier1_clades"
+            ]
+            +
+            df[
+                "n_secondary_only_clades"
+            ]
+        )
+    )
+
+    if inconsistent_counts.any():
+
+        bad = (
+            df.loc[
+                inconsistent_counts,
+                [
+                    "dmel_cre_id",
+                    "n_total_tier1_clades",
+                    "n_focal_tier1_clades",
+                    "n_secondary_only_clades",
+                ],
+            ]
+            .drop_duplicates()
+        )
+
+        raise SystemExit(
+            "ERROR: inconsistent Tier-1 clade counts:\n\n"
+            + bad.to_string(
+                index=False
+            )
         )
 
 
     # ========================================================
-    # Derived CRE-level flags
-    # ============================================================
+    # Validate repeated CRE-level information
+    # ========================================================
 
+    validate_cre_level_consistency(
+        df,
+        [
+            "candidate_priority",
+            "downstream_priority",
+            "n_total_tier1_clades",
+            "n_focal_tier1_clades",
+            "n_secondary_only_clades",
+            "tier1_clades",
+            "gene_assignment_qc",
+        ],
+    )
+
+
+    # ========================================================
+    # Derived CRE-level support flags
+    # ========================================================
+
+    # Recurrence is inherited from the explicit candidate
+    # priority assigned in Step 04 rather than redefined here.
     df[
         "is_recurrent_cre"
-    ] = (
-        df[
-            "n_total_tier1_clades"
-        ]
-        >= 2
+    ] = df[
+        "candidate_priority"
+    ].isin(
+        RECURRENT_CANDIDATE_PRIORITIES
     )
+
 
     df[
         "has_focal_support"
@@ -447,6 +996,7 @@ def main():
         >= 1
     )
 
+
     df[
         "is_high_priority_cre"
     ] = (
@@ -456,6 +1006,7 @@ def main():
         == "high"
     )
 
+
     df[
         "is_medium_priority_cre"
     ] = (
@@ -464,6 +1015,7 @@ def main():
         ]
         == "medium"
     )
+
 
     df[
         "is_exploratory_cre"
@@ -477,7 +1029,7 @@ def main():
 
     # ========================================================
     # Gene-level aggregation
-    # ============================================================
+    # ========================================================
 
     gene_rows = []
 
@@ -488,11 +1040,16 @@ def main():
         )
     ):
 
+        # ----------------------------------------------------
+        # CRE sets associated with this gene
+        # ----------------------------------------------------
+
         cre_ids = sorted(
             sub[
                 "dmel_cre_id"
             ].unique()
         )
+
 
         primary_cre_ids = sorted(
             sub.loc[
@@ -504,6 +1061,7 @@ def main():
             ].unique()
         )
 
+
         secondary_cre_ids = sorted(
             sub.loc[
                 sub[
@@ -514,6 +1072,18 @@ def main():
             ].unique()
         )
 
+
+        reference_target_cre_ids = sorted(
+            sub.loc[
+                sub[
+                    "is_reference_target"
+                ]
+                == "yes",
+                "dmel_cre_id",
+            ].unique()
+        )
+
+
         recurrent_cre_ids = sorted(
             sub.loc[
                 sub[
@@ -522,6 +1092,7 @@ def main():
                 "dmel_cre_id",
             ].unique()
         )
+
 
         focal_supported_cre_ids = sorted(
             sub.loc[
@@ -532,6 +1103,7 @@ def main():
             ].unique()
         )
 
+
         high_priority_cre_ids = sorted(
             sub.loc[
                 sub[
@@ -541,6 +1113,7 @@ def main():
             ].unique()
         )
 
+
         medium_priority_cre_ids = sorted(
             sub.loc[
                 sub[
@@ -549,6 +1122,7 @@ def main():
                 "dmel_cre_id",
             ].unique()
         )
+
 
         exploratory_cre_ids = sorted(
             sub.loc[
@@ -561,18 +1135,75 @@ def main():
 
 
         # ----------------------------------------------------
-        # Aggregate clades across all CREs assigned to gene
+        # Gene-assignment QC support
         # ----------------------------------------------------
 
-        all_clades = split_pipe_values(
+        qc_pass_cre_ids = sorted(
+            sub.loc[
+                sub[
+                    "gene_assignment_qc"
+                ]
+                == "PASS",
+                "dmel_cre_id",
+            ].unique()
+        )
+
+
+        qc_flagged_cre_ids = sorted(
+            sub.loc[
+                sub[
+                    "gene_assignment_qc"
+                ]
+                != "PASS",
+                "dmel_cre_id",
+            ].unique()
+        )
+
+
+        qc_values = join_unique(
+            sub[
+                "gene_assignment_qc"
+            ]
+        )
+
+
+        qc_flags = split_delimited_values(
+            sub.loc[
+                sub[
+                    "gene_assignment_qc"
+                ]
+                != "PASS",
+                "gene_assignment_qc",
+            ],
+            ";",
+        )
+
+
+        # ----------------------------------------------------
+        # Aggregate clade support
+        # ----------------------------------------------------
+
+        all_clades = split_delimited_values(
             sub[
                 "tier1_clades"
+            ],
+            "|",
+        )
+
+
+        # ----------------------------------------------------
+        # Aggregate evidence classes
+        # ----------------------------------------------------
+
+        assignment_evidence_values = join_unique(
+            sub[
+                "assignment_evidence"
             ]
         )
 
 
         # ----------------------------------------------------
-        # Aggregate counts
+        # Counts
         # ----------------------------------------------------
 
         n_candidate_cres = len(
@@ -585,6 +1216,10 @@ def main():
 
         n_secondary_cres = len(
             secondary_cre_ids
+        )
+
+        n_reference_target_cres = len(
+            reference_target_cre_ids
         )
 
         n_recurrent_cres = len(
@@ -607,6 +1242,14 @@ def main():
             exploratory_cre_ids
         )
 
+        n_qc_pass_cres = len(
+            qc_pass_cre_ids
+        )
+
+        n_qc_flagged_cres = len(
+            qc_flagged_cre_ids
+        )
+
 
         # ----------------------------------------------------
         # Maximum support across CREs
@@ -615,35 +1258,41 @@ def main():
         max_total_tier1_clades = int(
             sub[
                 "n_total_tier1_clades"
-            ]
-            .max()
+            ].max()
         )
+
 
         max_focal_tier1_clades = int(
             sub[
                 "n_focal_tier1_clades"
-            ]
-            .max()
+            ].max()
         )
+
 
         max_secondary_only_clades = int(
             sub[
                 "n_secondary_only_clades"
-            ]
-            .max()
+            ].max()
         )
 
 
         # ----------------------------------------------------
-        # Gene-level primary support
+        # Gene-level support flags
         # ----------------------------------------------------
 
         has_primary_assignment = (
-            n_primary_cres > 0
+            n_primary_cres
+            > 0
         )
 
         has_secondary_assignment = (
-            n_secondary_cres > 0
+            n_secondary_cres
+            > 0
+        )
+
+        has_reference_target_support = (
+            n_reference_target_cres
+            > 0
         )
 
 
@@ -652,8 +1301,36 @@ def main():
         # ----------------------------------------------------
 
         gene_rows.append({
+
             "fbgn":
                 fbgn,
+
+            # --------------------------------------------
+            # Strongest observed evidence
+            # --------------------------------------------
+
+            "best_downstream_priority":
+                best_priority(
+                    sub[
+                        "downstream_priority"
+                    ],
+                    DOWNSTREAM_PRIORITY_ORDER,
+                ),
+
+            "best_candidate_priority":
+                best_priority(
+                    sub[
+                        "candidate_priority"
+                    ],
+                    CANDIDATE_PRIORITY_ORDER,
+                ),
+
+            "best_gene_role":
+                best_gene_role(
+                    sub[
+                        "gene_role"
+                    ]
+                ),
 
             # --------------------------------------------
             # Overall CRE support
@@ -668,7 +1345,7 @@ def main():
                 ),
 
             # --------------------------------------------
-            # Primary / secondary gene-role support
+            # Primary / secondary support
             # --------------------------------------------
 
             "n_primary_cres":
@@ -687,25 +1364,16 @@ def main():
                     secondary_cre_ids
                 ),
 
-            "best_gene_role":
-                best_gene_role(
-                    sub[
-                        "gene_role"
-                    ]
-                ),
+            # --------------------------------------------
+            # Original SCRMshaw target support
+            # --------------------------------------------
 
-            "has_primary_assignment":
-                (
-                    "yes"
-                    if has_primary_assignment
-                    else "no"
-                ),
+            "n_reference_target_cres":
+                n_reference_target_cres,
 
-            "has_secondary_assignment":
-                (
-                    "yes"
-                    if has_secondary_assignment
-                    else "no"
+            "reference_target_cre_ids":
+                "|".join(
+                    reference_target_cre_ids
                 ),
 
             # --------------------------------------------
@@ -733,7 +1401,7 @@ def main():
                 ),
 
             # --------------------------------------------
-            # Downstream priorities
+            # Downstream-priority support
             # --------------------------------------------
 
             "n_high_priority_cres":
@@ -761,26 +1429,6 @@ def main():
                 ),
 
             # --------------------------------------------
-            # Best observed priority
-            # --------------------------------------------
-
-            "best_candidate_priority":
-                best_priority(
-                    sub[
-                        "candidate_priority"
-                    ],
-                    CANDIDATE_PRIORITY_ORDER,
-                ),
-
-            "best_downstream_priority":
-                best_priority(
-                    sub[
-                        "downstream_priority"
-                    ],
-                    DOWNSTREAM_PRIORITY_ORDER,
-                ),
-
-            # --------------------------------------------
             # Clade support
             # --------------------------------------------
 
@@ -802,6 +1450,66 @@ def main():
 
             "max_secondary_only_clades_per_cre":
                 max_secondary_only_clades,
+
+            # --------------------------------------------
+            # QC support
+            # --------------------------------------------
+
+            "n_qc_pass_cres":
+                n_qc_pass_cres,
+
+            "qc_pass_cre_ids":
+                "|".join(
+                    qc_pass_cre_ids
+                ),
+
+            "n_qc_flagged_cres":
+                n_qc_flagged_cres,
+
+            "qc_flagged_cre_ids":
+                "|".join(
+                    qc_flagged_cre_ids
+                ),
+
+            "gene_assignment_qc_values":
+                qc_values,
+
+            "gene_assignment_qc_flags":
+                ";".join(
+                    qc_flags
+                ),
+
+            # --------------------------------------------
+            # Assignment evidence
+            # --------------------------------------------
+
+            "assignment_evidence":
+                assignment_evidence_values,
+
+            # --------------------------------------------
+            # Gene-level support flags
+            # --------------------------------------------
+
+            "has_primary_assignment":
+                (
+                    "yes"
+                    if has_primary_assignment
+                    else "no"
+                ),
+
+            "has_secondary_assignment":
+                (
+                    "yes"
+                    if has_secondary_assignment
+                    else "no"
+                ),
+
+            "has_reference_target_support":
+                (
+                    "yes"
+                    if has_reference_target_support
+                    else "no"
+                ),
         })
 
 
@@ -813,54 +1521,18 @@ def main():
         gene_rows
     )
 
-
     if out.empty:
+
         raise SystemExit(
             "ERROR: no gene-level rows generated."
         )
 
 
     # ========================================================
-    # Gene-level prioritization support variables
-    #
-    # These are descriptive, not a new biological
-    # classification.
-    # ========================================================
-
-    out[
-        "gene_support_score"
-    ] = (
-        4
-        * out[
-            "n_high_priority_cres"
-        ]
-        +
-        2
-        * out[
-            "n_medium_priority_cres"
-        ]
-        +
-        out[
-            "n_exploratory_cres"
-        ]
-        +
-        2
-        * out[
-            "n_recurrent_cres"
-        ]
-        +
-        out[
-            "n_focal_supported_cres"
-        ]
-        +
-        out[
-            "n_primary_cres"
-        ]
-    )
-
-
-    # ========================================================
     # Stable deterministic ordering
+    #
+    # No weighted support score is used. Genes are ordered by
+    # explicit, interpretable evidence variables.
     # ========================================================
 
     out[
@@ -898,16 +1570,18 @@ def main():
         .sort_values(
             [
                 "_best_downstream_rank",
-                "gene_support_score",
                 "n_high_priority_cres",
                 "n_recurrent_cres",
                 "n_focal_supported_cres",
+                "n_primary_cres",
                 "n_candidate_cres",
+                "n_unique_tier1_clades",
                 "_best_candidate_rank",
                 "fbgn",
             ],
             ascending=[
                 True,
+                False,
                 False,
                 False,
                 False,
@@ -944,13 +1618,11 @@ def main():
 
 
     # ========================================================
-    # Useful column order
+    # Explicit final column order
     # ========================================================
 
     front = [
         "fbgn",
-
-        "gene_support_score",
 
         "best_downstream_priority",
         "best_candidate_priority",
@@ -964,6 +1636,9 @@ def main():
 
         "n_secondary_cres",
         "secondary_cre_ids",
+
+        "n_reference_target_cres",
+        "reference_target_cre_ids",
 
         "n_recurrent_cres",
         "recurrent_cre_ids",
@@ -987,8 +1662,20 @@ def main():
         "max_focal_tier1_clades_per_cre",
         "max_secondary_only_clades_per_cre",
 
+        "n_qc_pass_cres",
+        "qc_pass_cre_ids",
+
+        "n_qc_flagged_cres",
+        "qc_flagged_cre_ids",
+
+        "gene_assignment_qc_values",
+        "gene_assignment_qc_flags",
+
+        "assignment_evidence",
+
         "has_primary_assignment",
         "has_secondary_assignment",
+        "has_reference_target_support",
     ]
 
 
@@ -1006,11 +1693,173 @@ def main():
 
 
     # ========================================================
-    # Write
+    # Write gene-level summary
     # ========================================================
 
     out.to_csv(
         args.out,
+        sep="\t",
+        index=False,
+    )
+
+
+    # ========================================================
+    # Run metadata
+    # ========================================================
+
+    unique_input_cres = (
+        df[
+            "dmel_cre_id"
+        ].nunique()
+    )
+
+
+    flagged_input_cres = (
+        df.loc[
+            df[
+                "gene_assignment_qc"
+            ]
+            != "PASS",
+            "dmel_cre_id",
+        ]
+        .nunique()
+    )
+
+
+    metadata = pd.DataFrame([
+        {
+            "script":
+                Path(
+                    __file__
+                ).name,
+
+            "run_timestamp":
+                datetime.now()
+                .astimezone()
+                .isoformat(),
+
+            "python_version":
+                sys.version.split()[0],
+
+            "pandas_version":
+                pd.__version__,
+
+            "platform":
+                platform.platform(),
+
+            "input_file":
+                str(
+                    args.input.resolve()
+                ),
+
+            "input_sha256":
+                file_sha256(
+                    args.input
+                ),
+
+            "output_file":
+                str(
+                    args.out.resolve()
+                ),
+
+            "output_sha256":
+                file_sha256(
+                    args.out
+                ),
+
+            "n_cre_fbgn_input_rows":
+                len(
+                    df
+                ),
+
+            "n_unique_candidate_cres":
+                unique_input_cres,
+
+            "n_unique_candidate_genes":
+                len(
+                    out
+                ),
+
+            "n_input_cres_with_qc_flags":
+                int(
+                    flagged_input_cres
+                ),
+
+            "n_genes_with_primary_support":
+                int(
+                    (
+                        out[
+                            "has_primary_assignment"
+                        ]
+                        == "yes"
+                    ).sum()
+                ),
+
+            "n_genes_with_secondary_support":
+                int(
+                    (
+                        out[
+                            "has_secondary_assignment"
+                        ]
+                        == "yes"
+                    ).sum()
+                ),
+
+            "n_genes_with_reference_target_support":
+                int(
+                    (
+                        out[
+                            "has_reference_target_support"
+                        ]
+                        == "yes"
+                    ).sum()
+                ),
+
+            "n_genes_with_flagged_cre_evidence":
+                int(
+                    (
+                        out[
+                            "n_qc_flagged_cres"
+                        ]
+                        > 0
+                    ).sum()
+                ),
+
+            "n_genes_with_high_priority_support":
+                int(
+                    (
+                        out[
+                            "n_high_priority_cres"
+                        ]
+                        > 0
+                    ).sum()
+                ),
+
+            "n_genes_with_recurrent_support":
+                int(
+                    (
+                        out[
+                            "n_recurrent_cres"
+                        ]
+                        > 0
+                    ).sum()
+                ),
+
+            "n_genes_with_focal_support":
+                int(
+                    (
+                        out[
+                            "n_focal_supported_cres"
+                        ]
+                        > 0
+                    ).sum()
+                ),
+        }
+    ])
+
+
+    metadata.to_csv(
+        args.metadata_out,
         sep="\t",
         index=False,
     )
@@ -1032,12 +1881,17 @@ def main():
 
     print(
         f"Unique candidate CREs: "
-        f"{df['dmel_cre_id'].nunique()}"
+        f"{unique_input_cres}"
     )
 
     print(
         f"Unique candidate genes: "
         f"{len(out)}"
+    )
+
+    print(
+        f"CREs with gene-assignment QC flags: "
+        f"{flagged_input_cres}"
     )
 
 
@@ -1054,6 +1908,10 @@ def main():
         .to_string()
     )
 
+
+    # --------------------------------------------------------
+    # Genes supported by multiple candidate CREs
+    # --------------------------------------------------------
 
     print()
     print(
@@ -1081,7 +1939,7 @@ def main():
             multi[
                 [
                     "fbgn",
-                    "gene_support_score",
+                    "best_downstream_priority",
                     "n_candidate_cres",
                     "n_primary_cres",
                     "n_recurrent_cres",
@@ -1096,6 +1954,10 @@ def main():
         )
 
 
+    # --------------------------------------------------------
+    # Top gene-level candidates
+    # --------------------------------------------------------
+
     print()
     print(
         "Top gene-level candidates:"
@@ -1105,15 +1967,17 @@ def main():
         out[
             [
                 "fbgn",
-                "gene_support_score",
                 "best_downstream_priority",
                 "best_candidate_priority",
                 "best_gene_role",
                 "n_candidate_cres",
+                "n_primary_cres",
+                "n_reference_target_cres",
                 "n_recurrent_cres",
                 "n_focal_supported_cres",
                 "n_high_priority_cres",
                 "n_unique_tier1_clades",
+                "n_qc_flagged_cres",
             ]
         ]
         .head(
@@ -1129,6 +1993,13 @@ def main():
     print(
         f"Wrote gene-level summary:\n"
         f"{args.out}"
+    )
+
+    print()
+
+    print(
+        f"Wrote metadata:\n"
+        f"{args.metadata_out}"
     )
 
 
