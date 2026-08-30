@@ -74,6 +74,16 @@ AXTCHAIN_MIN_SCORE="${AXTCHAIN_MIN_SCORE:-3000}"
 LIFTOVER_MIN_MATCH="${LIFTOVER_MIN_MATCH:-0.50}"
 
 # ======================================================================
+# SLURM resources
+# ======================================================================
+
+SLURM_NODE="${SLURM_NODE:-abacus-2}"
+
+WGA_MEM="${WGA_MEM:-5G}"
+WGA_CPUS="${WGA_CPUS:-1}"
+MAX_WGA_JOBS="${MAX_WGA_JOBS:-10}"
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -113,3 +123,8 @@ export AXTCHAIN_LINEAR_GAP
 export AXTCHAIN_MIN_SCORE
 
 export LIFTOVER_MIN_MATCH
+
+export SLURM_NODE
+export WGA_MEM
+export WGA_CPUS
+export MAX_WGA_JOBS
