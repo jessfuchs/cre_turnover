@@ -37,7 +37,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PIPELINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-source "$PIPELINE_ROOT/config/config.sh"
+source "$PIPELINE_ROOT/config/ortholog_config.sh"
 
 
 # ------------------------------------------------------------
