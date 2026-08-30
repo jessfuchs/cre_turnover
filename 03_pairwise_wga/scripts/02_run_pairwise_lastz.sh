@@ -75,15 +75,15 @@ echo "Output:    $OUT"
 lastz \
     "$REF_2BIT[multiple]" \
     "$QRY_2BIT[multiple]" \
-    --format=axt \
-    --ambiguous=iupac \
-    --notransition \
-    --step=20 \
-    --seed=12of19 \
-    --hspthresh=2200 \
-    --gappedthresh=4000 \
-    --ydrop=3400 \
-    --inner=2000 \
+    --format="$LASTZ_FORMAT" \
+    --ambiguous="$LASTZ_AMBIGUOUS" \
+    $([[ "$LASTZ_NOTRANSITION" == "1" ]] && echo "--notransition") \
+    --step="$LASTZ_STEP" \
+    --seed="$LASTZ_SEED" \
+    --hspthresh="$LASTZ_HSPTHRESH" \
+    --gappedthresh="$LASTZ_GAPPEDTHRESH" \
+    --ydrop="$LASTZ_YDROP" \
+    --inner="$LASTZ_INNER" \
     --output="$AXT"
 
 echo "[$(date)] LASTZ done"
@@ -93,8 +93,8 @@ echo "[$(date)] LASTZ done"
 # ----------------------------------------------------------
 
 axtChain \
-    -linearGap=medium \
-    -minScore=3000 \
+    -linearGap="$AXTCHAIN_LINEAR_GAP" \
+    -minScore="$AXTCHAIN_MIN_SCORE" \
     "$AXT" \
     "$REF_2BIT" \
     "$QRY_2BIT" \
