@@ -44,32 +44,12 @@ import pandas as pd
 # ============================================================
 
 def parse_args():
-
     parser = argparse.ArgumentParser(
-        description=(
-            "Build a gene-level summary of Tier-1 CRE "
-            "candidates from the exploded CRE x FBgn table."
-        )
+        description="Build a gene-level summary from the exploded Tier-1 CRE x FBgn table."
     )
-
-    parser.add_argument(
-        "--input",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        required=True,
-    )
-
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--metadata-out", type=Path, required=True)
     return parser.parse_args()
 
 
