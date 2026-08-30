@@ -37,7 +37,6 @@ FOCAL_CLADES_FILE="${CONFIG_DIR}/focal_clades.tsv"
 # ======================================================================
 
 FOCAL_CLADES_RESULTS_DIR="${RESULTS_DIR}/focal_clades"
-
 FOCAL_CLADE_SUMMARY="${RESULTS_DIR}/focal_clade_summary.tsv"
 
 
@@ -46,7 +45,6 @@ FOCAL_CLADE_SUMMARY="${RESULTS_DIR}/focal_clade_summary.tsv"
 # ======================================================================
 
 REFERENCE_SPECIES="${REFERENCE_SPECIES:-d_melanogaster}"
-
 EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 
 
@@ -55,13 +53,9 @@ EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 # ======================================================================
 
 SECONDARY_RESULTS_DIR="${RESULTS_DIR}/secondary_clades"
-
 SECONDARY_TIER1_ALL="${SECONDARY_RESULTS_DIR}/secondary_tier1_all_clades.tsv"
-
 SECONDARY_TIER1_RECURRENT="${SECONDARY_RESULTS_DIR}/secondary_tier1_recurrent_cres.tsv"
-
 SECONDARY_CLADE_SUMMARY="${SECONDARY_RESULTS_DIR}/secondary_clade_summary.tsv"
-
 SECONDARY_RUN_METADATA="${SECONDARY_RESULTS_DIR}/secondary_tier1_run_metadata.tsv"
 
 # Minimum number of clades required to classify a CRE as recurrent.
@@ -82,11 +76,8 @@ TURNOVER_BY_SPECIES_DIR="${CLASSIFICATION_ROOT}/results/turnover_by_species"
 
 # Tier-1 QC outputs.
 TIER1_QC_DIR="${RESULTS_DIR}/qc"
-
 TIER1_QC_SUMMARY="${TIER1_QC_DIR}/tier1_candidate_qc_summary.tsv"
-
 TIER1_QC_DETAILS="${TIER1_QC_DIR}/tier1_candidate_qc_details.tsv"
-
 TIER1_QC_METADATA="${TIER1_QC_DIR}/tier1_candidate_qc_metadata.tsv"
 
 # Minimum reciprocal overlap required for a positional CRE match.
@@ -99,11 +90,8 @@ TIER1_QC_MIN_RECIPROCAL_OVERLAP="${TIER1_QC_MIN_RECIPROCAL_OVERLAP:-0.50}"
 # ======================================================================
 
 TIER1_TABLES_DIR="${RESULTS_DIR}/tables"
-
 TIER1_CLADE_EVIDENCE="${TIER1_TABLES_DIR}/tier1_candidate_clade_evidence.tsv"
-
 TIER1_PRIORITIZED="${TIER1_TABLES_DIR}/tier1_candidates_prioritized.tsv"
-
 TIER1_PRIORITIZATION_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_prioritization_metadata.tsv"
 
 # Minimum number of focal Tier-1 clades required to classify
@@ -129,8 +117,15 @@ TIER1_GENE_DISTANCE_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_gene_distances
 # ======================================================================
 
 TIER1_GENE_ASSIGNMENTS="${TIER1_TABLES_DIR}/tier1_candidate_gene_assignments.tsv"
-
 TIER1_GENE_ASSIGNMENT_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_gene_assignments_metadata.tsv"
+
+
+# ======================================================================
+# Candidate FBgn expansion
+# ======================================================================
+
+TIER1_FBGN_EXPLODED="${TIER1_TABLES_DIR}/tier1_candidate_fbgn_exploded.tsv"
+TIER1_FBGN_EXPLODED_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_fbgn_exploded_metadata.tsv"
 
 
 # ======================================================================
@@ -181,4 +176,7 @@ export TIER1_GENE_DISTANCE_METADATA
 
 export TIER1_GENE_ASSIGNMENTS
 export TIER1_GENE_ASSIGNMENT_METADATA
+
+export TIER1_FBGN_EXPLODED
+export TIER1_FBGN_EXPLODED_METADATA
 
