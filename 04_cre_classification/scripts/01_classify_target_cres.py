@@ -1,5 +1,27 @@
 #!/usr/bin/env python3
 
+#!/usr/bin/env python3
+
+# ============================================================
+# 01 - Classify D. melanogaster reference CREs
+#
+# Purpose:
+#   Classify each reference CRE in one target species based on
+#   positional conservation and local same-FBgn CRE predictions.
+#
+# Input:
+#   - dmel_reference_cres.tsv
+#   - lifted reference CRE BED
+#   - SO_all_species_fbgn.tsv
+#
+# Output:
+#   - species-specific CRE classification TSV
+#
+# Configuration:
+#   Parameters and paths are supplied by the pipeline wrapper
+#   using config/classification_config.sh.
+# ============================================================
+
 import argparse
 import csv
 from pathlib import Path
