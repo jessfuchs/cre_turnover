@@ -129,6 +129,14 @@ TIER1_FBGN_EXPLODED_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_fbgn_exploded_
 
 
 # ======================================================================
+# Gene-level candidate summary
+# ======================================================================
+
+TIER1_GENE_LEVEL_SUMMARY="${TIER1_TABLES_DIR}/tier1_gene_level_summary.tsv"
+TIER1_GENE_LEVEL_METADATA="${TIER1_TABLES_DIR}/tier1_gene_level_summary_metadata.tsv"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -179,4 +187,8 @@ export TIER1_GENE_ASSIGNMENT_METADATA
 
 export TIER1_FBGN_EXPLODED
 export TIER1_FBGN_EXPLODED_METADATA
+
+export TIER1_GENE_LEVEL_SUMMARY
+export TIER1_GENE_LEVEL_METADATA
+
 
