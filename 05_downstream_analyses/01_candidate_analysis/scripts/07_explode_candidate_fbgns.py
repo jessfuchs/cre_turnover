@@ -32,33 +32,10 @@ import pandas as pd
 # ============================================================
 
 def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Convert Tier-1 CRE candidate gene assignments "
-            "into one row per CRE x FBgn for downstream "
-            "gene-level analysis."
-        )
-    )
-
-    parser.add_argument(
-        "--input",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        required=True,
-    )
-
+    parser = argparse.ArgumentParser(description='Convert Tier-1 CRE candidate gene assignments into one row per CRE x FBgn for downstream gene-level analysis.')
+    parser.add_argument('--input', type=Path, required=True)
+    parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--metadata-out', type=Path, required=True)
     return parser.parse_args()
 
 # ============================================================
@@ -95,16 +72,9 @@ def require_file(path):
         )
 
 
-def require_columns(
-    df,
-    required,
-    label,
-):
+def require_columns(df, required, label):
 
-    missing = sorted(
-        set(required)
-        - set(df.columns)
-    )
+    missing = sorted(set(required) - set(df.columns))
 
     if missing:
         raise SystemExit(
@@ -120,14 +90,8 @@ def normalize_missing(value):
 
     value = str(value).strip()
 
-    if value.lower() in {
-        "",
-        "na",
-        "nan",
-        "none",
-    }:
+    if value.lower() in {"", "na", "nan", "none"}:
         return "NA"
-
     return value
 
 
@@ -136,9 +100,7 @@ def parse_fbgns(value):
     Parse pipe-separated FBgn identifiers.
     """
 
-    value = normalize_missing(
-        value
-    )
+    value = normalize_missing(value)
 
     if value == "NA":
         return []
