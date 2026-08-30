@@ -33,86 +33,24 @@ import pandas as pd
 # ============================================================
 
 def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "QC focal and secondary Tier-1 CRE candidates "
-            "against detailed per-species CRE classifications."
-        )
-    )
-
-    parser.add_argument(
-        "--focal-dir",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--secondary",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--reference",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--turnover-dir",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-summary",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-detail",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--min-reciprocal-overlap",
-        type=float,
-        default=0.50,
-    )
-
-    parser.add_argument(
-        "--expected-reference-cres",
-        type=int,
-        default=None,
-    )
-
-    parser.add_argument(
-        "--recurrence-min-clades",
-        type=int,
-        default=2,
-    )
-
+    parser = argparse.ArgumentParser(description='QC focal and secondary Tier-1 CRE candidates against detailed per-species CRE classifications.')
+    parser.add_argument('--focal-dir', type=Path, required=True)
+    parser.add_argument('--secondary', type=Path, required=True)
+    parser.add_argument('--reference', type=Path, required=True)
+    parser.add_argument('--turnover-dir', type=Path, required=True)
+    parser.add_argument('--out-summary', type=Path, required=True)
+    parser.add_argument('--out-detail', type=Path, required=True)
+    parser.add_argument('--metadata-out', type=Path, required=True)
+    parser.add_argument('--min-reciprocal-overlap', type=float, default=0.5)
+    parser.add_argument('--expected-reference-cres', type=int, default=None)
+    parser.add_argument('--recurrence-min-clades', type=int, default=2)
     return parser.parse_args()
-    
 
 # ============================================================
 # CRE-state definitions
 # ============================================================
 
-VALID_TIER1_STATES = {
-    "present",
-    "turnover_candidate",
-}
-
+VALID_TIER1_STATES = {"present", "turnover_candidate"}
 
 # ============================================================
 # Required columns
