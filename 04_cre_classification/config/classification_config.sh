@@ -73,6 +73,9 @@ PHYLOGENY_SCRIPTS_DIR="${PHYLOGENY_ROOT}/scripts"
 # Adjust filenames to the files actually present in your project.
 TREE_FILE="${PHYLOGENY_RESULTS_DIR}/301Fly_HOG_UCLDtree_40species.nw"
 
+# Climate zone for each species.
+SPECIES_TRAITS="${PHYLOGENY_ROOT}/data/species_traits.tsv"
+
 SPECIES_ORDER_FILE="${PHYLOGENY_RESULTS_DIR}/species_order_40_tree_names.txt"
 
 SPECIES_METADATA="${PHYLOGENY_DATA_DIR}/species_metadata.tsv"
@@ -88,6 +91,13 @@ QC_MIN_MAPPED_FOR_OVERLAP_CHECK="${QC_MIN_MAPPED_FOR_OVERLAP_CHECK:-100}"
 QC_HIGH_MAPPING_RATE="${QC_HIGH_MAPPING_RATE:-0.90}"
 
 SPECIES_QC_SUMMARY="${RESULTS_DIR}/species_qc_summary.tsv"
+
+# ======================================================================
+# Clade heatmap outputs
+# ======================================================================
+
+FIGURES_DIR="${RESULTS_DIR}/figures"
+FOCAL_CLADE_CRE_TABLE="${RESULTS_DIR}/focal_clade_heatmap_CREs.tsv"
 
 # ======================================================================
 # Export
@@ -121,6 +131,7 @@ export PHYLOGENY_DATA_DIR
 export PHYLOGENY_RESULTS_DIR
 export PHYLOGENY_SCRIPTS_DIR
 export TREE_FILE
+export SPECIES_TRAITS
 export SPECIES_ORDER_FILE
 export SPECIES_METADATA
 
@@ -130,3 +141,6 @@ export QC_MIN_SEQID_OVERLAP
 export QC_MIN_MAPPED_FOR_OVERLAP_CHECK
 export QC_HIGH_MAPPING_RATE
 export SPECIES_QC_SUMMARY
+
+export FIGURES_DIR
+export FOCAL_CLADE_CRE_TABLE
