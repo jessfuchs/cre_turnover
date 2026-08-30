@@ -6,23 +6,23 @@ set -euo pipefail
 # 01 - QC of D. melanogaster ortholog annotations
 #
 # Purpose:
-#   Validate that all species GFF3 files contain usable
-#   dmel_orthologs annotations before ortholog mapping starts.
+#   Validate that species-specific GFF3 annotations contain
+#   usable D. melanogaster ortholog assignments before the
+#   ortholog-mapping workflow is executed.
 #
 # Source of truth:
-#   external_scrmshaw/combined_manifest.tsv
+#   01_scrmshaw/external/combined_manifest.tsv
 #
 # Per species, this script checks:
-#   - GFF exists and is non-empty
+#   - the GFF3 file exists and is non-empty
 #   - mRNA features are present
-#   - dmel_orthologs= attribute occurs
-#   - at least one non-empty/non-NA Dmel ortholog exists
-#   - fraction of mRNAs with a Dmel ortholog exceeds a
+#   - the dmel_orthologs attribute occurs
+#   - at least one non-empty/non-NA Dmel ortholog is present
+#   - the fraction of mRNAs with a Dmel ortholog exceeds a
 #     conservative technical minimum
 #
 # Output:
-#   mapping_orthologs/ortholog_results/
-#       dmel_ortholog_annotation_qc.tsv
+#   ortholog_results/dmel_ortholog_annotation_qc.tsv
 #
 # Exit status:
 #   0 = QC passed
@@ -31,31 +31,21 @@ set -euo pipefail
 
 
 # ------------------------------------------------------------
-# Paths
+# Configuration
 # ------------------------------------------------------------
 
-PROJECT="$HOME/cre_turnover/project"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PIPELINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-GENERATED_ROOT="$PROJECT/scrmshaw_pipeline"
-EXTERNAL_ROOT="$PROJECT/external_scrmshaw"
-MAPPING_ROOT="$PROJECT/mapping_orthologs"
-
-MANIFEST="$EXTERNAL_ROOT/combined_manifest.tsv"
-
-ORTHO_RESULTS="$MAPPING_ROOT/ortholog_results"
-
-OUTPUT="$ORTHO_RESULTS/dmel_ortholog_annotation_qc.tsv"
+source "$PIPELINE_ROOT/config/config.sh"
 
 
 # ------------------------------------------------------------
-# Expected final project state
+# Input and output paths
 # ------------------------------------------------------------
 
-EXPECTED_SPECIES=40
-
-# Conservative technical sanity threshold only.
-# This is NOT intended as a biological filtering criterion.
-MIN_FRACTION=0.10
+MANIFEST="$COMBINED_MANIFEST"
+OUTPUT="$DMEL_ORTHOLOG_QC"
 
 
 # ============================================================
@@ -68,7 +58,7 @@ MIN_FRACTION=0.10
     exit 1
 }
 
-mkdir -p "$ORTHO_RESULTS"
+mkdir -p "$ORTHOLOG_RESULTS_DIR"
 
 
 # ============================================================
@@ -94,19 +84,22 @@ n_failed=0
 # Header
 # ============================================================
 
-echo "Manifest      : $MANIFEST"
-echo "Output        : $OUTPUT"
+echo "============================================================"
+echo "QC of D. melanogaster ortholog annotations"
+echo "============================================================"
+echo "Manifest         : $MANIFEST"
+echo "Output           : $OUTPUT"
 echo "Expected species : $EXPECTED_SPECIES"
-echo "Min. fraction : $MIN_FRACTION"
+echo "Min. fraction    : $MIN_ORTHOLOG_FRACTION"
 echo
 
 
 # ============================================================
-# Read manifest robustly
+# Read manifest
 #
-# Python parses the TSV.
-# A pipe character is used only for transfer into Bash to avoid
-# accidental problems with Bash IFS/tab handling.
+# Python is used to parse the TSV robustly. A pipe character is
+# used only for transfer into Bash to avoid problems associated
+# with tab handling in Bash IFS.
 # ============================================================
 
 while IFS='|' read -r slug species source; do
@@ -117,17 +110,17 @@ while IFS='|' read -r slug species source; do
 
 
     # --------------------------------------------------------
-    # Locate species GFF
+    # Locate species-specific GFF3 annotation
     # --------------------------------------------------------
 
     case "$source" in
 
         generated)
-            gff="$GENERATED_ROOT/data/selected/$slug/annotation.gff3"
+            gff="$GENERATED_GFF_ROOT/$slug/annotation.gff3"
             ;;
 
         external)
-            gff="$EXTERNAL_ROOT/external_data/selected/$slug/annotation.gff3"
+            gff="$EXTERNAL_GFF_ROOT/$slug/annotation.gff3"
             ;;
 
         *)
@@ -146,12 +139,12 @@ while IFS='|' read -r slug species source; do
 
 
     # --------------------------------------------------------
-    # Check GFF existence
+    # Check GFF3 existence
     # --------------------------------------------------------
 
     if [[ ! -s "$gff" ]]; then
 
-        echo "ERROR: GFF missing or empty for $slug:" >&2
+        echo "ERROR: GFF3 missing or empty for $slug:" >&2
         echo "  $gff" >&2
 
         printf "%s\t%s\t%s\t0\t0\t0\t0\t0.0000\tFAIL_MISSING_GFF\n" \
@@ -168,54 +161,57 @@ while IFS='|' read -r slug species source; do
 
 
     # --------------------------------------------------------
-    # Count mRNA and Dmel ortholog annotations
+    # Count mRNAs and Dmel ortholog annotations
     # --------------------------------------------------------
 
     result="$(
-    awk -F'\t' '
-        BEGIN {
-            total  = 0
-            attr   = 0
-            mapped = 0
-        }
+        awk -F'\t' '
+            BEGIN {
+                total  = 0
+                attr   = 0
+                mapped = 0
+            }
 
-        /^#/ {
-            next
-        }
+            /^#/ {
+                next
+            }
 
-        NF >= 9 && $3 == "mRNA" {
+            NF >= 9 && $3 == "mRNA" {
 
-            total++
+                total++
 
-            if ($9 ~ /(^|;)dmel_orthologs=/) {
+                if ($9 ~ /(^|;)dmel_orthologs=/) {
 
-                attr++
+                    attr++
 
-                if ($9 !~ /(^|;)dmel_orthologs=NA([;]|$)/ && $9 !~ /(^|;)dmel_orthologs=([;]|$)/) {
-                    mapped++
+                    if (
+                        $9 !~ /(^|;)dmel_orthologs=NA([;]|$)/ &&
+                        $9 !~ /(^|;)dmel_orthologs=([;]|$)/
+                    ) {
+                        mapped++
+                    }
                 }
             }
-        }
 
-        END {
+            END {
 
-            unmapped = total - mapped
+                unmapped = total - mapped
 
-            if (total > 0) {
-                fraction = mapped / total
-            } else {
-                fraction = 0
+                if (total > 0) {
+                    fraction = mapped / total
+                } else {
+                    fraction = 0
+                }
+
+                printf "%d\t%d\t%d\t%d\t%.6f\n",
+                    total,
+                    attr,
+                    mapped,
+                    unmapped,
+                    fraction
             }
-
-            printf "%d\t%d\t%d\t%d\t%.6f\n",
-                total,
-                attr,
-                mapped,
-                unmapped,
-                fraction
-        }
-    ' "$gff"
-)"
+        ' "$gff"
+    )"
 
     IFS=$'\t' read -r \
         total \
@@ -232,8 +228,8 @@ while IFS='|' read -r slug species source; do
 
     status="PASS"
 
-    # D. melanogaster is the reference species.
-    # It does not need dmel_orthologs annotations to map to itself.
+    # D. melanogaster is the reference species and therefore
+    # does not require dmel_orthologs annotations to map to itself.
     if [[ "$slug" == "d_melanogaster" ]]; then
 
         if [[ "$total" -eq 0 ]]; then
@@ -260,7 +256,7 @@ while IFS='|' read -r slug species source; do
 
     elif ! awk \
         -v f="$fraction" \
-        -v min="$MIN_FRACTION" \
+        -v min="$MIN_ORTHOLOG_FRACTION" \
         'BEGIN { exit !(f >= min) }'
     then
 
@@ -333,8 +329,8 @@ with open(
         if not slug:
             continue
 
-        # Internal separator only.
-        # Species names in this project do not contain "|".
+        # Internal separator only. Species names in this project
+        # are not expected to contain "|".
         print(f"{slug}|{species}|{source}")
 PY
 )
@@ -402,8 +398,8 @@ fi
 echo "============================================================"
 echo "QC PASSED"
 echo "============================================================"
-echo "Dmel ortholog annotations are technically sufficient"
-echo "for downstream ortholog mapping."
+echo "D. melanogaster ortholog annotations are technically"
+echo "sufficient for downstream ortholog mapping."
 echo
 echo "Warnings are non-fatal and are retained in the QC report."
 echo
