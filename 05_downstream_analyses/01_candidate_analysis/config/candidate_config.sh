@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ======================================================================
-# Candidate-analysis configuration
+# Analysis configuration
 # ======================================================================
 
 PIPELINE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -51,6 +51,24 @@ EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 
 
 # ======================================================================
+# Secondary Tier-1 analysis
+# ======================================================================
+
+SECONDARY_RESULTS_DIR="${RESULTS_DIR}/secondary_clades"
+
+SECONDARY_TIER1_ALL="${SECONDARY_RESULTS_DIR}/secondary_tier1_all_clades.tsv"
+
+SECONDARY_TIER1_RECURRENT="${SECONDARY_RESULTS_DIR}/secondary_tier1_recurrent_cres.tsv"
+
+SECONDARY_CLADE_SUMMARY="${SECONDARY_RESULTS_DIR}/secondary_clade_summary.tsv"
+
+SECONDARY_RUN_METADATA="${SECONDARY_RESULTS_DIR}/secondary_tier1_run_metadata.tsv"
+
+# Minimum number of clades required to classify a CRE as recurrent.
+SECONDARY_RECURRENCE_MIN_CLADES="${SECONDARY_RECURRENCE_MIN_CLADES:-2}"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -67,3 +85,10 @@ export FOCAL_CLADE_SUMMARY
 
 export REFERENCE_SPECIES
 export EXPECTED_REFERENCE_CRES
+
+export SECONDARY_RESULTS_DIR
+export SECONDARY_TIER1_ALL
+export SECONDARY_TIER1_RECURRENT
+export SECONDARY_CLADE_SUMMARY
+export SECONDARY_RUN_METADATA
+export SECONDARY_RECURRENCE_MIN_CLADES
