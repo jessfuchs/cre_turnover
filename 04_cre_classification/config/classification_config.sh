@@ -100,6 +100,9 @@ FOCAL_CLADE_CRE_TABLE="${RESULTS_DIR}/focal_clade_heatmap_CREs.tsv"
 CRE_CONSERVATION_SUMMARY="${RESULTS_DIR}/CRE_conservation_summary.tsv"
 SPECIES_PLOT_QC_SUMMARY="${RESULTS_DIR}/species_plot_qc_summary.tsv"
 
+# D. melanogaster CRE-to-gene distance summary.
+DMEL_GENE_DISTANCE_SUMMARY="${RESULTS_DIR}/dmel_cre_gene_distance_summary.tsv"
+
 # ======================================================================
 # Export
 # ======================================================================
@@ -146,3 +149,4 @@ export FIGURES_DIR
 export FOCAL_CLADE_CRE_TABLE
 export CRE_CONSERVATION_SUMMARY
 export SPECIES_PLOT_QC_SUMMARY
+export DMEL_GENE_DISTANCE_SUMMARY
