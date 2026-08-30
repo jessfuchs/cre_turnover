@@ -68,6 +68,12 @@ AXTCHAIN_LINEAR_GAP="${AXTCHAIN_LINEAR_GAP:-medium}"
 AXTCHAIN_MIN_SCORE="${AXTCHAIN_MIN_SCORE:-3000}"
 
 # ======================================================================
+# liftOver parameters
+# ======================================================================
+
+LIFTOVER_MIN_MATCH="${LIFTOVER_MIN_MATCH:-0.50}"
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -105,3 +111,5 @@ export LASTZ_INNER
 
 export AXTCHAIN_LINEAR_GAP
 export AXTCHAIN_MIN_SCORE
+
+export LIFTOVER_MIN_MATCH
