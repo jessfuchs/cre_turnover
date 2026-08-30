@@ -214,20 +214,29 @@ def require_file(path):
 
 def save_figure(fig, basename):
     """
-    Save one figure as a 300-dpi PNG.
+    Save one figure as PNG and PDF.
     """
 
-    out = FIG_DIR / f"{basename}.png"
+    out_png = FIG_DIR / f"{basename}.png"
+    out_pdf = FIG_DIR / f"{basename}.pdf"
 
     fig.savefig(
-        out,
+        out_png,
         dpi=300,
         bbox_inches="tight",
+        facecolor="white",
+    )
+
+    fig.savefig(
+        out_pdf,
+        bbox_inches="tight",
+        facecolor="white",
     )
 
     plt.close(fig)
 
-    print(f"Wrote: {out}")
+    print(f"Wrote: {out_png}")
+    print(f"Wrote: {out_pdf}")
 
 
 def tree_name_from_species(species_name):
