@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-
 # ======================================================================
 # Pipeline roots
 # ======================================================================
@@ -11,7 +10,6 @@ PROJECT_ROOT="$(cd "$PIPELINE_ROOT/.." && pwd)"
 
 MAPPING_ROOT="${PROJECT_ROOT}/02_mapping_orthologs"
 WGA_ROOT="${PROJECT_ROOT}/03_pairwise_wga"
-
 
 # ======================================================================
 # Input data
@@ -25,7 +23,6 @@ LIFTED_CRES_DIR="${WGA_ROOT}/lifted_cres_dmel"
 
 TARGET_SPECIES_FILE="${WGA_ROOT}/target_species.txt"
 
-
 # ======================================================================
 # CRE classification
 # ======================================================================
@@ -38,7 +35,6 @@ TURNOVER_BY_SPECIES_DIR="${RESULTS_DIR}/turnover_by_species"
 CRE_TURNOVER_ALL_SPECIES="${RESULTS_DIR}/cre_turnover_all_species.tsv"
 CRE_TURNOVER_MATRIX="${RESULTS_DIR}/cre_turnover_matrix.tsv"
 
-
 # ======================================================================
 # Classification parameters
 # ======================================================================
@@ -47,6 +43,22 @@ RECIPROCAL_OVERLAP="${RECIPROCAL_OVERLAP:-0.50}"
 
 LOCAL_GENE_DISTANCE="${LOCAL_GENE_DISTANCE:-24000}"
 
+# ======================================================================
+# Classification outputs
+# ======================================================================
+
+RESULTS_DIR="${PIPELINE_ROOT}/results"
+TURNOVER_BY_SPECIES_DIR="${RESULTS_DIR}/turnover_by_species"
+
+CRE_TURNOVER_ALL_SPECIES="${RESULTS_DIR}/cre_turnover_all_species.tsv"
+CRE_TURNOVER_MATRIX="${RESULTS_DIR}/cre_turnover_matrix.tsv"
+SPECIES_SUMMARY="${RESULTS_DIR}/species_summary.tsv"
+
+# ======================================================================
+# Expected dataset dimensions
+# ======================================================================
+
+EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 
 # ======================================================================
 # Phylogeny
@@ -65,7 +77,6 @@ SPECIES_ORDER_FILE="${PHYLOGENY_RESULTS_DIR}/species_order_40_tree_names.txt"
 
 SPECIES_METADATA="${PHYLOGENY_DATA_DIR}/species_metadata.tsv"
 
-
 # ======================================================================
 # Export
 # ======================================================================
@@ -79,6 +90,10 @@ export REFERENCE_CRES_TSV
 export SO_ALL_SPECIES_FBGN
 export LIFTED_CRES_DIR
 export TARGET_SPECIES_FILE
+
+export SPECIES_SUMMARY
+
+export EXPECTED_REFERENCE_CRES
 
 export RESULTS_DIR
 export SENSITIVITY_DIR
