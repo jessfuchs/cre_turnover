@@ -1,66 +1,27 @@
 #!/usr/bin/env python3
 
+
 # ============================================================
 # 02 - Map SCRMshaw peak-associated genes to D. melanogaster
 #      orthologs
 #
 # Purpose:
-#   Annotate the genes associated with each SCRMshaw CRE
-#   prediction with their corresponding D. melanogaster
-#   ortholog identifiers.
-#
-#   Ortholog assignments are obtained from the
-#   `dmel_orthologs` attribute of mRNA features in the
-#   species-specific 301Fly GFF3 annotations.
+#   Map the flanking genes of each SCRMshaw CRE prediction to
+#   their D. melanogaster orthologs using the `dmel_orthologs`
+#   attribute from species-specific GFF3 annotations.
 #
 # Input:
-#   01_scrmshaw/external/combined_manifest.tsv
-#
-#   01_scrmshaw/external/combined_results/
-#       <species>/peaks_AllSets.bed
-#
-#   Species-specific GFF3 annotations from either:
-#
-#       01_scrmshaw/generation/data/selected/
-#
-#   or:
-#
-#       01_scrmshaw/external/external_data/selected/
-#
-# Processing:
-#   - reads the unified species manifest
-#   - determines the appropriate GFF3 annotation for each species
-#   - maps the SCRMshaw flanking gene (column 6) to its
-#     D. melanogaster ortholog in column 7
-#   - maps the next flanking gene (column 11) to its
-#     D. melanogaster ortholog in column 12
-#   - retains multiple Dmel orthologs as pipe-separated IDs
-#   - treats D. melanogaster as a reference-species special case
-#     and maps its gene identifiers directly to themselves
+#   - combined_manifest.tsv
+#   - combined_results/<species>/peaks_AllSets.bed
+#   - species-specific GFF3 annotations
 #
 # Output:
-#   One ortholog-annotated BED file per species:
+#   - ortholog_results/<species>/SO_all_peaks.bed
+#   - ortholog_results/ortholog_mapping_qc.tsv
 #
-#       ortholog_results/<species>/SO_all_peaks.bed
-#
-# QC output:
-#   A tab-separated mapping summary is written to stderr and is
-#   captured by run_ortholog_pipeline.sh as:
-#
-#       ortholog_results/ortholog_mapping_qc.tsv
-#
-#   Informational messages and warnings are written to stdout and
-#   are captured as:
-#
-#       ortholog_results/ortholog_mapping.out
-#
-# Requirements:
-#   Path variables are provided by:
-#
-#       02_mapping_orthologs/config/config.sh
-#
+# Configuration:
+#   02_mapping_orthologs/config/ortholog_config.sh
 # ============================================================
-
 
 import csv
 import os
@@ -85,7 +46,7 @@ def get_env_path(name):
         sys.exit(
             f"ERROR: required environment variable {name} is not set. "
             "Run this script through run_ortholog_pipeline.sh or source "
-            "config/config.sh before execution."
+            "config/ortholog_config.sh before execution."
         )
 
     return Path(value)
