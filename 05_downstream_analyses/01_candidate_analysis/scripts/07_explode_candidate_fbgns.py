@@ -1,56 +1,65 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from datetime import datetime
+# ============================================================
+# Expand Tier-1 candidate genes to CRE x FBgn records
+#
+# Purpose:
+#   Convert CRE-level candidate gene assignments into a
+#   long-form table containing one row per unique CRE x FBgn
+#   combination for downstream gene-level analyses.
+#
+# Gene sources:
+#   - original SCRMshaw target-gene assignments
+#   - primary distance-derived candidate gene
+#   - secondary distance-derived candidate gene
+#
+# Input/output paths:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
 import hashlib
+from pathlib import Path
 import platform
 import sys
 
 import pandas as pd
 
-
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
+def parse_args():
 
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Convert Tier-1 CRE candidate gene assignments "
+            "into one row per CRE x FBgn for downstream "
+            "gene-level analysis."
+        )
+    )
 
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
+    parser.add_argument(
+        "--input",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR = (
-    RESULTS_DIR
-    / "tables"
-)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
 
-
-DEFAULT_INPUT = (
-    TABLE_DIR
-    / "tier1_candidate_gene_assignments.tsv"
-)
-
-DEFAULT_OUTPUT = (
-    TABLE_DIR
-    / "tier1_candidate_fbgn_exploded.tsv"
-)
+    return parser.parse_args()
 
 # ============================================================
 # Required columns
@@ -73,51 +82,13 @@ REQUIRED_COLUMNS = {
     "gene_assignment_qc",
 }
 
-
-# ============================================================
-# Arguments
-# ============================================================
-
-def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Convert Tier-1 CRE candidate gene assignments "
-            "into one row per CRE x FBgn for downstream "
-            "gene-level candidate analysis."
-        )
-    )
-
-    parser.add_argument(
-        "--input",
-        type=Path,
-        default=DEFAULT_INPUT,
-        help=(
-            "Tier-1 candidate gene-assignment table "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--out",
-        type=Path,
-        default=DEFAULT_OUTPUT,
-        help=(
-            "Long-form CRE x FBgn output "
-            "(default: %(default)s)"
-        ),
-    )
-
-    return parser.parse_args()
-
-
 # ============================================================
 # Helpers
 # ============================================================
 
 def require_file(path):
 
-    if not path.exists():
+    if not path.is_file():
         raise SystemExit(
             "ERROR: required input file not found:\n"
             f"{path}"
@@ -244,6 +215,11 @@ def main():
         exist_ok=True,
     )
 
+    args.metadata_out.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
     # ========================================================
     # Load input
     # ========================================================
@@ -292,12 +268,69 @@ def main():
         )
 
 
+    # --------------------------------------------------------
+    # Primary and secondary genes must differ
+    # --------------------------------------------------------
+    
+    primary_fbgn_normalized = (
+        df[
+            "primary_candidate_fbgn"
+        ].apply(
+            normalize_missing
+        )
+    )
+    
+    secondary_fbgn_normalized = (
+        df[
+            "secondary_candidate_fbgn"
+        ].apply(
+            normalize_missing
+        )
+    )
+    
+    invalid_same_gene = (
+        (
+            primary_fbgn_normalized
+            != "NA"
+        )
+        &
+        (
+            secondary_fbgn_normalized
+            != "NA"
+        )
+        &
+        (
+            primary_fbgn_normalized
+            ==
+            secondary_fbgn_normalized
+        )
+    )
+    
+    if invalid_same_gene.any():
+    
+        bad = df.loc[
+            invalid_same_gene,
+            [
+                "dmel_cre_id",
+                "primary_candidate_fbgn",
+                "secondary_candidate_fbgn",
+            ],
+        ]
+    
+        raise SystemExit(
+            "ERROR: identical primary and secondary candidate "
+            "genes detected:\n\n"
+            + bad.to_string(
+                index=False
+            )
+        )
+
+   
     # ========================================================
     # Explode to one row per CRE x FBgn
     # ========================================================
-
+    
     rows = []
-
 
     for _, row in (
         df.iterrows()
@@ -652,60 +685,38 @@ def main():
 
 
     # --------------------------------------------------------
-    # Exactly one primary gene per CRE
+    # At most one primary gene per CRE
+    #
+    # A primary distance-derived candidate may be unavailable
+    # for CREs carrying gene-assignment QC flags.
     # --------------------------------------------------------
-
+    
     primary_counts = (
         out.loc[
             out[
                 "is_primary_candidate"
-            ]
-            == "yes"
+            ] == "yes"
         ]
         .groupby(
             "dmel_cre_id"
         )
         .size()
     )
-
-
-    missing_primary = sorted(
-        set(
-            df[
-                "dmel_cre_id"
-            ]
-        )
-        - set(
-            primary_counts.index
-        )
-    )
-
-
-    if missing_primary:
-
-        raise SystemExit(
-            "ERROR: CREs without primary candidate "
-            "in exploded table:\n"
-            + "\n".join(
-                missing_primary
-            )
-        )
-
-
+    
     if (
         primary_counts
-        != 1
+        > 1
     ).any():
-
+    
         bad = (
             primary_counts.loc[
                 primary_counts
-                != 1
+                > 1
             ]
         )
-
+    
         raise SystemExit(
-            "ERROR: CREs with !=1 primary candidate:\n\n"
+            "ERROR: CREs with >1 primary candidate:\n\n"
             + bad.to_string()
         )
 
@@ -826,6 +837,96 @@ def main():
         index=False,
     )
 
+
+    # ========================================================
+    # Run metadata
+    # ========================================================
+    
+    metadata = pd.DataFrame([
+        {
+            "script":
+                Path(
+                    __file__
+                ).name,
+    
+            "run_timestamp":
+                datetime.now()
+                .astimezone()
+                .isoformat(),
+    
+            "python_version":
+                sys.version.split()[0],
+    
+            "pandas_version":
+                pd.__version__,
+    
+            "platform":
+                platform.platform(),
+    
+            "input_file":
+                str(
+                    args.input.resolve()
+                ),
+    
+            "input_sha256":
+                file_sha256(
+                    args.input
+                ),
+    
+            "n_candidate_cres":
+                df[
+                    "dmel_cre_id"
+                ].nunique(),
+    
+            "n_cre_fbgn_rows":
+                len(
+                    out
+                ),
+    
+            "n_unique_fbgns":
+                out[
+                    "fbgn"
+                ].nunique(),
+    
+            "n_primary_candidate_rows":
+                int(
+                    (
+                        out[
+                            "is_primary_candidate"
+                        ]
+                        == "yes"
+                    ).sum()
+                ),
+    
+            "n_secondary_candidate_rows":
+                int(
+                    (
+                        out[
+                            "is_secondary_candidate"
+                        ]
+                        == "yes"
+                    ).sum()
+                ),
+    
+            "n_reference_target_rows":
+                int(
+                    (
+                        out[
+                            "is_reference_target"
+                        ]
+                        == "yes"
+                    ).sum()
+                ),
+        }
+    ])
+    
+    metadata.to_csv(
+        args.metadata_out,
+        sep="\t",
+        index=False,
+    )
+
+    
     # ========================================================
     # Console summary
     # ========================================================
@@ -882,6 +983,11 @@ def main():
     print(
         f"Wrote long-form table:\n"
         f"{args.out}"
+    )
+    print()
+    print(
+        f"Wrote metadata:\n"
+        f"{args.metadata_out}"
     )
 
 # ============================================================
