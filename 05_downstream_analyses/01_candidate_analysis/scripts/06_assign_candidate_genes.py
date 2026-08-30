@@ -1,60 +1,65 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from datetime import datetime
+# ============================================================
+# Assign candidate genes to Tier-1 CREs
+#
+# Purpose:
+#   Assign primary and secondary candidate genes to prioritized
+#   Tier-1 CREs using D. melanogaster flanking-gene annotations.
+#
+# Assignment:
+#   Candidate genes are ranked by absolute CRE-to-gene
+#   distance. Equal-distance ties are resolved deterministically.
+#   Agreement with the original SCRMshaw target-gene annotation
+#   is retained as QC information.
+#
+# Input/output paths:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
 import hashlib
+from pathlib import Path
 import platform
 import sys
 
 import pandas as pd
 
-
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
+def parse_args():
 
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Assign primary and secondary candidate genes "
+            "to Tier-1 CRE candidates using D. melanogaster "
+            "flanking-gene distances."
+        )
+    )
 
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
+    parser.add_argument(
+        "--input",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR = (
-    RESULTS_DIR
-    / "tables"
-)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
 
-DEFAULT_INPUT = (
-    TABLE_DIR
-    / "tier1_candidate_gene_distances.tsv"
-)
-
-DEFAULT_OUTPUT = (
-    TABLE_DIR
-    / "tier1_candidate_gene_assignments.tsv"
-)
-
-DEFAULT_METADATA = (
-    TABLE_DIR
-    / "tier1_candidate_gene_assignments_metadata.tsv"
-)
+    return parser.parse_args()
 
 
 # ============================================================
@@ -78,64 +83,17 @@ REQUIRED_COLUMNS = {
 
 
 # ============================================================
-# Arguments
-# ============================================================
-
-def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Assign primary and secondary candidate genes "
-            "to Tier-1 CRE candidates using D. melanogaster "
-            "flanking-gene distances."
-        )
-    )
-
-    parser.add_argument(
-        "--input",
-        type=Path,
-        default=DEFAULT_INPUT,
-        help=(
-            "Candidate gene-distance table "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--out",
-        type=Path,
-        default=DEFAULT_OUTPUT,
-        help=(
-            "Candidate gene-assignment output "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        default=DEFAULT_METADATA,
-        help=(
-            "Run metadata output "
-            "(default: %(default)s)"
-        ),
-    )
-
-    return parser.parse_args()
-
-
-# ============================================================
 # Helpers
 # ============================================================
 
 def require_file(path):
 
-    if not path.exists():
+    if not path.is_file():
         raise SystemExit(
             "ERROR: required input file not found:\n"
             f"{path}"
         )
-
+        
 
 def require_columns(
     df,
@@ -178,14 +136,26 @@ def parse_target_genes(value):
     Convert pipe-separated FBgn target genes into a set.
     """
 
+    return set(
+        parse_fbgns(
+            value
+        )
+    )
+
+
+def parse_fbgns(value):
+    """
+    Parse pipe-separated FBgn identifiers.
+    """
+
     raw = normalize_missing(
         value
     )
 
     if raw == "NA":
-        return set()
+        return []
 
-    return {
+    return sorted({
         gene.strip()
         for gene in raw.split("|")
         if gene.strip()
@@ -195,7 +165,7 @@ def parse_target_genes(value):
             "nan",
             "none",
         }
-    }
+    })
 
 
 def file_sha256(path):
@@ -363,93 +333,96 @@ def main():
 
 
         # ----------------------------------------------------
-        # Raw distance-derived genes
+        # Raw distance-derived gene annotations
         # ----------------------------------------------------
-
+        
         fbgn1 = normalize_missing(
             row[
                 "dmel_fbgn_flanking_gene"
             ]
         )
-
+        
         fbgn2 = normalize_missing(
             row[
                 "dmel_fbgn_next_flanking_gene"
             ]
         )
-
+        
+        fbgn1_values = parse_fbgns(
+            fbgn1
+        )
+        
+        fbgn2_values = parse_fbgns(
+            fbgn2
+        )
+        
         d1 = row[
             "distance_flanking_gene"
         ]
-
+        
         d2 = row[
             "distance_next_gene"
         ]
-
-
-        # ----------------------------------------------------
-        # Normalize impossible gene/distance combinations
-        # ----------------------------------------------------
-
-        if fbgn1 == "NA":
-            d1 = pd.NA
-
-        if fbgn2 == "NA":
-            d2 = pd.NA
-
-
+        
+        
         # ====================================================
-        # Determine primary and secondary candidate gene
+        # Build distance-derived candidate genes
         #
-        # Primary rule:
-        #   smallest genomic distance to CRE
-        #
-        # Tie rule:
-        #   deterministic lexical FBgn ordering
+        # Distances are ranked by absolute genomic distance.
+        # Raw signed distances are retained separately in the
+        # provenance columns of the output.
         # ====================================================
-
+        
         candidates = []
-
+        
         if (
-            fbgn1 != "NA"
+            fbgn1_values
             and not pd.isna(
                 d1
             )
         ):
-
-            candidates.append({
-                "fbgn":
-                    fbgn1,
-
-                "distance":
-                    float(
-                        d1
-                    ),
-
-                "source":
-                    "flanking_gene",
-            })
-
-
+        
+            for fbgn in fbgn1_values:
+        
+                candidates.append({
+                    "fbgn":
+                        fbgn,
+        
+                    "distance":
+                        abs(
+                            float(
+                                d1
+                            )
+                        ),
+        
+                    "source":
+                        "flanking_gene",
+                })
+        
+        
         if (
-            fbgn2 != "NA"
+            fbgn2_values
             and not pd.isna(
                 d2
             )
         ):
-
-            candidates.append({
-                "fbgn":
-                    fbgn2,
-
-                "distance":
-                    float(
-                        d2
-                    ),
-
-                "source":
-                    "next_flanking_gene",
-            })
+        
+            for fbgn in fbgn2_values:
+        
+                candidates.append({
+                    "fbgn":
+                        fbgn,
+        
+                    "distance":
+                        abs(
+                            float(
+                                d2
+                            )
+                        ),
+        
+                    "source":
+                        "next_flanking_gene",
+                })
 
 
         # ----------------------------------------------------
