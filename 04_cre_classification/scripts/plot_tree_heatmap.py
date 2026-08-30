@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#!/usr/bin/env python3
-
 # ============================================================
 # Plot phylogeny-wide CRE-state heatmap
 #
