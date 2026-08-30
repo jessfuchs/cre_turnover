@@ -91,11 +91,14 @@ QC_HIGH_MAPPING_RATE="${QC_HIGH_MAPPING_RATE:-0.90}"
 SPECIES_QC_SUMMARY="${RESULTS_DIR}/species_qc_summary.tsv"
 
 # ======================================================================
-# Clade heatmap outputs
+# Analysis outputs
 # ======================================================================
 
 FIGURES_DIR="${RESULTS_DIR}/figures"
 FOCAL_CLADE_CRE_TABLE="${RESULTS_DIR}/focal_clade_heatmap_CREs.tsv"
+
+CRE_CONSERVATION_SUMMARY="${RESULTS_DIR}/CRE_conservation_summary.tsv"
+SPECIES_PLOT_QC_SUMMARY="${RESULTS_DIR}/species_plot_qc_summary.tsv"
 
 # ======================================================================
 # Export
@@ -112,6 +115,7 @@ export LIFTED_CRES_DIR
 export TARGET_SPECIES_FILE
 
 export SPECIES_SUMMARY
+export SPECIES_QC_SUMMARY
 
 export EXPECTED_REFERENCE_CRES
 
@@ -137,7 +141,8 @@ export QC_MIN_SCRMSHAW_PEAKS
 export QC_MIN_SEQID_OVERLAP
 export QC_MIN_MAPPED_FOR_OVERLAP_CHECK
 export QC_HIGH_MAPPING_RATE
-export SPECIES_QC_SUMMARY
 
 export FIGURES_DIR
 export FOCAL_CLADE_CRE_TABLE
+export CRE_CONSERVATION_SUMMARY
+export SPECIES_PLOT_QC_SUMMARY
