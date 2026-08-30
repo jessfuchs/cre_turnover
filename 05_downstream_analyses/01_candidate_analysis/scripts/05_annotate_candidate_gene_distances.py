@@ -1,9 +1,27 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from datetime import datetime
+# ============================================================
+# Annotate Tier-1 candidate gene distances
+#
+# Purpose:
+#   Match prioritized D. melanogaster Tier-1 CRE candidates
+#   to their corresponding Dmel SCRMshaw predictions and
+#   retrieve flanking-gene and CRE-to-gene distance annotations.
+#
+# Matching:
+#   Candidate CREs are matched by genomic interval overlap.
+#   Exact coordinate matches are preferred and deviations are
+#   retained as QC flags.
+#
+# Input/output paths:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
 import hashlib
+from pathlib import Path
 import platform
 import sys
 
@@ -11,62 +29,44 @@ import pandas as pd
 
 
 # ============================================================
-# Project paths
+# Arguments
 # ============================================================
 
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
+def parse_args():
 
-MAP_DIR = (
-    PROJECT_DIR
-    / "mapping_orthologs"
-)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Annotate prioritized D. melanogaster Tier-1 CRE "
+            "candidates with flanking-gene and gene-distance "
+            "information."
+        )
+    )
 
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
+    parser.add_argument(
+        "--candidates",
+        type=Path,
+        required=True,
+    )
 
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
+    parser.add_argument(
+        "--so-table",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR = (
-    RESULTS_DIR
-    / "tables"
-)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
 
-
-DEFAULT_CANDIDATES = (
-    TABLE_DIR
-    / "tier1_candidates_prioritized.tsv"
-)
-
-DEFAULT_SO = (
-    MAP_DIR
-    / "ortholog_results/SO_all_species_fbgn.tsv"
-)
-
-
-DEFAULT_OUT = (
-    TABLE_DIR
-    / "tier1_candidate_gene_distances.tsv"
-)
-
-DEFAULT_METADATA = (
-    TABLE_DIR
-    / "tier1_candidate_gene_distances_metadata.tsv"
-)
+    return parser.parse_args()
 
 
 # ============================================================
@@ -128,70 +128,12 @@ def downstream_priority(candidate_priority):
 
 
 # ============================================================
-# Arguments
-# ============================================================
-
-def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Annotate prioritized D. melanogaster Tier-1 CRE "
-            "candidates with flanking-gene information from "
-            "the Dmel rows of the combined SCRMshaw orthology "
-            "table."
-        )
-    )
-
-    parser.add_argument(
-        "--candidates",
-        type=Path,
-        default=DEFAULT_CANDIDATES,
-        help=(
-            "Prioritized Tier-1 candidate table "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--so-table",
-        type=Path,
-        default=DEFAULT_SO,
-        help=(
-            "Combined SO/SCRMshaw orthology table "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--out",
-        type=Path,
-        default=DEFAULT_OUT,
-        help=(
-            "Gene-distance annotation output "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        default=DEFAULT_METADATA,
-        help=(
-            "Run metadata output "
-            "(default: %(default)s)"
-        ),
-    )
-
-    return parser.parse_args()
-
-
-# ============================================================
 # Helpers
 # ============================================================
 
 def require_file(path):
 
-    if not path.exists():
+    if not path.is_file():
         raise SystemExit(
             "ERROR: required input file not found:\n"
             f"{path}"
@@ -818,13 +760,16 @@ def main():
 
                 "matched_dmel_prediction":
                     "NO",
-
+                
                 "n_overlapping_predictions":
                     0,
-
+                
                 "best_match_tied":
                     "no",
-
+                
+                "exact_coordinate_match":
+                    "NA",
+                
                 "prediction_species_key":
                     "NA",
 
