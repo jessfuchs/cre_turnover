@@ -33,39 +33,11 @@ import pandas as pd
 # ============================================================
 
 def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Annotate prioritized D. melanogaster Tier-1 CRE "
-            "candidates with flanking-gene and gene-distance "
-            "information."
-        )
-    )
-
-    parser.add_argument(
-        "--candidates",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--so-table",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        required=True,
-    )
-
+    parser = argparse.ArgumentParser(description='Annotate prioritized D. melanogaster Tier-1 CRE candidates with flanking-gene and gene-distance information.')
+    parser.add_argument('--candidates', type=Path, required=True)
+    parser.add_argument('--so-table', type=Path, required=True)
+    parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--metadata-out', type=Path, required=True)
     return parser.parse_args()
 
 
