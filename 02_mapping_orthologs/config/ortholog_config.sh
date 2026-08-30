@@ -27,13 +27,15 @@ REFERENCE_CRES_DIR="${PIPELINE_ROOT}/reference_cres"
 SCRM_GENERATED_ROOT="${PROJECT_ROOT}/01_scrmshaw/generation"
 SCRM_EXTERNAL_ROOT="${PROJECT_ROOT}/01_scrmshaw/external"
 
+# Unified manifest and standardized SCRMshaw predictions for all species
 COMBINED_MANIFEST="${SCRM_EXTERNAL_ROOT}/combined_manifest.tsv"
+COMBINED_RESULTS_DIR="${SCRM_EXTERNAL_ROOT}/combined_results"
 
-# Species-specific GFF3 files used for ortholog-annotation QC.
+# Species-specific GFF3 annotations
 GENERATED_GFF_ROOT="${SCRM_GENERATED_ROOT}/data/selected"
 EXTERNAL_GFF_ROOT="${SCRM_EXTERNAL_ROOT}/external_data/selected"
 
-# D. melanogaster annotation used later for FBgn normalization.
+# D. melanogaster annotation used later for FBgn normalization
 DMEL_GFF="${EXTERNAL_GFF_ROOT}/d_melanogaster/annotation.gff3"
 
 # ======================================================================
@@ -82,6 +84,7 @@ export GENERATED_GFF_ROOT
 export EXTERNAL_GFF_ROOT
 
 export COMBINED_MANIFEST
+export COMBINED_RESULTS_DIR
 export DMEL_GFF
 
 export SO_ALL_SPECIES
