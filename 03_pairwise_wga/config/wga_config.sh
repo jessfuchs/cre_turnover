@@ -61,6 +61,13 @@ LASTZ_YDROP="${LASTZ_YDROP:-3400}"
 LASTZ_INNER="${LASTZ_INNER:-2000}"
 
 # ======================================================================
+# UCSC chain/net parameters
+# ======================================================================
+
+AXTCHAIN_LINEAR_GAP="${AXTCHAIN_LINEAR_GAP:-medium}"
+AXTCHAIN_MIN_SCORE="${AXTCHAIN_MIN_SCORE:-3000}"
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -95,3 +102,6 @@ export LASTZ_HSPTHRESH
 export LASTZ_GAPPEDTHRESH
 export LASTZ_YDROP
 export LASTZ_INNER
+
+export AXTCHAIN_LINEAR_GAP
+export AXTCHAIN_MIN_SCORE
