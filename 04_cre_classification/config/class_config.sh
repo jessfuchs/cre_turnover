@@ -19,7 +19,7 @@ WGA_ROOT="${PROJECT_ROOT}/03_pairwise_wga"
 
 REFERENCE_CRES_TSV="${MAPPING_ROOT}/reference_cres/dmel_reference_cres.tsv"
 
-SO_ALL_SPECIES_FBGN="${MAPPING_ROOT}/ortholog_results/SO_all_species_fbgn.tsv"
+SO_ALL_SPECIES_FBGN="${MAPPING_ROOT}/results/SO_all_species_fbgn.tsv"
 
 LIFTED_CRES_DIR="${WGA_ROOT}/lifted_cres_dmel"
 
