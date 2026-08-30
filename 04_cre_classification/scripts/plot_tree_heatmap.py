@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 
-"""
-Phylogeny + species labels + CRE-state heatmap + climate strip.
+#!/usr/bin/env python3
 
-Layout:
-    phylogeny | species labels | climate | CRE states | legends
+# ============================================================
+# Plot phylogeny-wide CRE-state heatmap
+#
+# Purpose:
+#   Visualize CRE-state distributions across the phylogeny
+#   together with species labels and climatic-zone annotations.
+#
+# Figure structure:
+#   phylogeny | species labels | climate strip | CRE-state heatmap
+#
+# Notes:
+#   - Branch lengths are retained unchanged from the Newick tree.
+#   - All panels share identical species order and y coordinates.
+#   - D. melanogaster is shown only as a reference row and is
+#     excluded from target-species CRE statistics.
+#
+# Output:
+#   - phylogeny_CRE_heatmap_climate.png
+#   - phylogeny_CRE_heatmap_climate.pdf
+# ============================================================
 
-Important:
-- Branch lengths are taken unchanged from the Newick tree.
-- Species labels are drawn in their own panel and therefore do not
-  influence the phylogenetic x-axis.
-- Tree tips, labels, CRE rows, and climate rows share exactly the
-  same species order and y coordinates.
-- D. melanogaster is shown only as a reference row and is NOT
-  included as a target species in CRE statistics.
-"""
-
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -32,54 +40,70 @@ from Bio import Phylo
 
 
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-CLASS_DIR = SCRIPT_DIR.parent
-PROJECT_DIR = CLASS_DIR.parent
+parser = argparse.ArgumentParser(
+    description=(
+        "Plot phylogeny-wide CRE-state distributions together "
+        "with climatic-zone annotations."
+    )
+)
 
-PHYLO_DIR = CLASS_DIR / "phylogeny"
+parser.add_argument(
+    "--matrix",
+    required=True,
+)
 
-RESULTS_DIR = CLASS_DIR / "results"
-FIG_DIR = RESULTS_DIR / "figures"
+parser.add_argument(
+    "--tree",
+    required=True,
+)
+
+parser.add_argument(
+    "--manifest",
+    required=True,
+)
+
+parser.add_argument(
+    "--traits",
+    required=True,
+)
+
+parser.add_argument(
+    "--fig-dir",
+    required=True,
+)
+
+args = parser.parse_args()
+
+
+# ============================================================
+# Input and output paths
+# ============================================================
+
+MATRIX_FILE = Path(args.matrix)
+TREE_FILE = Path(args.tree)
+MANIFEST_FILE = Path(args.manifest)
+TRAITS_FILE = Path(args.traits)
+
+FIG_DIR = Path(args.fig_dir)
+
+OUT_PNG = (
+    FIG_DIR
+    / "phylogeny_CRE_heatmap_climate.png"
+)
+
+OUT_PDF = (
+    FIG_DIR
+    / "phylogeny_CRE_heatmap_climate.pdf"
+)
 
 FIG_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
 
-# Pruned 40-species phylogeny
-TREE_FILE = (
-    PHYLO_DIR
-    / "results"
-    / "301Fly_HOG_UCLDtree_40species.nw"
-)
-
-# Central species manifest
-MANIFEST_FILE = (
-    PROJECT_DIR
-    / "external_scrmshaw"
-    / "combined_manifest.tsv"
-)
-
-# Climatic-zone annotations
-TRAITS_FILE = (
-    PHYLO_DIR
-    / "data"
-    / "species_traits.tsv"
-)
-
-# Final CRE-state matrix
-MATRIX_FILE = (
-    RESULTS_DIR
-    / "cre_turnover_matrix.tsv"
-)
-
-OUT_PNG = (
-    FIG_DIR
-    / "phylogeny_CRE_heatmap_climate.png"
-)
 
 # ============================================================
 # Constants
@@ -1288,25 +1312,23 @@ fig.subplots_adjust(
 fig.savefig(
     OUT_PNG,
     dpi=300,
+    facecolor="white",
 )
 
-
-plt.close(
-    fig
+fig.savefig(
+    OUT_PDF,
+    facecolor="white",
 )
 
+plt.close(fig)
 
-# ============================================================
-# Console summary
-# ============================================================
 
 print()
 print("PLOT SUMMARY")
 print("------------")
 
-print(
-    f"Wrote: {OUT_PNG}"
-)
+print(f"Wrote: {OUT_PNG}")
+print(f"Wrote: {OUT_PDF}")
 
 print()
 
@@ -1337,19 +1359,8 @@ print(
 
 print()
 
-print(
-    "Branch lengths modified: NO"
-)
-
-print(
-    "Species labels affect branch-length scaling: NO"
-)
-
-print(
-    "Tree / labels / heatmap / climate synchronized: YES"
-)
-
-print(
-    "Dmel included in target statistics: NO"
-)
+print("Branch lengths modified: NO")
+print("Species labels affect branch-length scaling: NO")
+print("Tree / labels / heatmap / climate synchronized: YES")
+print("Dmel included in target statistics: NO")
 
