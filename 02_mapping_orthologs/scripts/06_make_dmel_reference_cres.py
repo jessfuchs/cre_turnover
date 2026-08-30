@@ -1,28 +1,71 @@
 #!/usr/bin/env python3
 
+# ============================================================
+# 06 - Build the D. melanogaster reference CRE set
+#
+# Purpose:
+#   Extract D. melanogaster SCRMshaw CREs from the combined
+#   FBgn-normalized table and generate stable reference CRE IDs
+#   and associated target-gene annotations.
+#
+# Input:
+#   - SO_all_species_fbgn.tsv
+#
+# Output:
+#   - reference_cres/dmel_reference_cres.tsv
+#   - reference_cres/dmel_reference_cres.bed
+#   - QC summary written to stdout
+#
+# Configuration:
+#   Paths are supplied by run_ortholog_pipeline.sh using
+#   config/ortholog_config.sh.
+# ============================================================
+
+
 import csv
+import sys
 from pathlib import Path
 
 
 # ============================================================
-# Paths
+# Command-line arguments
 # ============================================================
 
-ROOT = Path.home() / "cre_turnover" / "project" / "mapping_orthologs"
+if len(sys.argv) != 5:
+    sys.exit(
+        "Usage: 06_make_dmel_reference_cres.py "
+        "SO_all_species_fbgn.tsv "
+        "OUTPUT.tsv OUTPUT.bed DMEL_SLUG"
+    )
 
-INFILE = ROOT / "ortholog_results" / "SO_all_species_fbgn.tsv"
-
-OUTDIR = ROOT / "reference_cres"
-OUTDIR.mkdir(parents=True, exist_ok=True)
-
-OUTFILE = OUTDIR / "dmel_reference_cres.tsv"
-BEDFILE = OUTDIR / "dmel_reference_cres.bed"
-
-DMEL_SLUG = "d_melanogaster"
+input_file = Path(sys.argv[1])
+output_tsv = Path(sys.argv[2])
+output_bed = Path(sys.argv[3])
+dmel_slug = sys.argv[4]
 
 
 # ============================================================
-# Helper
+# Input validation
+# ============================================================
+
+if not input_file.is_file():
+    sys.exit(
+        f"ERROR: input TSV does not exist: {input_file}"
+    )
+
+output_tsv.parent.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+output_bed.parent.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+
+# ============================================================
+# Helper functions
 # ============================================================
 
 def split_fbgn(value):
@@ -38,37 +81,29 @@ def split_fbgn(value):
     if not value or value in {"NA", ".", "None"}:
         return []
 
-    out = []
+    fbgns = []
 
-    for x in value.split("|"):
-        x = x.strip()
+    for item in value.split("|"):
 
-        if x.startswith("FBgn") and x not in out:
-            out.append(x)
+        item = item.strip()
 
-    return out
+        if item.startswith("FBgn") and item not in fbgns:
+            fbgns.append(item)
 
-
-# ============================================================
-# Input validation
-# ============================================================
-
-if not INFILE.is_file():
-    raise SystemExit(
-        f"FEHLER: Input fehlt: {INFILE}"
-    )
+    return fbgns
 
 
 # ============================================================
 # Read D. melanogaster CREs
 # ============================================================
 
-with INFILE.open(
-    encoding="utf-8-sig"
-) as f:
+with input_file.open(
+    encoding="utf-8-sig",
+    newline=""
+) as handle:
 
     reader = csv.DictReader(
-        f,
+        handle,
         delimiter="\t"
     )
 
@@ -92,8 +127,8 @@ with INFILE.open(
     )
 
     if missing:
-        raise SystemExit(
-            "FEHLER: Missing required columns: "
+        sys.exit(
+            "ERROR: missing required columns: "
             + ", ".join(sorted(missing))
         )
 
@@ -101,7 +136,7 @@ with INFILE.open(
 
     for row in reader:
 
-        if row["species_key"].strip() != DMEL_SLUG:
+        if row["species_key"].strip() != dmel_slug:
             continue
 
         try:
@@ -109,14 +144,14 @@ with INFILE.open(
             end = int(row["end0"])
 
         except ValueError:
-            raise SystemExit(
-                f"FEHLER: Invalid coordinates: "
+            sys.exit(
+                f"ERROR: invalid coordinates: "
                 f"{row['chrom']}:{row['start0']}-{row['end0']}"
             )
 
         if end <= start:
-            raise SystemExit(
-                f"FEHLER: Invalid interval: "
+            sys.exit(
+                f"ERROR: invalid interval: "
                 f"{row['chrom']}:{start}-{end}"
             )
 
@@ -157,8 +192,8 @@ with INFILE.open(
 # ============================================================
 
 if not rows:
-    raise SystemExit(
-        f"FEHLER: Keine CREs für species_key={DMEL_SLUG!r} gefunden."
+    sys.exit(
+        f"ERROR: no CREs found for species_key={dmel_slug!r}"
     )
 
 
@@ -167,29 +202,32 @@ if not rows:
 # ============================================================
 
 rows.sort(
-    key=lambda x: (
-        x["chrom"],
-        x["start0"],
-        x["end0"],
-        x["training_set"],
-        x["method"],
-        int(x["rank"]),
+    key=lambda row: (
+        row["chrom"],
+        row["start0"],
+        row["end0"],
+        row["training_set"],
+        row["method"],
+        int(row["rank"]),
     )
 )
 
 
 # ============================================================
-# Stable CRE IDs
+# Assign stable CRE identifiers
 # ============================================================
 
-for i, row in enumerate(rows, start=1):
+for index, row in enumerate(
+    rows,
+    start=1
+):
     row["dmel_cre_id"] = (
-        f"DMEL_CRE_{i:05d}"
+        f"DMEL_CRE_{index:05d}"
     )
 
 
 # ============================================================
-# Output TSV
+# Write reference CRE TSV
 # ============================================================
 
 fieldnames = [
@@ -206,15 +244,14 @@ fieldnames = [
     "rank",
 ]
 
-
-with OUTFILE.open(
+with output_tsv.open(
     "w",
     encoding="utf-8",
     newline=""
-) as f:
+) as handle:
 
     writer = csv.DictWriter(
-        f,
+        handle,
         delimiter="\t",
         fieldnames=fieldnames,
         lineterminator="\n",
@@ -225,17 +262,17 @@ with OUTFILE.open(
 
 
 # ============================================================
-# BED6 for liftOver
+# Write BED6 reference file for liftOver
 # ============================================================
 
-with BEDFILE.open(
+with output_bed.open(
     "w",
     encoding="utf-8"
-) as f:
+) as handle:
 
     for row in rows:
 
-        f.write(
+        handle.write(
             f"{row['chrom']}\t"
             f"{row['start0']}\t"
             f"{row['end0']}\t"
@@ -245,19 +282,17 @@ with BEDFILE.open(
 
 
 # ============================================================
-# QC
+# QC summary
 # ============================================================
 
 n_with_gene = sum(
-    1
-    for r in rows
-    if r["n_fbgn_target_genes"] > 0
+    row["n_fbgn_target_genes"] > 0
+    for row in rows
 )
 
 n_multi = sum(
-    1
-    for r in rows
-    if r["n_fbgn_target_genes"] > 1
+    row["n_fbgn_target_genes"] > 1
+    for row in rows
 )
 
 n_without_gene = (
@@ -265,30 +300,9 @@ n_without_gene = (
     - n_with_gene
 )
 
-
-print(
-    f"Dmel CREs: {len(rows)}"
-)
-
-print(
-    f"With >=1 FBgn target: "
-    f"{n_with_gene}"
-)
-
-print(
-    f"With >1 FBgn target: "
-    f"{n_multi}"
-)
-
-print(
-    f"Without FBgn target: "
-    f"{n_without_gene}"
-)
-
-print(
-    f"Wrote: {OUTFILE}"
-)
-
-print(
-    f"Wrote: {BEDFILE}"
-)
+print(f"Dmel CREs: {len(rows)}")
+print(f"With >=1 FBgn target: {n_with_gene}")
+print(f"With >1 FBgn target: {n_multi}")
+print(f"Without FBgn target: {n_without_gene}")
+print(f"Wrote: {output_tsv}")
+print(f"Wrote: {output_bed}")
