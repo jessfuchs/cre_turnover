@@ -1,31 +1,103 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# ============================================================
+# 02 - Map SCRMshaw peak-associated genes to D. melanogaster
+#      orthologs
+#
+# Purpose:
+#   Annotate the genes associated with each SCRMshaw CRE
+#   prediction with their corresponding D. melanogaster
+#   ortholog identifiers.
+#
+#   Ortholog assignments are obtained from the
+#   `dmel_orthologs` attribute of mRNA features in the
+#   species-specific 301Fly GFF3 annotations.
+#
+# Input:
+#   01_scrmshaw/external/combined_manifest.tsv
+#
+#   01_scrmshaw/external/combined_results/
+#       <species>/peaks_AllSets.bed
+#
+#   Species-specific GFF3 annotations from either:
+#
+#       01_scrmshaw/generation/data/selected/
+#
+#   or:
+#
+#       01_scrmshaw/external/external_data/selected/
+#
+# Processing:
+#   - reads the unified species manifest
+#   - determines the appropriate GFF3 annotation for each species
+#   - maps the SCRMshaw flanking gene (column 6) to its
+#     D. melanogaster ortholog in column 7
+#   - maps the next flanking gene (column 11) to its
+#     D. melanogaster ortholog in column 12
+#   - retains multiple Dmel orthologs as pipe-separated IDs
+#   - treats D. melanogaster as a reference-species special case
+#     and maps its gene identifiers directly to themselves
+#
+# Output:
+#   One ortholog-annotated BED file per species:
+#
+#       ortholog_results/<species>/SO_all_peaks.bed
+#
+# QC output:
+#   A tab-separated mapping summary is written to stderr and is
+#   captured by run_ortholog_pipeline.sh as:
+#
+#       ortholog_results/ortholog_mapping_qc.tsv
+#
+#   Informational messages and warnings are written to stdout and
+#   are captured as:
+#
+#       ortholog_results/ortholog_mapping.out
+#
+# Requirements:
+#   Path variables are provided by:
+#
+#       02_mapping_orthologs/config/config.sh
+#
+# ============================================================
+
+
 import csv
+import os
 import re
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 
 # ============================================================
-# Paths
+# Configuration
 # ============================================================
 
-PROJECT_ROOT = Path.home() / "cre_turnover" / "project"
+def get_env_path(name):
+    """
+    Read a required path from an exported environment variable.
+    """
 
-GENERATED_ROOT = PROJECT_ROOT / "scrmshaw_pipeline"
-EXTERNAL_ROOT = PROJECT_ROOT / "external_scrmshaw"
-MAPPING_ROOT = PROJECT_ROOT / "mapping_orthologs"
+    value = os.environ.get(name, "").strip()
 
-GENERATED_MANIFEST = GENERATED_ROOT / "data" / "manifest.tsv"
-EXTERNAL_MANIFEST = EXTERNAL_ROOT / "external_data" / "external_manifest.tsv"
-COMBINED_MANIFEST = EXTERNAL_ROOT / "combined_manifest.tsv"
+    if not value:
+        sys.exit(
+            f"ERROR: required environment variable {name} is not set. "
+            "Run this script through run_ortholog_pipeline.sh or source "
+            "config/config.sh before execution."
+        )
 
-GENERATED_RESULTS = GENERATED_ROOT / "results"
-EXTERNAL_RESULTS = EXTERNAL_ROOT / "external_results"
+    return Path(value)
 
-# Ortholog-annotierte BEDs werden separat gespeichert.
-ORTHOLOG_RESULTS = MAPPING_ROOT / "ortholog_results"
+
+COMBINED_MANIFEST = get_env_path("COMBINED_MANIFEST")
+COMBINED_RESULTS_DIR = get_env_path("COMBINED_RESULTS_DIR")
+
+GENERATED_GFF_ROOT = get_env_path("GENERATED_GFF_ROOT")
+EXTERNAL_GFF_ROOT = get_env_path("EXTERNAL_GFF_ROOT")
+
+ORTHOLOG_RESULTS_DIR = get_env_path("ORTHOLOG_RESULTS_DIR")
 
 
 # ============================================================
@@ -34,12 +106,13 @@ ORTHOLOG_RESULTS = MAPPING_ROOT / "ortholog_results"
 
 def parse_attributes(text):
     """
-    Parse GFF3 attribute field into a dictionary.
+    Parse a GFF3 attribute field into a dictionary.
     """
 
     attrs = {}
 
     for item in text.strip().split(";"):
+
         if not item:
             continue
 
@@ -52,25 +125,28 @@ def parse_attributes(text):
 
 def build_gene_to_dmel(gff):
     """
-    Build target-gene -> D. melanogaster ortholog mapping.
+    Build a mapping from target-species genes to D. melanogaster
+    ortholog identifiers.
 
-    The mapping is derived from mRNA entries in the 301Fly GFF:
+    Ortholog assignments are derived from mRNA entries in the
+    301Fly GFF3 annotations, for example:
 
         Parent=gene-G...
         dmel_orthologs=rna-NM_...|rna-NM_...
 
+    Multiple orthologs associated with the same target gene are
+    retained as a pipe-separated string.
+
     Returns
     -------
     dict
-        {
-            target_gene:
-                "dmel_ortholog1|dmel_ortholog2"
-        }
+        target_gene -> Dmel ortholog identifier(s)
     """
 
     mapping = defaultdict(set)
 
     with gff.open(errors="replace") as handle:
+
         for line in handle:
 
             if not line.strip() or line.startswith("#"):
@@ -92,7 +168,8 @@ def build_gene_to_dmel(gff):
             if not parent:
                 continue
 
-            # Parent can theoretically contain multiple genes.
+            # A transcript may theoretically contain multiple
+            # parent-gene identifiers.
             parents = [
                 x.strip()
                 for x in parent.split(",")
@@ -102,8 +179,8 @@ def build_gene_to_dmel(gff):
             if not dmel or dmel == "NA":
                 continue
 
-            # Multiple orthologs can occur, for example:
-            # rna-NM_x|rna-NM_y
+            # Multiple Dmel orthologs may be separated by
+            # "|" or ",".
             orthologs = [
                 x.strip()
                 for x in re.split(r"[|,]", dmel)
@@ -122,19 +199,46 @@ def build_gene_to_dmel(gff):
 
 def read_manifest(path):
     """
-    Read a tab-separated manifest and return rows keyed by slug.
+    Read the combined tab-separated species manifest.
+
+    Rows are returned as a dictionary keyed by species slug.
     """
 
     if not path.is_file():
-        return {}
+        sys.exit(
+            f"ERROR: combined manifest does not exist: {path}"
+        )
 
     result = {}
 
-    with path.open(encoding="utf-8-sig") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
+    with path.open(
+        encoding="utf-8-sig",
+        newline=""
+    ) as handle:
+
+        reader = csv.DictReader(
+            handle,
+            delimiter="\t"
+        )
 
         if reader.fieldnames is None:
-            return {}
+            sys.exit(
+                f"ERROR: combined manifest has no header: {path}"
+            )
+
+        required = {
+            "slug",
+            "species",
+            "source",
+        }
+
+        missing = required - set(reader.fieldnames)
+
+        if missing:
+            sys.exit(
+                "ERROR: combined manifest is missing required columns: "
+                + ", ".join(sorted(missing))
+            )
 
         for row in reader:
 
@@ -149,16 +253,14 @@ def read_manifest(path):
 
 
 # ============================================================
-# Read manifests
+# Read combined species manifest
 # ============================================================
 
-generated = read_manifest(GENERATED_MANIFEST)
-external = read_manifest(EXTERNAL_MANIFEST)
 combined = read_manifest(COMBINED_MANIFEST)
 
 if not combined:
     sys.exit(
-        f"FEHLER: Combined manifest fehlt oder ist leer: "
+        f"ERROR: combined manifest is empty: "
         f"{COMBINED_MANIFEST}"
     )
 
@@ -167,14 +269,21 @@ if not combined:
 # Prepare output directory
 # ============================================================
 
-ORTHOLOG_RESULTS.mkdir(parents=True, exist_ok=True)
+ORTHOLOG_RESULTS_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
 
 
 # ============================================================
 # QC header
 #
-# stderr can be redirected to:
-# ortholog_mapping_qc.tsv
+# stderr is redirected by run_ortholog_pipeline.sh to:
+#
+#   ortholog_results/ortholog_mapping_qc.tsv
+#
+# Keeping stderr restricted to the table ensures that the QC
+# output remains machine-readable.
 # ============================================================
 
 print(
@@ -201,81 +310,56 @@ for slug, info in combined.items():
 
 
     # --------------------------------------------------------
-    # Determine annotation and peaks_AllSets.bed
+    # Locate species-specific GFF3 annotation
     # --------------------------------------------------------
 
-    if source in {"generated", "original", "original22"}:
+    if source in {
+        "generated",
+        "original",
+        "original22",
+    }:
 
-        if slug not in generated:
-            print(
-                f"WARNUNG: {slug} fehlt im Generated-Manifest",
-                file=sys.stderr
-            )
-            continue
-
-        row = generated[slug]
-
-        # Current generated manifest uses "annotation".
-        # "gff" is retained as a fallback.
-        gff_text = (
-            row.get("annotation", "").strip()
-            or row.get("gff", "").strip()
-        )
-
-        if not gff_text:
-            print(
-                f"WARNUNG: Keine Annotation für {slug}",
-                file=sys.stderr
-            )
-            continue
-
-        gff = Path(gff_text)
-
-        peaks = (
-            GENERATED_RESULTS
+        gff = (
+            GENERATED_GFF_ROOT
             / slug
-            / "peaks_AllSets.bed"
+            / "annotation.gff3"
         )
 
-    elif source in {"external", "external12"}:
+    elif source in {
+        "external",
+        "external12",
+    }:
 
-        if slug not in external:
-            print(
-                f"WARNUNG: {slug} fehlt im External-Manifest",
-                file=sys.stderr
-            )
-            continue
-
-        row = external[slug]
-
-        # Current external manifest uses "gff".
-        # "annotation" is retained as a fallback.
-        gff_text = (
-            row.get("gff", "").strip()
-            or row.get("annotation", "").strip()
-        )
-
-        if not gff_text:
-            print(
-                f"WARNUNG: Keine Annotation für {slug}",
-                file=sys.stderr
-            )
-            continue
-
-        gff = Path(gff_text)
-
-        peaks = (
-            EXTERNAL_RESULTS
+        gff = (
+            EXTERNAL_GFF_ROOT
             / slug
-            / "peaks_AllSets.bed"
+            / "annotation.gff3"
         )
 
     else:
+
         print(
-            f"WARNUNG: Unbekannte source={source!r} für {slug}",
-            file=sys.stderr
+            f"WARNING: unknown source={source!r} for {slug}; "
+            "species skipped.",
+            file=sys.stdout
         )
+
         continue
+
+
+    # --------------------------------------------------------
+    # Locate standardized SCRMshaw predictions
+    #
+    # All generated and external predictions have already been
+    # harmonized by 01_scrmshaw/external and are therefore read
+    # from the unified combined_results directory.
+    # --------------------------------------------------------
+
+    peaks = (
+        COMBINED_RESULTS_DIR
+        / slug
+        / "peaks_AllSets.bed"
+    )
 
 
     # --------------------------------------------------------
@@ -283,18 +367,23 @@ for slug, info in combined.items():
     # --------------------------------------------------------
 
     if not gff.is_file():
+
         print(
-            f"WARNUNG: GFF fehlt für {slug}: {gff}",
-            file=sys.stderr
+            f"WARNING: GFF3 missing for {slug}: {gff}",
+            file=sys.stdout
         )
+
         continue
 
+
     if not peaks.is_file():
+
         print(
-            f"WARNUNG: peaks_AllSets.bed fehlt für {slug}: "
+            f"WARNING: peaks_AllSets.bed missing for {slug}: "
             f"{peaks}",
-            file=sys.stderr
+            file=sys.stdout
         )
+
         continue
 
 
@@ -302,24 +391,38 @@ for slug, info in combined.items():
     # Output
     # --------------------------------------------------------
 
-    output_dir = ORTHOLOG_RESULTS / slug
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = (
+        ORTHOLOG_RESULTS_DIR
+        / slug
+    )
 
-    output = output_dir / "SO_all_peaks.bed"
+    output_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    output = (
+        output_dir
+        / "SO_all_peaks.bed"
+    )
 
 
     # --------------------------------------------------------
     # D. melanogaster special case
     #
-    # D. melanogaster itself usually does not require
-    # dmel_orthologs= annotation.
+    # D. melanogaster is the reference species and therefore
+    # generally does not require a dmel_orthologs annotation.
     #
-    # Therefore:
-    #   column 7  = column 6
-    #   column 12 = column 11
+    # For the reference species:
+    #
+    #   output column 7  = input column 6
+    #   output column 12 = input column 11
     # --------------------------------------------------------
 
-    is_dmel = species.lower() == "drosophila melanogaster"
+    is_dmel = (
+        species.lower()
+        == "drosophila melanogaster"
+    )
 
     if is_dmel:
         gene_to_dmel = {}
@@ -341,13 +444,16 @@ for slug, info in combined.items():
 
 
     # --------------------------------------------------------
-    # Process peaks
+    # Process SCRMshaw peaks
     # --------------------------------------------------------
 
     with peaks.open(errors="replace") as inp, \
          output.open("w") as out:
 
-        for line_number, line in enumerate(inp, start=1):
+        for line_number, line in enumerate(
+            inp,
+            start=1
+        ):
 
             if not line.strip():
                 continue
@@ -358,25 +464,40 @@ for slug, info in combined.items():
 
             cols = line.rstrip("\n").split("\t")
 
+
+            # ------------------------------------------------
+            # Validate SCRMshaw BED structure
+            # ------------------------------------------------
+
             if len(cols) != 18:
+
                 print(
-                    f"WARNUNG: {peaks}:{line_number} "
-                    f"hat {len(cols)} statt 18 Spalten",
-                    file=sys.stderr
+                    f"WARNING: {peaks}:{line_number} contains "
+                    f"{len(cols)} columns instead of 18; "
+                    "row skipped.",
+                    file=sys.stdout
                 )
+
                 continue
+
 
             total += 1
 
-            # SCRMshaw:
-            # column 6  = flanking gene
-            # column 11 = next flanking gene
+
+            # ------------------------------------------------
+            # SCRMshaw gene fields
+            #
+            # Column 6  = flanking gene
+            # Column 11 = next flanking gene
+            # ------------------------------------------------
+
             flanking_gene = cols[5]
             next_gene = cols[10]
 
 
             # ------------------------------------------------
             # Flanking gene -> Dmel ortholog
+            #
             # Output column 7
             # ------------------------------------------------
 
@@ -384,26 +505,35 @@ for slug, info in combined.items():
 
                 cols[6] = flanking_gene
 
-                if flanking_gene not in {"", "NA", "."}:
+                if flanking_gene not in {
+                    "",
+                    "NA",
+                    ".",
+                }:
                     mapped_flanking += 1
                 else:
                     unmapped_flanking += 1
 
             else:
 
-                ortholog = gene_to_dmel.get(flanking_gene)
+                ortholog = gene_to_dmel.get(
+                    flanking_gene
+                )
 
                 if ortholog:
+
                     cols[6] = ortholog
                     mapped_flanking += 1
 
                 else:
+
                     cols[6] = "NA"
                     unmapped_flanking += 1
 
 
             # ------------------------------------------------
             # Next flanking gene -> Dmel ortholog
+            #
             # Output column 12
             # ------------------------------------------------
 
@@ -411,25 +541,36 @@ for slug, info in combined.items():
 
                 cols[11] = next_gene
 
-                if next_gene not in {"", "NA", "."}:
+                if next_gene not in {
+                    "",
+                    "NA",
+                    ".",
+                }:
                     mapped_next += 1
                 else:
                     unmapped_next += 1
 
             else:
 
-                ortholog = gene_to_dmel.get(next_gene)
+                ortholog = gene_to_dmel.get(
+                    next_gene
+                )
 
                 if ortholog:
+
                     cols[11] = ortholog
                     mapped_next += 1
 
                 else:
+
                     cols[11] = "NA"
                     unmapped_next += 1
 
 
-            out.write("\t".join(cols) + "\n")
+            out.write(
+                "\t".join(cols)
+                + "\n"
+            )
 
 
     # --------------------------------------------------------
@@ -439,11 +580,15 @@ for slug, info in combined.items():
     if total > 0:
 
         flanking_pct = (
-            100.0 * mapped_flanking / total
+            100.0
+            * mapped_flanking
+            / total
         )
 
         next_pct = (
-            100.0 * mapped_next / total
+            100.0
+            * mapped_next
+            / total
         )
 
     else:
@@ -454,6 +599,9 @@ for slug, info in combined.items():
 
     # --------------------------------------------------------
     # QC output
+    #
+    # Keep this strictly tab-separated because stderr is
+    # redirected to ortholog_mapping_qc.tsv.
     # --------------------------------------------------------
 
     print(
@@ -470,7 +618,7 @@ for slug, info in combined.items():
 
 
     # --------------------------------------------------------
-    # Standard output
+    # Informational output
     # --------------------------------------------------------
 
     print(
