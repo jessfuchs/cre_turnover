@@ -32,63 +32,15 @@ import pandas as pd
 # ============================================================
 
 def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Consolidate QC-passing focal and secondary "
-            "Tier-1 CRE evidence and derive reproducible "
-            "candidate priority categories."
-        )
-    )
-
-    parser.add_argument(
-        "--qc",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--reference",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-evidence",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-prioritized",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--focal-recurrent-min-clades",
-        type=int,
-        default=2,
-    )
-
-    parser.add_argument(
-        "--secondary-recurrent-min-clades",
-        type=int,
-        default=2,
-    )
-
-    parser.add_argument(
-        "--expected-reference-cres",
-        type=int,
-        default=None,
-    )
-
+    parser = argparse.ArgumentParser(description='Consolidate QC-passing focal and secondary Tier-1 CRE evidence and derive reproducible candidate priority categories.')
+    parser.add_argument('--qc', type=Path, required=True)
+    parser.add_argument('--reference', type=Path, required=True)
+    parser.add_argument('--out-evidence', type=Path, required=True)
+    parser.add_argument('--out-prioritized', type=Path, required=True)
+    parser.add_argument('--metadata-out', type=Path, required=True)
+    parser.add_argument('--focal-recurrent-min-clades', type=int, default=2)
+    parser.add_argument('--secondary-recurrent-min-clades', type=int, default=2)
+    parser.add_argument('--expected-reference-cres', type=int, default=None)
     return parser.parse_args()
 
 
