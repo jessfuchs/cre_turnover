@@ -3,34 +3,38 @@ set -euo pipefail
 
 
 # ============================================================
-# QC of unresolved D. melanogaster identifiers after FBgn mapping
+# 05 - QC of unresolved D. melanogaster identifiers
 #
-# Checks whether unresolved identifiers:
+# Purpose:
+#   Investigate Dmel identifiers that could not be converted to
+#   FlyBase FBgn IDs and test whether alternative identifier
+#   normalization resolves them against the Dmel GFF3.
 #
-#   1. occur literally in the Dmel GFF
-#   2. are Dmelanogast_M... transcript identifiers
-#   3. become valid GFF transcript IDs after normalization:
+# Input:
+#   - unresolved_dmel_identifiers.tsv
+#   - D. melanogaster GFF3 annotation
 #
-#        Dmelanogast_M000... -> Dmelanogast_000...
+# Output:
+#   - unresolved_dmel_qc_summary.tsv
+#   - detailed QC files in ortholog_results/unresolved_dmel_qc/
 #
-#   4. have an associated FBgn annotation
-#
-# Outputs are written to ortholog_results/.
+# Configuration:
+#   config/ortholog_config.sh
 # ============================================================
 
 
-PROJECT="$HOME/cre_turnover/project"
+# ============================================================
+# Configuration
+# ============================================================
 
-MAPPING_ROOT="$PROJECT/mapping_orthologs"
-ORTHO="$MAPPING_ROOT/ortholog_results"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PIPELINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-UNRESOLVED="$ORTHO/unresolved_dmel_identifiers.tsv"
+source "$PIPELINE_ROOT/config/ortholog_config.sh"
 
-DMEL_GFF="$PROJECT/external_scrmshaw/external_data/selected/d_melanogaster/annotation.gff3"
-
-SUMMARY="$ORTHO/unresolved_dmel_qc_summary.tsv"
-
-TMPDIR="$ORTHO/unresolved_dmel_qc"
+UNRESOLVED="$UNRESOLVED_DMEL"
+SUMMARY="$UNRESOLVED_QC_SUMMARY"
+TMPDIR="$UNRESOLVED_QC_DIR"
 
 mkdir -p "$TMPDIR"
 
@@ -40,20 +44,20 @@ mkdir -p "$TMPDIR"
 # ============================================================
 
 [[ -s "$UNRESOLVED" ]] || {
-    echo "ERROR: unresolved identifier file missing:" >&2
+    echo "ERROR: unresolved identifier file missing or empty:" >&2
     echo "  $UNRESOLVED" >&2
     exit 1
 }
 
 [[ -s "$DMEL_GFF" ]] || {
-    echo "ERROR: Dmel GFF missing:" >&2
+    echo "ERROR: D. melanogaster GFF3 missing or empty:" >&2
     echo "  $DMEL_GFF" >&2
     exit 1
 }
 
 
 # ============================================================
-# Extract unique unresolved identifiers robustly
+# Extract unique unresolved identifiers
 # ============================================================
 
 python3 - "$UNRESOLVED" "$TMPDIR/unresolved_ids.txt" <<'PY'
@@ -66,7 +70,6 @@ outfile = sys.argv[2]
 ids = set()
 
 with open(infile, encoding="utf-8-sig", newline="") as handle:
-
     rows = list(csv.reader(handle, delimiter="\t"))
 
 if not rows:
@@ -74,7 +77,6 @@ if not rows:
 
 header = rows[0]
 
-# Try to identify the identifier column automatically.
 candidate_names = {
     "identifier",
     "dmel_identifier",
@@ -90,7 +92,6 @@ for i, name in enumerate(header):
         id_col = i
         break
 
-# Fallback: first column.
 if id_col is None:
     id_col = 0
 
@@ -104,21 +105,22 @@ for row in rows[1:]:
     if not value:
         continue
 
-    # Allow pipe-separated unresolved IDs if present.
     for identifier in value.split("|"):
+
         identifier = identifier.strip()
 
         if identifier and identifier not in {"NA", "."}:
             ids.add(identifier)
 
 with open(outfile, "w", encoding="utf-8", newline="\n") as out:
+
     for identifier in sorted(ids):
         out.write(identifier + "\n")
 PY
 
 
 # ============================================================
-# Basic unresolved-ID categories
+# Classify unresolved identifiers
 # ============================================================
 
 grep '^Dmelanogast_M' \
@@ -134,9 +136,8 @@ grep -v '^Dmelanogast_M' \
 # Normalize Dmelanogast_M identifiers
 #
 # Example:
-# Dmelanogast_M00000001234
-# ->
-# Dmelanogast_00000001234
+#   Dmelanogast_M00000001234
+#   -> Dmelanogast_00000001234
 # ============================================================
 
 sed 's/^Dmelanogast_M/Dmelanogast_/' \
@@ -145,11 +146,7 @@ sed 's/^Dmelanogast_M/Dmelanogast_/' \
 
 
 # ============================================================
-# Parse Dmel GFF once and determine:
-#
-# - literal unresolved IDs present in GFF
-# - normalized Dmelanogast IDs present in GFF
-# - FBgn annotations associated with normalized models
+# Compare unresolved and normalized IDs against the Dmel GFF3
 # ============================================================
 
 python3 - \
@@ -190,7 +187,11 @@ normalized_found = set()
 normalized_fbgn = set()
 
 
-with open(gff_file, encoding="utf-8") as handle:
+with open(
+    gff_file,
+    encoding="utf-8",
+    errors="replace",
+) as handle:
 
     for line in handle:
 
@@ -204,9 +205,6 @@ with open(gff_file, encoding="utf-8") as handle:
 
         attributes = parts[8]
 
-        # Direct search is intentional here because both
-        # ID=... and Parent=... relationships can be useful.
-
         for identifier in unresolved:
             if identifier in attributes:
                 literal_found.add(identifier)
@@ -219,11 +217,18 @@ with open(gff_file, encoding="utf-8") as handle:
 
         if matched_normalized:
 
-            normalized_found.update(matched_normalized)
+            normalized_found.update(
+                matched_normalized
+            )
 
-            fbgns = re.findall(r"FBgn\d+", attributes)
+            fbgns = re.findall(
+                r"FBgn\d+",
+                attributes
+            )
 
-            normalized_fbgn.update(fbgns)
+            normalized_fbgn.update(
+                fbgns
+            )
 
 
 for path, values in [
@@ -231,17 +236,25 @@ for path, values in [
     (normalized_out, normalized_found),
     (fbgn_out, normalized_fbgn),
 ]:
-    with open(path, "w", encoding="utf-8", newline="\n") as out:
+
+    with open(
+        path,
+        "w",
+        encoding="utf-8",
+        newline="\n",
+    ) as out:
+
         for value in sorted(values):
             out.write(value + "\n")
 PY
 
 
 # ============================================================
-# Counts
+# Count QC categories
 # ============================================================
 
 count_lines() {
+
     local file="$1"
 
     if [[ -s "$file" ]]; then
@@ -253,22 +266,16 @@ count_lines() {
 
 
 n_total=$(count_lines "$TMPDIR/unresolved_ids.txt")
-
 n_m=$(count_lines "$TMPDIR/dmelanogast_M_ids.txt")
-
 n_other=$(count_lines "$TMPDIR/other_unresolved_ids.txt")
-
 n_literal=$(count_lines "$TMPDIR/unresolved_literal_in_gff.txt")
-
 n_normalized=$(count_lines "$TMPDIR/dmelanogast_normalized_ids.txt")
-
 n_normalized_found=$(count_lines "$TMPDIR/normalized_in_gff.txt")
-
 n_fbgn=$(count_lines "$TMPDIR/normalized_fbgn.txt")
 
 
 # ============================================================
-# Write summary
+# Write QC summary
 # ============================================================
 
 printf "metric\tcount\n" > "$SUMMARY"
@@ -296,7 +303,7 @@ printf "unique_FBgn_for_normalized_models\t%d\n" \
 
 
 # ============================================================
-# Print result
+# Report
 # ============================================================
 
 echo
@@ -305,7 +312,11 @@ echo "Unresolved Dmel identifier QC completed"
 echo "============================================================"
 echo
 
-column -t -s $'\t' "$SUMMARY"
+if command -v column >/dev/null 2>&1; then
+    column -t -s $'\t' "$SUMMARY"
+else
+    cat "$SUMMARY"
+fi
 
 echo
 echo "Detailed QC files:"
