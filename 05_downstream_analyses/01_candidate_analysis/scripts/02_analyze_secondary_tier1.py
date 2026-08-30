@@ -1,8 +1,30 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from datetime import datetime
+# ============================================================
+# Analyze secondary singleton CRE-state contrasts
+#
+# Purpose:
+#   Identify CREs for which exactly one species within a focal
+#   clade differs from a common state shared by all remaining
+#   species.
+#
+# Categories:
+#   - tier1: present <-> turnover_candidate
+#   - tier2: positive CRE state <-> no_detected_CRE
+#   - tier3: other singleton contrasts
+#   - other_pattern: no valid singleton contrast
+#
+# Secondary Tier-1 candidates are additionally summarized
+# across clades to identify recurrent CREs.
+#
+# Input/output paths and clade definitions:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
+from pathlib import Path
 import platform
 import sys
 
@@ -10,125 +32,10 @@ import pandas as pd
 
 
 # ============================================================
-# Paths
-# ============================================================
-
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
-
-CLASS_DIR = (
-    PROJECT_DIR
-    / "cre_classification"
-)
-
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
-
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
-
-SECONDARY_DIR = (
-    RESULTS_DIR
-    / "secondary_clades"
-)
-
-SECONDARY_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-
-DEFAULT_MATRIX = (
-    CLASS_DIR
-    / "results"
-    / "cre_turnover_matrix.tsv"
-)
-
-DEFAULT_OUT_LONG = (
-    SECONDARY_DIR
-    / "secondary_tier1_all_clades.tsv"
-)
-
-DEFAULT_OUT_SUMMARY = (
-    SECONDARY_DIR
-    / "secondary_tier1_recurrent_cres.tsv"
-)
-
-DEFAULT_OUT_GROUP_SUMMARY = (
-    SECONDARY_DIR
-    / "secondary_clade_summary.tsv"
-)
-
-DEFAULT_METADATA = (
-    SECONDARY_DIR
-    / "secondary_tier1_run_metadata.tsv"
-)
-
-
-# ============================================================
-# Clade definitions
-#
-# These are exploratory phylogenetic groups.
-# No species is predefined as focal here.
-# Any one species may be the discordant singleton.
-# ============================================================
-
-GROUPS = {
-    "rufa_group": [
-        "druf",
-        "dkik",
-        "dbun",
-        "dbir",
-        "d_serrata",
-    ],
-
-    "immigrans_group": [
-        "dimm",
-        "dfor",
-        "dsul",
-        "dnas",
-    ],
-
-    "obscura_group": [
-        "dsub",
-        "dbif",
-        "dobs",
-    ],
-
-    "azteca_affinis_miranda_group": [
-        "dazt",
-        "d_affinis",
-        "dmir",
-        "dper",
-    ],
-
-    "teissieri_group": [
-        "dtei",
-        "d_simulans",
-        "d_lutescens",
-        "dsuz",
-    ],
-
-    "repleta_group": [
-        "d_repleta",
-        "d_buzzatii",
-        "d_mojavensis",
-        "d_arizonae",
-    ],
-}
-
-
-# ============================================================
 # CRE-state definitions
 # ============================================================
+
+REFERENCE_CRE_ID_COLUMN = "dmel_cre_id"
 
 VALID_STATES = {
     "present",
@@ -151,97 +58,94 @@ OUTPUT_TIERS = [
 
 
 # ============================================================
-# Argument parsing
+# Arguments
 # ============================================================
 
 def parse_args():
 
     parser = argparse.ArgumentParser(
         description=(
-            "Identify singleton discordant CRE-state patterns "
-            "within predefined phylogenetic clades and summarize "
-            "recurrent secondary Tier-1 CRE candidates."
+            "Identify singleton CRE-state contrasts within "
+            "predefined phylogenetic clades and summarize "
+            "secondary Tier-1 candidates."
         )
     )
 
     parser.add_argument(
         "--matrix",
         type=Path,
-        default=DEFAULT_MATRIX,
-        help=(
-            "CRE turnover matrix "
-            "(default: %(default)s)"
-        ),
+        required=True,
+    )
+
+    parser.add_argument(
+        "--groups",
+        type=Path,
+        required=True,
     )
 
     parser.add_argument(
         "--outdir",
         type=Path,
-        default=SECONDARY_DIR,
-        help=(
-            "Output directory for per-clade tables "
-            "(default: %(default)s)"
-        ),
+        required=True,
     )
 
     parser.add_argument(
         "--out-long",
         type=Path,
-        default=DEFAULT_OUT_LONG,
-        help=(
-            "Combined secondary Tier-1 long table "
-            "(default: %(default)s)"
-        ),
+        required=True,
     )
 
     parser.add_argument(
         "--out-summary",
         type=Path,
-        default=DEFAULT_OUT_SUMMARY,
-        help=(
-            "Recurrent secondary Tier-1 CRE summary "
-            "(default: %(default)s)"
-        ),
+        required=True,
     )
 
     parser.add_argument(
         "--out-group-summary",
         type=Path,
-        default=DEFAULT_OUT_GROUP_SUMMARY,
-        help=(
-            "Per-clade pattern-count summary "
-            "(default: %(default)s)"
-        ),
+        required=True,
     )
 
     parser.add_argument(
         "--metadata-out",
         type=Path,
-        default=DEFAULT_METADATA,
-        help=(
-            "Run metadata output "
-            "(default: %(default)s)"
-        ),
+        required=True,
+    )
+
+    parser.add_argument(
+        "--expected-reference-cres",
+        type=int,
+        default=None,
+    )
+
+    parser.add_argument(
+        "--recurrence-min-clades",
+        type=int,
+        default=2,
     )
 
     return parser.parse_args()
 
 
 # ============================================================
-# Helpers
+# Helper functions
 # ============================================================
 
 def require_file(path):
-    if not path.exists():
+    """
+    Abort if a required input file is missing.
+    """
+
+    if not path.is_file():
         raise SystemExit(
-            "ERROR: required input file not found:\n"
-            f"{path}"
+            f"ERROR: required input file not found:\n{path}"
         )
 
 
 def join_unique(values):
     """
-    Join unique, non-empty values in deterministic order.
+    Join unique non-empty values in deterministic order.
     """
 
     clean = sorted({
@@ -259,6 +163,103 @@ def join_unique(values):
     return "|".join(clean)
 
 
+def load_groups(path):
+    """
+    Load clade definitions from focal_clades.tsv.
+
+    The focal/comparison distinction is ignored here because
+    every species can act as the discordant singleton.
+    """
+
+    groups = pd.read_csv(
+        path,
+        sep="\t",
+        dtype=str,
+    ).fillna("")
+
+    required = {
+        "group_name",
+        "focal_species",
+        "comparison_species",
+    }
+
+    missing = (
+        required
+        - set(groups.columns)
+    )
+
+    if missing:
+        raise SystemExit(
+            "ERROR: clade definition file is missing columns:\n"
+            + "\n".join(
+                sorted(missing)
+            )
+        )
+
+    for column in required:
+        groups[column] = (
+            groups[column]
+            .astype(str)
+            .str.strip()
+        )
+
+    duplicated_groups = (
+        groups.loc[
+            groups["group_name"].duplicated(
+                keep=False
+            ),
+            "group_name",
+        ]
+        .unique()
+        .tolist()
+    )
+
+    if duplicated_groups:
+        raise SystemExit(
+            "ERROR: duplicate clade names:\n"
+            + "\n".join(
+                sorted(duplicated_groups)
+            )
+        )
+
+    result = {}
+
+    for row in groups.itertuples(
+        index=False
+    ):
+
+        comparisons = [
+            value.strip()
+            for value
+            in row.comparison_species.split("|")
+            if value.strip()
+        ]
+
+        species = [
+            row.focal_species,
+            *comparisons,
+        ]
+
+        if len(species) < 3:
+            raise SystemExit(
+                f"ERROR: {row.group_name} contains fewer "
+                "than three species."
+            )
+
+        if len(species) != len(
+            set(species)
+        ):
+            raise SystemExit(
+                f"ERROR: duplicate species in {row.group_name}."
+            )
+
+        result[
+            row.group_name
+        ] = species
+
+    return result
+
+
 def classify_secondary_pattern(
     row,
     species,
@@ -266,29 +267,8 @@ def classify_secondary_pattern(
     """
     Classify one CRE across one phylogenetic clade.
 
-    A secondary singleton pattern requires exactly one species
-    to differ from all other species in the clade.
-
-    Examples
-    --------
-    3 species:
-        A != B = B
-
-    4 species:
-        A != B = B = B
-
-    5 species:
-        A != B = B = B = B
-
-    Returns
-    -------
-    dict
-        pattern_class
-        tier
-        discordant_species
-        discordant_state
-        consensus_state
-        n_consensus_species
+    A singleton contrast requires exactly one species to differ
+    from one common state shared by all remaining species.
     """
 
     states = {
@@ -322,10 +302,6 @@ def classify_secondary_pattern(
                 0,
         }
 
-    # --------------------------------------------------------
-    # Count state frequencies
-    # --------------------------------------------------------
-
     counts = (
         pd.Series(
             list(
@@ -335,12 +311,8 @@ def classify_secondary_pattern(
         .value_counts()
     )
 
-    # --------------------------------------------------------
-    # Singleton pattern requires exactly two states
-    # --------------------------------------------------------
-
+    # Exactly two states must occur.
     if len(counts) != 2:
-
         return {
             "pattern_class":
                 "not_singleton_contrast",
@@ -367,12 +339,8 @@ def classify_secondary_pattern(
         if n == 1
     ]
 
-    # --------------------------------------------------------
-    # Exactly one state must occur exactly once
-    # --------------------------------------------------------
-
+    # Exactly one state must occur once.
     if len(singleton_states) != 1:
-
         return {
             "pattern_class":
                 "not_singleton_contrast",
@@ -404,10 +372,7 @@ def classify_secondary_pattern(
         == discordant_state
     ]
 
-    if len(
-        discordant_species
-    ) != 1:
-
+    if len(discordant_species) != 1:
         return {
             "pattern_class":
                 "not_singleton_contrast",
@@ -435,23 +400,15 @@ def classify_secondary_pattern(
     consensus_species = [
         sp
         for sp in species
-        if sp
-        != discordant_species
+        if sp != discordant_species
     ]
 
     consensus_states = {
         states[sp]
-        for sp
-        in consensus_species
+        for sp in consensus_species
     }
 
-    if (
-        len(
-            consensus_states
-        )
-        != 1
-    ):
-
+    if len(consensus_states) != 1:
         return {
             "pattern_class":
                 "not_singleton_contrast",
@@ -482,22 +439,16 @@ def classify_secondary_pattern(
         consensus_species
     )
 
-    # --------------------------------------------------------
     # Tier 1:
     # present <-> turnover_candidate
-    # --------------------------------------------------------
 
     if (
-        discordant_state
-        in POSITIVE_STATES
+        discordant_state in POSITIVE_STATES
         and
-        consensus_state
-        in POSITIVE_STATES
+        consensus_state in POSITIVE_STATES
         and
-        discordant_state
-        != consensus_state
+        discordant_state != consensus_state
     ):
-
         return {
             "pattern_class":
                 "present_vs_turnover",
@@ -518,10 +469,8 @@ def classify_secondary_pattern(
                 n_consensus_species,
         }
 
-    # --------------------------------------------------------
     # Tier 2:
-    # positive <-> no_detected_CRE
-    # --------------------------------------------------------
+    # positive state <-> no_detected_CRE
 
     if (
         (
@@ -540,7 +489,6 @@ def classify_secondary_pattern(
             in POSITIVE_STATES
         )
     ):
-
         return {
             "pattern_class":
                 "detection_contrast",
@@ -561,11 +509,8 @@ def classify_secondary_pattern(
                 n_consensus_species,
         }
 
-    # --------------------------------------------------------
     # Tier 3:
-    # singleton contrast exists, but involves uncertain
-    # or another non-priority combination
-    # --------------------------------------------------------
+    # remaining singleton contrasts.
 
     return {
         "pattern_class":
@@ -600,30 +545,40 @@ def main():
         args.matrix
     )
 
+    require_file(
+        args.groups
+    )
+
+    if args.recurrence_min_clades < 1:
+        raise SystemExit(
+            "ERROR: recurrence-min-clades must be >= 1."
+        )
+
     args.outdir.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    args.out_long.parent.mkdir(
-        parents=True,
-        exist_ok=True,
+    for path in [
+        args.out_long,
+        args.out_summary,
+        args.out_group_summary,
+        args.metadata_out,
+    ]:
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+
+    # ========================================================
+    # Load clade definitions
+    # ========================================================
+
+    groups = load_groups(
+        args.groups
     )
 
-    args.out_summary.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    args.out_group_summary.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    args.metadata_out.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
 
     # ========================================================
     # Load CRE-state matrix
@@ -635,55 +590,58 @@ def main():
         dtype=str,
     ).fillna("")
 
-    if (
-        "dmel_cre_id"
-        not in df.columns
-    ):
-
+    if REFERENCE_CRE_ID_COLUMN not in df.columns:
         raise SystemExit(
             "ERROR: CRE-state matrix lacks "
-            "dmel_cre_id."
+            f"'{REFERENCE_CRE_ID_COLUMN}'."
         )
 
-    # --------------------------------------------------------
-    # Unique CRE IDs
-    # --------------------------------------------------------
-
     if df[
-        "dmel_cre_id"
+        REFERENCE_CRE_ID_COLUMN
     ].duplicated().any():
 
         duplicated = (
             df.loc[
                 df[
-                    "dmel_cre_id"
+                    REFERENCE_CRE_ID_COLUMN
                 ].duplicated(
                     keep=False
                 ),
-                "dmel_cre_id",
+                REFERENCE_CRE_ID_COLUMN,
             ]
             .drop_duplicates()
             .tolist()
         )
 
         raise SystemExit(
-            "ERROR: duplicate dmel_cre_id values "
-            "in CRE-state matrix:\n"
+            "ERROR: duplicate D. melanogaster CRE IDs:\n"
             + "\n".join(
-                sorted(
-                    duplicated
-                )
+                sorted(duplicated)
             )
         )
 
+    if (
+        args.expected_reference_cres
+        is not None
+        and
+        len(df)
+        != args.expected_reference_cres
+    ):
+        raise SystemExit(
+            "ERROR: unexpected number of reference CREs.\n"
+            f"Expected: {args.expected_reference_cres}\n"
+            f"Observed: {len(df)}"
+        )
+
+
     # ========================================================
-    # Validate required species
+    # Validate species
     # ========================================================
 
     required_species = sorted({
         sp
         for species
-        in GROUPS.values()
+        in groups.values()
         for sp
         in species
     })
@@ -698,7 +656,6 @@ def main():
     )
 
     if missing_species:
-
         raise SystemExit(
             "ERROR: required species missing from "
             "CRE-state matrix:\n"
@@ -706,6 +663,7 @@ def main():
                 missing_species
             )
         )
+
 
     # ========================================================
     # Validate state vocabulary
@@ -728,14 +686,13 @@ def main():
     )
 
     if unknown_states:
-
         raise SystemExit(
-            "ERROR: unexpected CRE-state values "
-            "in matrix:\n"
+            "ERROR: unexpected CRE-state values in matrix:\n"
             + "\n".join(
                 unknown_states
             )
         )
+
 
     # ========================================================
     # Analyze each clade
@@ -744,32 +701,25 @@ def main():
     group_summary_rows = []
     secondary_tier1_rows = []
 
+
     for (
         group_name,
         species,
-    ) in GROUPS.items():
-
-        # ----------------------------------------------------
-        # Extract group matrix
-        # ----------------------------------------------------
+    ) in groups.items():
 
         sub = df[
             [
-                "dmel_cre_id",
+                REFERENCE_CRE_ID_COLUMN,
                 *species,
             ]
         ].copy()
 
-        # ----------------------------------------------------
-        # Classify all CREs
-        # ----------------------------------------------------
-
         classified = sub.apply(
             lambda row:
-                classify_secondary_pattern(
-                    row,
-                    species,
-                ),
+            classify_secondary_pattern(
+                row,
+                species,
+            ),
             axis=1,
             result_type="expand",
         )
@@ -782,32 +732,28 @@ def main():
             axis=1,
         )
 
-        sub[
-            "group_name"
-        ] = group_name
-
-        sub[
-            "group_species"
-        ] = "|".join(
-            species
+        sub["group_name"] = (
+            group_name
         )
 
-        sub[
-            "n_group_species"
-        ] = len(
-            species
+        sub["group_species"] = (
+            "|".join(
+                species
+            )
         )
 
-        # ----------------------------------------------------
-        # Stable ordering
-        # ----------------------------------------------------
+        sub["n_group_species"] = (
+            len(
+                species
+            )
+        )
 
         sub = (
             sub
             .sort_values(
                 [
                     "tier",
-                    "dmel_cre_id",
+                    REFERENCE_CRE_ID_COLUMN,
                 ],
                 kind="mergesort",
             )
@@ -816,16 +762,14 @@ def main():
             )
         )
 
+
         # ----------------------------------------------------
-        # Complete group table
+        # Write complete and tier-specific tables
         # ----------------------------------------------------
 
         all_file = (
             args.outdir
-            / (
-                f"{group_name}"
-                "_all_patterns.tsv"
-            )
+            / f"{group_name}_all_patterns.tsv"
         )
 
         sub.to_csv(
@@ -834,109 +778,84 @@ def main():
             index=False,
         )
 
-        # ----------------------------------------------------
-        # Tier-specific tables
-        # ----------------------------------------------------
-
         for tier in OUTPUT_TIERS:
-
-            tier_df = (
-                sub.loc[
-                    sub[
-                        "tier"
-                    ]
-                    == tier
-                ]
-                .copy()
-            )
 
             tier_file = (
                 args.outdir
-                / (
-                    f"{group_name}_"
-                    f"{tier}.tsv"
-                )
+                / f"{group_name}_{tier}.tsv"
             )
 
-            tier_df.to_csv(
+            sub.loc[
+                sub["tier"] == tier
+            ].to_csv(
                 tier_file,
                 sep="\t",
                 index=False,
             )
 
-        # ----------------------------------------------------
-        # Extract Secondary Tier-1 rows for combined summary
-        # ----------------------------------------------------
-
-        tier1 = (
-            sub.loc[
-                sub[
-                    "tier"
-                ]
-                == "tier1"
-            ]
-            .copy()
-        )
-
-        if not tier1.empty:
-
-            for _, row in (
-                tier1.iterrows()
-            ):
-
-                secondary_tier1_rows.append({
-                    "dmel_cre_id":
-                        row[
-                            "dmel_cre_id"
-                        ],
-
-                    "group_name":
-                        group_name,
-
-                    "discordant_species":
-                        row[
-                            "discordant_species"
-                        ],
-
-                    "discordant_state":
-                        row[
-                            "discordant_state"
-                        ],
-
-                    "consensus_state":
-                        row[
-                            "consensus_state"
-                        ],
-
-                    "n_group_species":
-                        len(
-                            species
-                        ),
-
-                    "n_consensus_species":
-                        row[
-                            "n_consensus_species"
-                        ],
-
-                    "group_species":
-                        "|".join(
-                            species
-                        ),
-
-                    "pattern_class":
-                        row[
-                            "pattern_class"
-                        ],
-                })
 
         # ----------------------------------------------------
-        # Group-level summary
+        # Collect secondary Tier-1 candidates
+        # ----------------------------------------------------
+
+        tier1 = sub.loc[
+            sub["tier"] == "tier1"
+        ].copy()
+
+        for _, row in tier1.iterrows():
+
+            secondary_tier1_rows.append({
+                REFERENCE_CRE_ID_COLUMN:
+                    row[
+                        REFERENCE_CRE_ID_COLUMN
+                    ],
+
+                "group_name":
+                    group_name,
+
+                "discordant_species":
+                    row[
+                        "discordant_species"
+                    ],
+
+                "discordant_state":
+                    row[
+                        "discordant_state"
+                    ],
+
+                "consensus_state":
+                    row[
+                        "consensus_state"
+                    ],
+
+                "n_group_species":
+                    len(
+                        species
+                    ),
+
+                "n_consensus_species":
+                    row[
+                        "n_consensus_species"
+                    ],
+
+                "group_species":
+                    "|".join(
+                        species
+                    ),
+
+                "pattern_class":
+                    row[
+                        "pattern_class"
+                    ],
+            })
+
+
+        # ----------------------------------------------------
+        # Group summary
         # ----------------------------------------------------
 
         counts = (
-            sub[
-                "tier"
-            ]
+            sub["tier"]
             .value_counts()
         )
 
@@ -992,9 +911,6 @@ def main():
                 ),
         })
 
-        # ----------------------------------------------------
-        # Console report
-        # ----------------------------------------------------
 
         print()
         print("=" * 72)
@@ -1033,29 +949,9 @@ def main():
             f"{counts.get('other_pattern', 0)}"
         )
 
-        if not tier1.empty:
-
-            print()
-            print(
-                "Secondary Tier-1 candidates:"
-            )
-
-            print(
-                tier1[
-                    [
-                        "dmel_cre_id",
-                        "discordant_species",
-                        "discordant_state",
-                        "consensus_state",
-                        *species,
-                    ]
-                ].to_string(
-                    index=False
-                )
-            )
 
     # ========================================================
-    # Combined Secondary Tier-1 long table
+    # Combined secondary Tier-1 table
     # ========================================================
 
     secondary_long = pd.DataFrame(
@@ -1068,7 +964,7 @@ def main():
             secondary_long
             .sort_values(
                 [
-                    "dmel_cre_id",
+                    REFERENCE_CRE_ID_COLUMN,
                     "group_name",
                     "discordant_species",
                 ],
@@ -1081,7 +977,7 @@ def main():
 
         if secondary_long.duplicated(
             subset=[
-                "dmel_cre_id",
+                REFERENCE_CRE_ID_COLUMN,
                 "group_name",
             ]
         ).any():
@@ -1091,14 +987,31 @@ def main():
                 "in secondary Tier-1 table."
             )
 
+    else:
+
+        secondary_long = pd.DataFrame(
+            columns=[
+                REFERENCE_CRE_ID_COLUMN,
+                "group_name",
+                "discordant_species",
+                "discordant_state",
+                "consensus_state",
+                "n_group_species",
+                "n_consensus_species",
+                "group_species",
+                "pattern_class",
+            ]
+        )
+
     secondary_long.to_csv(
         args.out_long,
         sep="\t",
         index=False,
     )
 
+
     # ========================================================
-    # Recurrent Secondary Tier-1 summary
+    # Recurrent secondary Tier-1 summary
     # ========================================================
 
     if not secondary_long.empty:
@@ -1106,7 +1019,7 @@ def main():
         secondary_summary = (
             secondary_long
             .groupby(
-                "dmel_cre_id",
+                REFERENCE_CRE_ID_COLUMN,
                 sort=True,
             )
             .agg(
@@ -1145,7 +1058,8 @@ def main():
         ].apply(
             lambda n:
                 "recurrent"
-                if int(n) >= 2
+                if int(n)
+                >= args.recurrence_min_clades
                 else "single_clade"
         )
 
@@ -1154,7 +1068,7 @@ def main():
             .sort_values(
                 [
                     "n_secondary_tier1_clades",
-                    "dmel_cre_id",
+                    REFERENCE_CRE_ID_COLUMN,
                 ],
                 ascending=[
                     False,
@@ -1171,7 +1085,7 @@ def main():
 
         secondary_summary = pd.DataFrame(
             columns=[
-                "dmel_cre_id",
+                REFERENCE_CRE_ID_COLUMN,
                 "n_secondary_tier1_clades",
                 "secondary_tier1_clades",
                 "discordant_species",
@@ -1187,16 +1101,15 @@ def main():
         index=False,
     )
 
+
     # ========================================================
     # Group summary
     # ========================================================
 
-    group_summary = pd.DataFrame(
-        group_summary_rows
-    )
-
     group_summary = (
-        group_summary
+        pd.DataFrame(
+            group_summary_rows
+        )
         .sort_values(
             "group_name",
             kind="mergesort",
@@ -1211,6 +1124,7 @@ def main():
         sep="\t",
         index=False,
     )
+
 
     # ========================================================
     # Run metadata
@@ -1242,6 +1156,11 @@ def main():
                     args.matrix.resolve()
                 ),
 
+            "clade_definition_input":
+                str(
+                    args.groups.resolve()
+                ),
+
             "n_reference_cres":
                 len(
                     df
@@ -1249,8 +1168,11 @@ def main():
 
             "n_clades":
                 len(
-                    GROUPS
+                    groups
                 ),
+
+            "recurrence_min_clades":
+                args.recurrence_min_clades,
 
             "n_secondary_tier1_rows":
                 len(
@@ -1260,7 +1182,7 @@ def main():
             "n_unique_secondary_tier1_cres":
                 (
                     secondary_long[
-                        "dmel_cre_id"
+                        REFERENCE_CRE_ID_COLUMN
                     ].nunique()
                     if not secondary_long.empty
                     else 0
@@ -1286,13 +1208,16 @@ def main():
         index=False,
     )
 
+
     # ========================================================
-    # Final console summary
+    # Final report
     # ========================================================
 
     print()
     print("=" * 72)
-    print("Secondary Tier analysis complete")
+    print(
+        "Secondary Tier-1 analysis complete"
+    )
     print("=" * 72)
 
     print(
@@ -1302,7 +1227,7 @@ def main():
 
     print(
         f"Clades analyzed: "
-        f"{len(GROUPS)}"
+        f"{len(groups)}"
     )
 
     print(
@@ -1312,44 +1237,24 @@ def main():
 
     print(
         "Unique Secondary Tier-1 CREs: "
-        f"{secondary_long['dmel_cre_id'].nunique() if not secondary_long.empty else 0}"
+        f"{secondary_long[REFERENCE_CRE_ID_COLUMN].nunique() "
+        f"if not secondary_long.empty else 0}"
     )
 
-    if not secondary_summary.empty:
+    recurrent = (
+        secondary_summary.loc[
+            secondary_summary[
+                "secondary_recurrence"
+            ] == "recurrent"
+        ]
+        if not secondary_summary.empty
+        else secondary_summary
+    )
 
-        recurrent = (
-            secondary_summary.loc[
-                secondary_summary[
-                    "secondary_recurrence"
-                ]
-                == "recurrent"
-            ]
-        )
-
-        print(
-            f"Recurrent Secondary Tier-1 CREs: "
-            f"{len(recurrent)}"
-        )
-
-        if not recurrent.empty:
-
-            print()
-            print(
-                "Recurrent Secondary Tier-1 candidates:"
-            )
-
-            print(
-                recurrent[
-                    [
-                        "dmel_cre_id",
-                        "n_secondary_tier1_clades",
-                        "secondary_tier1_clades",
-                        "discordant_species",
-                    ]
-                ].to_string(
-                    index=False
-                )
-            )
+    print(
+        f"Recurrent Secondary Tier-1 CREs: "
+        f"{len(recurrent)}"
+    )
 
     print()
     print(
@@ -1357,28 +1262,20 @@ def main():
         f"{args.outdir}"
     )
 
-    print()
-
     print(
         f"Wrote combined Tier-1 table:\n"
         f"{args.out_long}"
     )
-
-    print()
 
     print(
         f"Wrote recurrent CRE summary:\n"
         f"{args.out_summary}"
     )
 
-    print()
-
     print(
         f"Wrote clade summary:\n"
         f"{args.out_group_summary}"
     )
-
-    print()
 
     print(
         f"Wrote run metadata:\n"
