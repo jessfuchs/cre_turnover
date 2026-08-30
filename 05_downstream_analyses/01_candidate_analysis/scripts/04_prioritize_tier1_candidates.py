@@ -1,8 +1,26 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from datetime import datetime
+# ============================================================
+# Prioritize Tier-1 CRE candidates
+#
+# Purpose:
+#   Consolidate QC-passing focal and secondary Tier-1 evidence
+#   across focal clades and assign reproducible candidate
+#   priority categories.
+#
+# Priority is based on:
+#   - recurrence of focal Tier-1 support
+#   - recurrence of secondary-only Tier-1 support
+#   - combined focal and secondary support
+#
+# Input/output paths and recurrence thresholds:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
+from pathlib import Path
 import platform
 import sys
 
@@ -10,79 +28,68 @@ import pandas as pd
 
 
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
+def parse_args():
 
-MAP_DIR = (
-    PROJECT_DIR
-    / "mapping_orthologs"
-)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Consolidate QC-passing focal and secondary "
+            "Tier-1 CRE evidence and derive reproducible "
+            "candidate priority categories."
+        )
+    )
 
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
+    parser.add_argument(
+        "--qc",
+        type=Path,
+        required=True,
+    )
 
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
+    parser.add_argument(
+        "--reference",
+        type=Path,
+        required=True,
+    )
 
-QC_DIR = (
-    RESULTS_DIR
-    / "qc"
-)
+    parser.add_argument(
+        "--out-evidence",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR = (
-    RESULTS_DIR
-    / "tables"
-)
+    parser.add_argument(
+        "--out-prioritized",
+        type=Path,
+        required=True,
+    )
 
-TABLE_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
 
-DEFAULT_QC = (
-    QC_DIR
-    / "tier1_candidate_qc_summary.tsv"
-)
+    parser.add_argument(
+        "--focal-recurrent-min-clades",
+        type=int,
+        default=2,
+    )
 
-DEFAULT_REF = (
-    MAP_DIR
-    / "reference_cres/dmel_reference_cres.tsv"
-)
+    parser.add_argument(
+        "--secondary-recurrent-min-clades",
+        type=int,
+        default=2,
+    )
 
+    parser.add_argument(
+        "--expected-reference-cres",
+        type=int,
+        default=None,
+    )
 
-DEFAULT_OUT_EVIDENCE = (
-    TABLE_DIR
-    / "tier1_candidate_clade_evidence.tsv"
-)
-
-DEFAULT_OUT_PRIORITIZED = (
-    TABLE_DIR
-    / "tier1_candidates_prioritized.tsv"
-)
-
-DEFAULT_METADATA = (
-    TABLE_DIR
-    / "tier1_candidate_prioritization_metadata.tsv"
-)
-
-
-# ============================================================
-# Priority definitions
-# ============================================================
-
-FOCAL_RECURRENT_MIN_CLADES = 2
-SECONDARY_RECURRENT_MIN_CLADES = 2
+    return parser.parse_args()
 
 
 # ============================================================
@@ -116,73 +123,6 @@ REF_COLUMNS = [
     "method",
     "rank",
 ]
-
-
-# ============================================================
-# Argument parser
-# ============================================================
-
-def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "Consolidate QC-passing focal and secondary Tier-1 "
-            "CRE evidence and derive reproducible candidate "
-            "priority categories."
-        )
-    )
-
-    parser.add_argument(
-        "--qc",
-        type=Path,
-        default=DEFAULT_QC,
-        help=(
-            "Tier-1 candidate QC summary "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--reference",
-        type=Path,
-        default=DEFAULT_REF,
-        help=(
-            "D. melanogaster reference CRE annotation "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--out-evidence",
-        type=Path,
-        default=DEFAULT_OUT_EVIDENCE,
-        help=(
-            "Clade-level Tier-1 evidence table "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--out-prioritized",
-        type=Path,
-        default=DEFAULT_OUT_PRIORITIZED,
-        help=(
-            "One-row-per-CRE prioritized table "
-            "(default: %(default)s)"
-        ),
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        default=DEFAULT_METADATA,
-        help=(
-            "Run metadata output "
-            "(default: %(default)s)"
-        ),
-    )
-
-    return parser.parse_args()
 
 
 # ============================================================
@@ -245,29 +185,11 @@ def join_unique(values):
 def assign_priority(
     n_focal_clades,
     n_secondary_only_clades,
+    focal_recurrent_min_clades,
+    secondary_recurrent_min_clades,
 ):
     """
-    Assign descriptive, reproducible candidate priority.
-
-    Priority hierarchy
-    ------------------
-    focal_recurrent
-        Focal Tier-1 in >=2 clades.
-
-    focal_plus_secondary_recurrent
-        Focal Tier-1 in >=1 clade and secondary-only Tier-1
-        in >=1 additional clade.
-
-    focal_single
-        Exactly one focal Tier-1 clade and no secondary-only
-        support elsewhere.
-
-    secondary_recurrent
-        No focal Tier-1 support, but secondary-only Tier-1
-        in >=2 clades.
-
-    secondary_single
-        One secondary-only Tier-1 clade only.
+    Assign a reproducible Tier-1 candidate priority.
     """
 
     n_focal_clades = int(
@@ -280,7 +202,7 @@ def assign_priority(
 
     if (
         n_focal_clades
-        >= FOCAL_RECURRENT_MIN_CLADES
+        >= focal_recurrent_min_clades
     ):
         return "focal_recurrent"
 
@@ -304,7 +226,7 @@ def assign_priority(
         n_focal_clades == 0
         and
         n_secondary_only_clades
-        >= SECONDARY_RECURRENT_MIN_CLADES
+        >= secondary_recurrent_min_clades
     ):
         return "secondary_recurrent"
 
@@ -347,6 +269,25 @@ def priority_rank(priority):
 def main():
 
     args = parse_args()
+
+    if args.focal_recurrent_min_clades < 2:
+        raise SystemExit(
+            "ERROR: focal-recurrent-min-clades must be >= 2."
+        )
+    
+    if args.secondary_recurrent_min_clades < 2:
+        raise SystemExit(
+            "ERROR: secondary-recurrent-min-clades must be >= 2."
+        )
+    
+    if (
+        args.expected_reference_cres is not None
+        and
+        args.expected_reference_cres < 1
+    ):
+        raise SystemExit(
+            "ERROR: expected-reference-cres must be >= 1."
+        )
 
     require_file(
         args.qc
@@ -496,6 +437,18 @@ def main():
         sep="\t",
         dtype=str,
     ).fillna("")
+
+    if (
+        args.expected_reference_cres is not None
+        and
+        len(ref) != args.expected_reference_cres
+    ):
+        raise SystemExit(
+            "ERROR: unexpected number of D. melanogaster "
+            "reference CREs.\n"
+            f"Expected: {args.expected_reference_cres}\n"
+            f"Observed: {len(ref)}"
+        )
 
     require_columns(
         ref,
@@ -662,6 +615,8 @@ def main():
         priority = assign_priority(
             focal_clades,
             secondary_clades,
+            args.focal_recurrent_min_clades,
+            args.secondary_recurrent_min_clades,
         )
 
         # ----------------------------------------------------
@@ -1016,10 +971,17 @@ def main():
                 platform.platform(),
 
             "focal_recurrent_min_clades":
-                FOCAL_RECURRENT_MIN_CLADES,
-
+                args.focal_recurrent_min_clades,
+            
             "secondary_recurrent_min_clades":
-                SECONDARY_RECURRENT_MIN_CLADES,
+                args.secondary_recurrent_min_clades,
+            
+            "expected_reference_cres":
+                (
+                    args.expected_reference_cres
+                    if args.expected_reference_cres is not None
+                    else "NA"
+                ),
 
             "qc_input":
                 str(
@@ -1137,14 +1099,19 @@ def main():
             .to_string()
         )
 
-        recurrent = (
-            prioritized.loc[
-                prioritized[
-                    "n_total_tier1_clades"
-                ]
-                > 1
-            ]
-        )
+        recurrent_priorities = {
+            "focal_recurrent",
+            "focal_plus_secondary_recurrent",
+            "secondary_recurrent",
+        }
+
+        recurrent = prioritized.loc[
+            prioritized[
+                "candidate_priority"
+            ].isin(
+                recurrent_priorities
+            )
+        ]
 
         if not recurrent.empty:
 
