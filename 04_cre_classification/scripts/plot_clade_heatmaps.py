@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 
-"""
-Plot stringent lineage-specific CRE-state contrasts for six focal clades.
+# ============================================================
+# Plot focal-clade CRE-state heatmaps
+#
+# Purpose:
+# Identify stringent lineage-specific CRE-state contrasts across six focal clades.
+#
+# Analysis:
+# Strict singleton contrasts between `present` and `turnover_candidate` states are identified. 
+# Focal Tier-1 and Secondary Tier-1 candidates are kept separate and ordered deterministically.
+#
+# Figure structure:
+# phylogeny | species labels | climate strip | gap | CRE-state heatmap
+#
+# Notes:
+# - D. melanogaster is not displayed as a species row.
+# - Heatmap columns represent D. melanogaster reference CREs.
+#
+# Output:
+# - one PNG and PDF figure per focal clade
+# - focal_clade_heatmap_CREs.tsv
+# ============================================================
 
-For each focal clade, the script identifies strict singleton contrasts between
-`present` and `turnover_candidate` CRE states, separates focal Tier-1 from
-secondary Tier-1 candidates, orders CREs deterministically, and writes one
-phylogeny/climate/heatmap figure in PNG and PDF format.
-
-Figure structure
-----------------
-    phylogeny | species labels | climate strip | gap | CRE-state heatmap
-
-D. melanogaster is not displayed as a species row. Heatmap column labels refer
-to the D. melanogaster reference CRE set.
-"""
 
 # ============================================================
 # Imports
