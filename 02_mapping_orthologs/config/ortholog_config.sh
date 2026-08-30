@@ -69,6 +69,12 @@ EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 MIN_ORTHOLOG_FRACTION="${MIN_ORTHOLOG_FRACTION:-0.10}"
 
 # ======================================================================
+# Reference species
+# ======================================================================
+
+DMEL_SLUG="${DMEL_SLUG:-d_melanogaster}"
+
+# ======================================================================
 # Export variables for child Bash/Python processes
 # ======================================================================
 
@@ -102,3 +108,5 @@ export EXPECTED_SPECIES
 export EXPECTED_REFERENCE_CRES
 
 export MIN_ORTHOLOG_FRACTION
+
+export DMEL_SLUG
