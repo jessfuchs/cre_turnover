@@ -78,6 +78,18 @@ SPECIES_ORDER_FILE="${PHYLOGENY_RESULTS_DIR}/species_order_40_tree_names.txt"
 SPECIES_METADATA="${PHYLOGENY_DATA_DIR}/species_metadata.tsv"
 
 # ======================================================================
+# Species-level QC parameters
+# ======================================================================
+
+QC_MIN_MAPPING_RATE="${QC_MIN_MAPPING_RATE:-0.50}"
+QC_MIN_SCRMSHAW_PEAKS="${QC_MIN_SCRMSHAW_PEAKS:-50}"
+QC_MIN_SEQID_OVERLAP="${QC_MIN_SEQID_OVERLAP:-0.25}"
+QC_MIN_MAPPED_FOR_OVERLAP_CHECK="${QC_MIN_MAPPED_FOR_OVERLAP_CHECK:-100}"
+QC_HIGH_MAPPING_RATE="${QC_HIGH_MAPPING_RATE:-0.90}"
+
+SPECIES_QC_SUMMARY="${RESULTS_DIR}/species_qc_summary.tsv"
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -111,3 +123,10 @@ export PHYLOGENY_SCRIPTS_DIR
 export TREE_FILE
 export SPECIES_ORDER_FILE
 export SPECIES_METADATA
+
+export QC_MIN_MAPPING_RATE
+export QC_MIN_SCRMSHAW_PEAKS
+export QC_MIN_SEQID_OVERLAP
+export QC_MIN_MAPPED_FOR_OVERLAP_CHECK
+export QC_HIGH_MAPPING_RATE
+export SPECIES_QC_SUMMARY
