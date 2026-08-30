@@ -24,38 +24,22 @@ set -euo pipefail
 
 
 # ------------------------------------------------------------
-# Paths
+# Configuration
 # ------------------------------------------------------------
 
-PROJECT="$HOME/cre_turnover/project"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PIPELINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-ROOT="$PROJECT/mapping_orthologs"
-SCRIPTS="$ROOT/scripts"
-
-ORTHO="$ROOT/ortholog_results"
-REFERENCE="$ROOT/reference_cres"
-
-EXTERNAL="$PROJECT/external_scrmshaw"
-
-MANIFEST="$EXTERNAL/combined_manifest.tsv"
-
-DMEL_GFF="$EXTERNAL/external_data/selected/d_melanogaster/annotation.gff3"
-
-
-# ------------------------------------------------------------
-# Expected final project state
-# ------------------------------------------------------------
-
-EXPECTED_SPECIES=40
-EXPECTED_REFERENCE_CRES=337
+source "$PIPELINE_ROOT/config/ortholog_config.sh"
 
 
 # ============================================================
 # Prepare directories
 # ============================================================
 
-mkdir -p "$ORTHO"
-mkdir -p "$REFERENCE"
+mkdir -p \
+    "$ORTHOLOG_RESULTS_DIR" \
+    "$REFERENCE_CRES_DIR"
 
 
 # ============================================================
@@ -65,9 +49,11 @@ mkdir -p "$REFERENCE"
 echo "============================================================"
 echo "Drosophila ortholog-mapping pipeline"
 echo "============================================================"
-echo "Started : $(date)"
-echo "Project : $PROJECT"
-echo "Root    : $ROOT"
+echo "Started      : $(date)"
+echo "Project root : $PROJECT_ROOT"
+echo "Pipeline root: $PIPELINE_ROOT"
+echo "Manifest     : $COMBINED_MANIFEST"
+echo "Dmel GFF     : $DMEL_GFF"
 echo
 
 
@@ -79,16 +65,15 @@ echo "[PRE] Checking required files..."
 
 required_files=(
 
-    "$MANIFEST"
+    "$COMBINED_MANIFEST"
     "$DMEL_GFF"
 
-    "$SCRIPTS/01_qc_dmel_orthologs.sh"
-    "$SCRIPTS/02_map_peaks_to_dmel_orthologs.py"
-    "$SCRIPTS/03_SO_bed_to_tsv.py"
-    "$SCRIPTS/04_map_dmel_ids_to_fbgn.py"
-    "$SCRIPTS/05_qc_unresolved_dmel_ids.sh"
-    "$SCRIPTS/06_make_dmel_reference_cres.py"
-
+    "$SCRIPTS_DIR/01_qc_dmel_orthologs.sh"
+    "$SCRIPTS_DIR/02_map_peaks_to_dmel_orthologs.py"
+    "$SCRIPTS_DIR/03_SO_bed_to_tsv.py"
+    "$SCRIPTS_DIR/04_map_dmel_ids_to_fbgn.py"
+    "$SCRIPTS_DIR/05_qc_unresolved_dmel_ids.sh"
+    "$SCRIPTS_DIR/06_make_dmel_reference_cres.py"
 )
 
 for f in "${required_files[@]}"; do
@@ -103,6 +88,9 @@ for f in "${required_files[@]}"; do
 
 done
 
+echo "[PRE] PASSED"
+echo
+
 
 # ============================================================
 # 01. QC input Dmel ortholog annotations
@@ -113,7 +101,7 @@ echo "[01/06] QC of Dmel ortholog annotations"
 echo "============================================================"
 echo
 
-bash "$SCRIPTS/01_qc_dmel_orthologs.sh"
+bash "$SCRIPTS_DIR/01_qc_dmel_orthologs.sh"
 
 echo
 echo "[01/06] PASSED"
@@ -129,9 +117,9 @@ echo "[02/06] Mapping peak-associated genes to Dmel orthologs"
 echo "============================================================"
 echo
 
-python3 "$SCRIPTS/02_map_peaks_to_dmel_orthologs.py" \
-    > "$ORTHO/ortholog_mapping.out" \
-    2> "$ORTHO/ortholog_mapping_qc.tsv"
+python3 "$SCRIPTS_DIR/02_map_peaks_to_dmel_orthologs.py" \
+    > "$ORTHOLOG_RESULTS_DIR/ortholog_mapping.out" \
+    2> "$ORTHOLOG_RESULTS_DIR/ortholog_mapping_qc.tsv"
 
 
 # ------------------------------------------------------------
@@ -139,7 +127,7 @@ python3 "$SCRIPTS/02_map_peaks_to_dmel_orthologs.py" \
 # ------------------------------------------------------------
 
 N_SO=$(
-    find "$ORTHO" \
+    find "$ORTHOLOG_RESULTS_DIR" \
         -mindepth 2 \
         -maxdepth 2 \
         -type f \
@@ -159,11 +147,11 @@ fi
 
 
 # ------------------------------------------------------------
-# QC: files must not be empty
+# QC: species-specific files must not be empty
 # ------------------------------------------------------------
 
 EMPTY_SO=$(
-    find "$ORTHO" \
+    find "$ORTHOLOG_RESULTS_DIR" \
         -mindepth 2 \
         -maxdepth 2 \
         -type f \
@@ -193,14 +181,14 @@ echo "[03/06] Combining species-specific SO BED files"
 echo "============================================================"
 echo
 
-python3 "$SCRIPTS/03_SO_bed_to_tsv.py" \
-    "$ORTHO" \
-    "$MANIFEST" \
-    > "$ORTHO/SO_all_species.tsv" \
-    2> "$ORTHO/SO_bed_to_tsv_qc.log"
+python3 "$SCRIPTS_DIR/03_SO_bed_to_tsv.py" \
+    "$ORTHOLOG_RESULTS_DIR" \
+    "$COMBINED_MANIFEST" \
+    > "$SO_ALL_SPECIES" \
+    2> "$ORTHOLOG_RESULTS_DIR/SO_bed_to_tsv_qc.log"
 
 
-[[ -s "$ORTHO/SO_all_species.tsv" ]] || {
+[[ -s "$SO_ALL_SPECIES" ]] || {
 
     echo "ERROR: SO_all_species.tsv was not created." >&2
     exit 1
@@ -213,7 +201,7 @@ python3 "$SCRIPTS/03_SO_bed_to_tsv.py" \
 # ------------------------------------------------------------
 
 N_COMBINED_SPECIES=$(
-    python3 - "$ORTHO/SO_all_species.tsv" <<'PY'
+    python3 - "$SO_ALL_SPECIES" <<'PY'
 import csv
 import sys
 
@@ -250,7 +238,7 @@ if [[ "$N_COMBINED_SPECIES" -ne "$EXPECTED_SPECIES" ]]; then
 fi
 
 echo
-echo "[02/05] PASSED"
+echo "[03/06] PASSED"
 echo
 
 
@@ -263,14 +251,14 @@ echo "[04/06] Mapping Dmel identifiers to FBgn"
 echo "============================================================"
 echo
 
-python3 "$SCRIPTS/04_map_dmel_ids_to_fbgn.py" \
-    "$ORTHO/SO_all_species.tsv" \
+python3 "$SCRIPTS_DIR/04_map_dmel_ids_to_fbgn.py" \
+    "$SO_ALL_SPECIES" \
     "$DMEL_GFF" \
-    "$ORTHO/SO_all_species_fbgn.tsv" \
-    2> "$ORTHO/fbgn_mapping_qc.log"
+    "$SO_ALL_SPECIES_FBGN" \
+    2> "$ORTHOLOG_RESULTS_DIR/fbgn_mapping_qc.log"
 
 
-[[ -s "$ORTHO/SO_all_species_fbgn.tsv" ]] || {
+[[ -s "$SO_ALL_SPECIES_FBGN" ]] || {
 
     echo "ERROR: SO_all_species_fbgn.tsv was not created." >&2
     exit 1
@@ -278,7 +266,7 @@ python3 "$SCRIPTS/04_map_dmel_ids_to_fbgn.py" \
 }
 
 
-[[ -f "$ORTHO/unresolved_dmel_identifiers.tsv" ]] || {
+[[ -f "$UNRESOLVED_DMEL" ]] || {
 
     echo "ERROR: unresolved_dmel_identifiers.tsv was not created." >&2
     exit 1
@@ -299,10 +287,10 @@ echo "[05/06] QC of unresolved Dmel identifiers"
 echo "============================================================"
 echo
 
-bash "$SCRIPTS/05_qc_unresolved_dmel_ids.sh"
+bash "$SCRIPTS_DIR/05_qc_unresolved_dmel_ids.sh"
 
 
-[[ -s "$ORTHO/unresolved_dmel_qc_summary.tsv" ]] || {
+[[ -s "$UNRESOLVED_QC_SUMMARY" ]] || {
 
     echo "ERROR: unresolved Dmel QC summary was not created." >&2
     exit 1
@@ -323,27 +311,23 @@ echo "[06/06] Building final Dmel reference CRE set"
 echo "============================================================"
 echo
 
-python3 "$SCRIPTS/06_make_dmel_reference_cres.py" \
-    > "$REFERENCE/reference_qc.log"
+python3 "$SCRIPTS_DIR/06_make_dmel_reference_cres.py" \
+    > "$REFERENCE_CRES_DIR/reference_qc.log"
 
 
-REF_TSV="$REFERENCE/dmel_reference_cres.tsv"
-REF_BED="$REFERENCE/dmel_reference_cres.bed"
-
-
-[[ -s "$REF_TSV" ]] || {
+[[ -s "$REFERENCE_CRES_TSV" ]] || {
 
     echo "ERROR: reference CRE TSV was not created:" >&2
-    echo "  $REF_TSV" >&2
+    echo "  $REFERENCE_CRES_TSV" >&2
     exit 1
 
 }
 
 
-[[ -s "$REF_BED" ]] || {
+[[ -s "$REFERENCE_CRES_BED" ]] || {
 
     echo "ERROR: reference CRE BED was not created:" >&2
-    echo "  $REF_BED" >&2
+    echo "  $REFERENCE_CRES_BED" >&2
     exit 1
 
 }
@@ -354,11 +338,11 @@ REF_BED="$REFERENCE/dmel_reference_cres.bed"
 # ------------------------------------------------------------
 
 N_REF=$(
-    grep -vcE '^(#|$)' "$REF_BED"
+    grep -vcE '^(#|$)' "$REFERENCE_CRES_BED"
 )
 
 N_UNIQUE_IDS=$(
-    cut -f4 "$REF_BED" \
+    cut -f4 "$REFERENCE_CRES_BED" \
         | sort -u \
         | wc -l
 )
@@ -403,29 +387,30 @@ echo "Main outputs:"
 echo
 
 echo "Annotation QC:"
-echo "  $ORTHO/dmel_ortholog_annotation_qc.tsv"
+echo "  $DMEL_ORTHOLOG_QC"
 echo
 
 echo "Species-specific ortholog mapping:"
-echo "  $ORTHO/<species>/SO_all_peaks.bed"
+echo "  $ORTHOLOG_RESULTS_DIR/<species>/SO_all_peaks.bed"
 echo
 
 echo "Combined mapping:"
-echo "  $ORTHO/SO_all_species.tsv"
+echo "  $SO_ALL_SPECIES"
 echo
 
 echo "FBgn-normalized mapping:"
-echo "  $ORTHO/SO_all_species_fbgn.tsv"
+echo "  $SO_ALL_SPECIES_FBGN"
 echo
 
 echo "Unresolved-ID QC:"
-echo "  $ORTHO/unresolved_dmel_identifiers.tsv"
-echo "  $ORTHO/unresolved_dmel_qc_summary.tsv"
+echo "  $UNRESOLVED_DMEL"
+echo "  $UNRESOLVED_QC_SUMMARY"
 echo
 
 echo "Final Dmel reference CRE set:"
-echo "  $REF_TSV"
-echo "  $REF_BED"
+echo "  $REFERENCE_CRES_TSV"
+echo "  $REFERENCE_CRES_BED"
 echo
+
 echo "Reference CREs: $N_REF"
 echo "============================================================"
