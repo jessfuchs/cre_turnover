@@ -1,182 +1,36 @@
 #!/usr/bin/env python3
 
-"""
-    Classify the CRE-state pattern for one focal clade.
-
-    Categories
-    ----------
-    tier1
-        Focal and comparison consensus differ between
-        present and turnover_candidate.
-
-        Example:
-            focal: turnover_candidate
-            comparisons: present, present, present
-
-        This is the strongest candidate for lineage-specific
-        positional CRE turnover.
-
-    tier2
-        Focal and comparison consensus differ between
-        a positive CRE state and no_detected_CRE.
-
-        Example:
-            focal: no_detected_CRE
-            comparisons: present, present, present
-
-        This represents a detection contrast and is interpreted
-        more conservatively.
-
-    tier3
-        Comparison species agree and focal differs, but the
-        contrast involves uncertain or another non-priority
-        state combination.
-
-    comparison_mixed
-        Comparison species do not share one common state.
-
-    all_same
-        Focal and all comparison species share the same state.
-
-    invalid
-        At least one value is outside the expected CRE-state
-        vocabulary.
-"""
-
-from pathlib import Path
-import pandas as pd
-
-
 # ============================================================
-# Paths
-# ============================================================
-
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
-
-CLASS_DIR = (
-    PROJECT_DIR
-    / "cre_classification"
-)
-
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
-
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
-
-OUTDIR = (
-    RESULTS_DIR
-    / "focal_clades"
-)
-
-OUTDIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-MATRIX_FILE = (
-    CLASS_DIR
-    / "results"
-    / "cre_turnover_matrix.tsv"
-)
-
-SUMMARY_FILE = (
-    RESULTS_DIR
-    / "focal_clade_summary.tsv"
-)
-
-
-# ============================================================
-# Each group contains:
-# - one focal species from one climatic zone
-# - phylogenetically close comparison species sharing another
-#   climatic zone
+# Analyze focal-clade CRE-state contrasts
 #
-# D. melanogaster is not included because it is the reference
-# species and therefore has no target-state column in the matrix
+# Purpose:
+#   Identify lineage-specific CRE-state contrasts between one
+#   focal species and phylogenetically close comparison species.
+#
+# Categories:
+#   - tier1: present <-> turnover_candidate
+#   - tier2: positive CRE state <-> no_detected_CRE
+#   - tier3: other focal contrasts with comparison consensus
+#   - comparison_mixed: comparison species do not agree
+#   - all_same: focal and comparison species share one state
+#   - invalid: unexpected CRE-state value
+#
+# Input/output paths and focal-clade definitions:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
 # ============================================================
 
-GROUPS = {
-    "rufa_group": {
-        "focal": "druf",              # TEMP
-        "comparison": [
-            "dkik",                   # TROP
-            "dbun",                   # TROP
-            "dbir",                   # TROP
-            "d_serrata",              # TROP
-        ],
-        "focal_climate": "TEMP",
-        "comparison_climate": "TROP",
-    },
+import argparse
+from pathlib import Path
 
-    "immigrans_group": {
-        "focal": "dimm",              # TEMP
-        "comparison": [
-            "dfor",                   # TROP
-            "dsul",                   # TROP
-            "dnas",                   # TROP
-        ],
-        "focal_climate": "TEMP",
-        "comparison_climate": "TROP",
-    },
-
-    "obscura_group": {
-        "focal": "dsub",              # TEMP
-        "comparison": [
-            "dbif",                   # BORE
-            "dobs",                   # BORE
-        ],
-        "focal_climate": "TEMP",
-        "comparison_climate": "BORE",
-    },
-
-    "azteca_affinis_miranda_group": {
-        "focal": "dazt",              # ARID
-        "comparison": [
-            "d_affinis",              # TEMP
-            "dmir",                   # TEMP
-            "dper",                   # TEMP
-        ],
-        "focal_climate": "ARID",
-        "comparison_climate": "TEMP",
-    },
-
-    "teissieri_group": {
-        "focal": "dtei",              # TROP
-        "comparison": [
-            "d_simulans",             # TEMP
-            "d_lutescens",            # TEMP
-            "dsuz",                   # TEMP
-        ],
-        "focal_climate": "TROP",
-        "comparison_climate": "TEMP",
-    },
-
-    "repleta_group": {
-        "focal": "d_repleta",         # TEMP
-        "comparison": [
-            "d_buzzatii",             # ARID
-            "d_mojavensis",           # ARID
-            "d_arizonae",             # ARID
-        ],
-        "focal_climate": "TEMP",
-        "comparison_climate": "ARID",
-    },
-}
+import pandas as pd
 
 
 # ============================================================
 # CRE-state definitions
 # ============================================================
+
+REFERENCE_CRE_ID_COLUMN = "dmel_cre_id"
 
 POSITIVE_STATES = {
     "present",
@@ -201,19 +55,354 @@ OUTPUT_CATEGORIES = [
 
 
 # ============================================================
+# Arguments
+# ============================================================
+
+parser = argparse.ArgumentParser(
+    description=(
+        "Analyze focal-clade CRE-state contrasts between one "
+        "focal species and phylogenetically close comparison "
+        "species."
+    )
+)
+
+parser.add_argument(
+    "--matrix",
+    required=True,
+)
+
+parser.add_argument(
+    "--groups",
+    required=True,
+)
+
+parser.add_argument(
+    "--manifest",
+    required=True,
+)
+
+parser.add_argument(
+    "--traits",
+    required=True,
+)
+
+parser.add_argument(
+    "--out-dir",
+    required=True,
+)
+
+parser.add_argument(
+    "--summary-out",
+    required=True,
+)
+
+parser.add_argument(
+    "--reference-species",
+    default="d_melanogaster",
+)
+
+parser.add_argument(
+    "--expected-reference-cres",
+    type=int,
+    default=None,
+)
+
+args = parser.parse_args()
+
+
+# ============================================================
+# Input and output paths
+# ============================================================
+
+MATRIX_FILE = Path(args.matrix)
+GROUPS_FILE = Path(args.groups)
+MANIFEST_FILE = Path(args.manifest)
+TRAITS_FILE = Path(args.traits)
+
+OUTDIR = Path(args.out_dir)
+SUMMARY_FILE = Path(args.summary_out)
+
+OUTDIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+SUMMARY_FILE.parent.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+
+# ============================================================
 # Helper functions
 # ============================================================
 
 def require_file(path):
     """
-    Abort if a required input file does not exist.
+    Abort if a required input file is missing.
     """
 
-    if not path.exists():
+    if not path.is_file():
         raise SystemExit(
-            "ERROR: required input file not found:\n"
-            f"{path}"
+            f"ERROR: required input file not found:\n{path}"
         )
+
+
+def tree_name_from_species(species_name):
+    """
+    Convert a scientific species name to the tree-name
+    convention used in the published phylogeny.
+    """
+
+    return (
+        str(species_name)
+        .strip()
+        .upper()
+        .replace(" ", "_")
+    )
+
+
+def load_groups(path):
+    """
+    Load focal-clade definitions.
+    """
+
+    groups = pd.read_csv(
+        path,
+        sep="\t",
+        dtype=str,
+    ).fillna("")
+
+    required = {
+        "group_name",
+        "focal_species",
+        "comparison_species",
+    }
+
+    missing = (
+        required
+        - set(groups.columns)
+    )
+
+    if missing:
+        raise SystemExit(
+            "ERROR: focal-clade definition file is missing "
+            "columns:\n"
+            + "\n".join(
+                sorted(missing)
+            )
+        )
+
+    for column in required:
+        groups[column] = (
+            groups[column]
+            .astype(str)
+            .str.strip()
+        )
+
+    if (
+        groups[
+            list(required)
+        ] == ""
+    ).any().any():
+        raise SystemExit(
+            "ERROR: focal-clade definition file contains "
+            "empty required values."
+        )
+
+    duplicated = (
+        groups.loc[
+            groups["group_name"].duplicated(
+                keep=False
+            ),
+            "group_name",
+        ]
+        .unique()
+        .tolist()
+    )
+
+    if duplicated:
+        raise SystemExit(
+            "ERROR: duplicate focal-clade names:\n"
+            + "\n".join(
+                sorted(duplicated)
+            )
+        )
+
+    result = {}
+
+    for row in groups.itertuples(
+        index=False
+    ):
+
+        comparisons = [
+            value.strip()
+            for value
+            in row.comparison_species.split("|")
+            if value.strip()
+        ]
+
+        if not comparisons:
+            raise SystemExit(
+                "ERROR: no comparison species defined for "
+                f"{row.group_name}."
+            )
+
+        if len(comparisons) != len(
+            set(comparisons)
+        ):
+            raise SystemExit(
+                "ERROR: duplicate comparison species in "
+                f"{row.group_name}."
+            )
+
+        if row.focal_species in comparisons:
+            raise SystemExit(
+                "ERROR: focal species also occurs among "
+                f"comparisons for {row.group_name}."
+            )
+
+        result[row.group_name] = {
+            "focal": row.focal_species,
+            "comparison": comparisons,
+        }
+
+    return result
+
+
+def load_species_climates(
+    manifest_file,
+    traits_file,
+):
+    """
+    Map pipeline species slugs to climatic zones.
+    """
+
+    manifest = pd.read_csv(
+        manifest_file,
+        sep="\t",
+        dtype=str,
+    ).fillna("")
+
+    required_manifest = {
+        "slug",
+        "species",
+    }
+
+    missing = (
+        required_manifest
+        - set(manifest.columns)
+    )
+
+    if missing:
+        raise SystemExit(
+            "ERROR: combined manifest is missing columns:\n"
+            + "\n".join(
+                sorted(missing)
+            )
+        )
+
+    for column in required_manifest:
+        manifest[column] = (
+            manifest[column]
+            .astype(str)
+            .str.strip()
+        )
+
+    duplicated_slugs = (
+        manifest.loc[
+            manifest["slug"].duplicated(
+                keep=False
+            ),
+            "slug",
+        ]
+        .unique()
+        .tolist()
+    )
+
+    if duplicated_slugs:
+        raise SystemExit(
+            "ERROR: duplicate species slugs in combined "
+            "manifest:\n"
+            + "\n".join(
+                sorted(duplicated_slugs)
+            )
+        )
+
+    manifest["tree_name"] = (
+        manifest["species"]
+        .map(
+            tree_name_from_species
+        )
+    )
+
+    traits = pd.read_csv(
+        traits_file,
+        sep="\t",
+        dtype=str,
+    ).fillna("")
+
+    required_traits = {
+        "tree_name",
+        "climatic_zone",
+    }
+
+    missing = (
+        required_traits
+        - set(traits.columns)
+    )
+
+    if missing:
+        raise SystemExit(
+            "ERROR: species trait table is missing columns:\n"
+            + "\n".join(
+                sorted(missing)
+            )
+        )
+
+    for column in required_traits:
+        traits[column] = (
+            traits[column]
+            .astype(str)
+            .str.strip()
+        )
+
+    duplicated_tree_names = (
+        traits.loc[
+            traits["tree_name"].duplicated(
+                keep=False
+            ),
+            "tree_name",
+        ]
+        .unique()
+        .tolist()
+    )
+
+    if duplicated_tree_names:
+        raise SystemExit(
+            "ERROR: duplicate tree names in species trait "
+            "table:\n"
+            + "\n".join(
+                sorted(duplicated_tree_names)
+            )
+        )
+
+    tree_to_climate = dict(
+        zip(
+            traits["tree_name"],
+            traits["climatic_zone"],
+        )
+    )
+
+    return {
+        row.slug: tree_to_climate.get(
+            row.tree_name,
+            "",
+        )
+        for row in manifest.itertuples(
+            index=False
+        )
+    }
 
 
 def classify_focal(
@@ -221,12 +410,15 @@ def classify_focal(
     focal,
     comparisons,
 ):
+    """
+    Classify one focal-clade CRE-state pattern.
+    """
 
     focal_state = row[focal]
 
     comparison_states = [
-        row[sp]
-        for sp in comparisons
+        row[species]
+        for species in comparisons
     ]
 
     all_states = [
@@ -234,18 +426,12 @@ def classify_focal(
         *comparison_states,
     ]
 
-    # --------------------------------------------------------
-    # Validate state vocabulary
-    # --------------------------------------------------------
-
-    if not set(all_states).issubset(
+    if not set(
+        all_states
+    ).issubset(
         VALID_STATES
     ):
         return "invalid"
-
-    # --------------------------------------------------------
-    # Comparison species must agree
-    # --------------------------------------------------------
 
     if len(
         set(comparison_states)
@@ -256,31 +442,20 @@ def classify_focal(
         comparison_states[0]
     )
 
-    # --------------------------------------------------------
-    # No focal difference
-    # --------------------------------------------------------
-
     if focal_state == consensus_state:
         return "all_same"
 
-    # --------------------------------------------------------
     # Tier 1:
     # present <-> turnover_candidate
-    # --------------------------------------------------------
 
     if (
         focal_state in POSITIVE_STATES
-        and
-        consensus_state in POSITIVE_STATES
-        and
-        focal_state != consensus_state
+        and consensus_state in POSITIVE_STATES
     ):
         return "tier1"
 
-    # --------------------------------------------------------
     # Tier 2:
     # positive state <-> no_detected_CRE
-    # --------------------------------------------------------
 
     if (
         (
@@ -297,10 +472,8 @@ def classify_focal(
     ):
         return "tier2"
 
-    # --------------------------------------------------------
     # Tier 3:
-    # remaining focal contrasts, including uncertain
-    # --------------------------------------------------------
+    # remaining focal contrasts, including uncertain.
 
     return "tier3"
 
@@ -310,30 +483,44 @@ def get_comparison_consensus(
     comparisons,
 ):
     """
-    Return the common comparison-species state.
-
-    Returns 'mixed' when comparison species disagree.
+    Return the common comparison state or 'mixed'.
     """
 
-    values = [
-        row[sp]
-        for sp in comparisons
+    states = [
+        row[species]
+        for species in comparisons
     ]
 
-    unique = set(values)
+    unique = set(states)
 
     if len(unique) == 1:
-        return values[0]
+        return states[0]
 
     return "mixed"
 
 
 # ============================================================
-# Input checks
+# Load inputs
 # ============================================================
 
-require_file(
-    MATRIX_FILE
+for path in [
+    MATRIX_FILE,
+    GROUPS_FILE,
+    MANIFEST_FILE,
+    TRAITS_FILE,
+]:
+    require_file(path)
+
+
+GROUPS = load_groups(
+    GROUPS_FILE
+)
+
+slug_to_climate = (
+    load_species_climates(
+        MANIFEST_FILE,
+        TRAITS_FILE,
+    )
 )
 
 df = pd.read_csv(
@@ -344,68 +531,103 @@ df = pd.read_csv(
 
 
 # ============================================================
-# Validate matrix structure
+# Validate CRE-state matrix
 # ============================================================
 
-if "dmel_cre_id" not in df.columns:
+if REFERENCE_CRE_ID_COLUMN not in df.columns:
     raise SystemExit(
-        "ERROR: cre_turnover_matrix.tsv does not contain "
-        "a dmel_cre_id column."
+        "ERROR: CRE-state matrix does not contain "
+        f"'{REFERENCE_CRE_ID_COLUMN}'."
     )
 
 
-# ------------------------------------------------------------
-# Duplicated reference CRE IDs
-# ------------------------------------------------------------
-
-if df["dmel_cre_id"].duplicated().any():
+if df[
+    REFERENCE_CRE_ID_COLUMN
+].duplicated().any():
 
     duplicated = (
         df.loc[
             df[
-                "dmel_cre_id"
+                REFERENCE_CRE_ID_COLUMN
             ].duplicated(
                 keep=False
             ),
-            "dmel_cre_id",
+            REFERENCE_CRE_ID_COLUMN,
         ]
         .unique()
         .tolist()
     )
 
     raise SystemExit(
-        "ERROR: duplicated D. melanogaster CRE IDs "
-        "in cre_turnover_matrix.tsv:\n"
+        "ERROR: duplicated D. melanogaster CRE IDs:\n"
         + "\n".join(
             sorted(duplicated)
         )
     )
 
 
-# ------------------------------------------------------------
-# Validate required focal-clade species
-# ------------------------------------------------------------
+if (
+    args.expected_reference_cres is not None
+    and
+    len(df) != args.expected_reference_cres
+):
+    raise SystemExit(
+        "ERROR: unexpected number of reference CREs.\n"
+        f"Expected: {args.expected_reference_cres}\n"
+        f"Observed: {len(df)}"
+    )
+
+
+# ============================================================
+# Validate focal-clade species
+# ============================================================
 
 required_species = {
-    sp
+    species
     for info in GROUPS.values()
-    for sp in [
+    for species in [
         info["focal"],
         *info["comparison"],
     ]
 }
 
-missing_species = sorted(
+
+if args.reference_species in required_species:
+    raise SystemExit(
+        "ERROR: the reference species must not be included "
+        "in a focal-clade definition."
+    )
+
+
+missing_matrix_species = sorted(
     required_species
     - set(df.columns)
 )
 
-if missing_species:
+if missing_matrix_species:
     raise SystemExit(
         "ERROR: focal-clade species missing from "
-        "cre_turnover_matrix.tsv:\n"
+        "CRE-state matrix:\n"
         + "\n".join(
-            missing_species
+            missing_matrix_species
+        )
+    )
+
+
+missing_climates = sorted(
+    species
+    for species in required_species
+    if not slug_to_climate.get(
+        species,
+        "",
+    )
+)
+
+if missing_climates:
+    raise SystemExit(
+        "ERROR: climatic-zone annotation missing for:\n"
+        + "\n".join(
+            missing_climates
         )
     )
 
@@ -414,15 +636,11 @@ if missing_species:
 # Validate CRE-state vocabulary
 # ============================================================
 
-state_columns = sorted(
-    required_species
-)
-
 observed_states = {
     value
     for value in pd.unique(
         df[
-            state_columns
+            sorted(required_species)
         ].values.ravel()
     )
     if value != ""
@@ -449,41 +667,63 @@ if unknown_states:
 
 summary_rows = []
 
+
 for group_name, info in GROUPS.items():
 
     focal = info["focal"]
-
-    comparisons = (
-        info["comparison"]
-    )
+    comparisons = info["comparison"]
 
     focal_climate = (
-        info["focal_climate"]
+        slug_to_climate[focal]
     )
 
-    comparison_climate = (
-        info["comparison_climate"]
+    comparison_climates = {
+        slug_to_climate[species]
+        for species in comparisons
+    }
+
+    if len(
+        comparison_climates
+    ) != 1:
+        raise SystemExit(
+            "ERROR: comparison species in "
+            f"{group_name} do not share one climatic zone:\n"
+            + "\n".join(
+                f"{species}\t"
+                f"{slug_to_climate[species]}"
+                for species in comparisons
+            )
+        )
+
+    comparison_climate = next(
+        iter(
+            comparison_climates
+        )
     )
+
+    if focal_climate == comparison_climate:
+        raise SystemExit(
+            f"ERROR: focal and comparison species in "
+            f"{group_name} share the same climatic zone "
+            f"({focal_climate})."
+        )
 
     species = [
         focal,
         *comparisons,
     ]
 
+
     # --------------------------------------------------------
-    # Extract group-specific matrix
+    # Extract and classify group-specific CRE states
     # --------------------------------------------------------
 
     sub = df[
         [
-            "dmel_cre_id",
+            REFERENCE_CRE_ID_COLUMN,
             *species,
         ]
     ].copy()
-
-    # --------------------------------------------------------
-    # Classify each reference CRE
-    # --------------------------------------------------------
 
     sub["category"] = sub.apply(
         lambda row: classify_focal(
@@ -494,25 +734,15 @@ for group_name, info in GROUPS.items():
         axis=1,
     )
 
+
     # --------------------------------------------------------
-    # Add explicit analysis metadata
+    # Add analysis metadata
     # --------------------------------------------------------
 
-    sub["group_name"] = (
-        group_name
-    )
-
-    sub["focal_species"] = (
-        focal
-    )
-
-    sub["focal_climate"] = (
-        focal_climate
-    )
-
-    sub["focal_state"] = (
-        sub[focal]
-    )
+    sub["group_name"] = group_name
+    sub["focal_species"] = focal
+    sub["focal_climate"] = focal_climate
+    sub["focal_state"] = sub[focal]
 
     sub[
         "comparison_species"
@@ -522,28 +752,27 @@ for group_name, info in GROUPS.items():
 
     sub[
         "comparison_climate"
-    ] = (
-        comparison_climate
-    )
+    ] = comparison_climate
 
     sub[
         "comparison_consensus_state"
     ] = sub.apply(
         lambda row:
-            get_comparison_consensus(
-                row,
-                comparisons,
-            ),
+        get_comparison_consensus(
+            row,
+            comparisons,
+        ),
         axis=1,
     )
 
+
     # --------------------------------------------------------
-    # Useful column order
+    # Column order
     # --------------------------------------------------------
 
-    front_columns = [
+    columns = [
         "group_name",
-        "dmel_cre_id",
+        REFERENCE_CRE_ID_COLUMN,
         "category",
         "focal_species",
         "focal_climate",
@@ -554,19 +783,13 @@ for group_name, info in GROUPS.items():
         *species,
     ]
 
-    remaining_columns = [
-        col
-        for col in sub.columns
-        if col not in front_columns
+    sub = sub[
+        columns
     ]
 
-    sub = sub[
-        front_columns
-        + remaining_columns
-    ]
 
     # --------------------------------------------------------
-    # Write complete group table
+    # Write group tables
     # --------------------------------------------------------
 
     all_file = (
@@ -580,30 +803,22 @@ for group_name, info in GROUPS.items():
         index=False,
     )
 
-    # --------------------------------------------------------
-    # Write one table per category
-    # --------------------------------------------------------
 
     for category in OUTPUT_CATEGORIES:
 
-        out = sub[
-            sub["category"]
-            == category
-        ].copy()
-
         out_file = (
             OUTDIR
-            / (
-                f"{group_name}_"
-                f"{category}.tsv"
-            )
+            / f"{group_name}_{category}.tsv"
         )
 
-        out.to_csv(
+        sub.loc[
+            sub["category"] == category
+        ].to_csv(
             out_file,
             sep="\t",
             index=False,
         )
+
 
     # --------------------------------------------------------
     # Group-level counts
@@ -614,80 +829,31 @@ for group_name, info in GROUPS.items():
         .value_counts()
     )
 
-    n_tier1 = int(
-        counts.get(
-            "tier1",
-            0,
+    category_counts = {
+        category: int(
+            counts.get(
+                category,
+                0,
+            )
         )
-    )
-
-    n_tier2 = int(
-        counts.get(
-            "tier2",
-            0,
-        )
-    )
-
-    n_tier3 = int(
-        counts.get(
-            "tier3",
-            0,
-        )
-    )
-
-    n_comparison_mixed = int(
-        counts.get(
-            "comparison_mixed",
-            0,
-        )
-    )
-
-    n_all_same = int(
-        counts.get(
-            "all_same",
-            0,
-        )
-    )
-
-    n_invalid = int(
-        counts.get(
-            "invalid",
-            0,
-        )
-    )
+        for category in OUTPUT_CATEGORIES
+    }
 
     n_reference_cres = len(
         sub
     )
 
-    # --------------------------------------------------------
-    # Sanity check:
-    # all categories must sum to all reference CREs
-    # --------------------------------------------------------
-
-    n_total_classified = (
-        n_tier1
-        + n_tier2
-        + n_tier3
-        + n_comparison_mixed
-        + n_all_same
-        + n_invalid
-    )
-
     if (
-        n_total_classified
+        sum(
+            category_counts.values()
+        )
         != n_reference_cres
     ):
         raise SystemExit(
-            "ERROR: category counts do not sum to "
-            f"all CREs for {group_name}.\n"
-            f"Expected: {n_reference_cres}\n"
-            f"Observed: {n_total_classified}"
+            "ERROR: category counts do not sum to all CREs "
+            f"for {group_name}."
         )
 
-    # --------------------------------------------------------
-    # Summary row
-    # --------------------------------------------------------
 
     summary_rows.append({
         "group_name":
@@ -716,23 +882,36 @@ for group_name, info in GROUPS.items():
             n_reference_cres,
 
         "n_tier1":
-            n_tier1,
+            category_counts[
+                "tier1"
+            ],
 
         "n_tier2":
-            n_tier2,
+            category_counts[
+                "tier2"
+            ],
 
         "n_tier3":
-            n_tier3,
+            category_counts[
+                "tier3"
+            ],
 
         "n_comparison_mixed":
-            n_comparison_mixed,
+            category_counts[
+                "comparison_mixed"
+            ],
 
         "n_all_same":
-            n_all_same,
+            category_counts[
+                "all_same"
+            ],
 
         "n_invalid":
-            n_invalid,
+            category_counts[
+                "invalid"
+            ],
     })
+
 
     # --------------------------------------------------------
     # Console summary
@@ -765,38 +944,39 @@ for group_name, info in GROUPS.items():
     print(
         "Tier 1 "
         "(present vs turnover_candidate): "
-        f"{n_tier1}"
+        f"{category_counts['tier1']}"
     )
 
     print(
         "Tier 2 "
         "(positive vs no_detected_CRE): "
-        f"{n_tier2}"
+        f"{category_counts['tier2']}"
     )
 
     print(
         "Tier 3 "
         "(other focal contrast): "
-        f"{n_tier3}"
+        f"{category_counts['tier3']}"
     )
 
     print(
         "Comparison mixed: "
-        f"{n_comparison_mixed}"
+        f"{category_counts['comparison_mixed']}"
     )
 
     print(
         "All same: "
-        f"{n_all_same}"
+        f"{category_counts['all_same']}"
     )
 
     print(
         "Invalid: "
-        f"{n_invalid}"
+        f"{category_counts['invalid']}"
     )
 
+
     # --------------------------------------------------------
-    # Print Tier 1 candidates
+    # Print Tier-1 candidates
     # --------------------------------------------------------
 
     tier1 = sub[
@@ -812,7 +992,7 @@ for group_name, info in GROUPS.items():
         )
 
         display_columns = [
-            "dmel_cre_id",
+            REFERENCE_CRE_ID_COLUMN,
             "focal_state",
             "comparison_consensus_state",
             *species,
@@ -828,7 +1008,7 @@ for group_name, info in GROUPS.items():
 
 
 # ============================================================
-# Cross-clade summary
+# Write cross-clade summary
 # ============================================================
 
 summary = pd.DataFrame(
@@ -843,31 +1023,25 @@ summary.to_csv(
 
 
 # ============================================================
-# Final QC
+# Final QC and report
 # ============================================================
 
-if summary["n_invalid"].sum() != 0:
+if summary[
+    "n_invalid"
+].sum() != 0:
+
     print()
     print(
         "WARNING: invalid CRE-state entries were detected."
     )
 
 
-# ============================================================
-# Final console summary
-# ============================================================
-
 print()
 print("=" * 72)
-print("Focal-clade candidate analysis complete")
-print("=" * 72)
-
 print(
-    f"Input matrix:\n"
-    f"{MATRIX_FILE}"
+    "Focal-clade candidate analysis complete"
 )
-
-print()
+print("=" * 72)
 
 print(
     f"Reference CREs: "
@@ -878,8 +1052,6 @@ print(
     f"Focal clades analyzed: "
     f"{len(GROUPS)}"
 )
-
-print()
 
 print(
     "Total Tier 1 candidates across clades "
@@ -899,8 +1071,6 @@ print(
     f"Wrote focal-clade tables to:\n"
     f"{OUTDIR}"
 )
-
-print()
 
 print(
     f"Wrote clade summary:\n"
