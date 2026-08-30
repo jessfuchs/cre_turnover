@@ -47,6 +47,7 @@ SO_ALL_SPECIES_FBGN="${ORTHOLOG_RESULTS_DIR}/SO_all_species_fbgn.tsv"
 
 UNRESOLVED_DMEL="${ORTHOLOG_RESULTS_DIR}/unresolved_dmel_identifiers.tsv"
 UNRESOLVED_QC_SUMMARY="${ORTHOLOG_RESULTS_DIR}/unresolved_dmel_qc_summary.tsv"
+UNRESOLVED_QC_DIR="${ORTHOLOG_RESULTS_DIR}/unresolved_dmel_qc"
 
 DMEL_ORTHOLOG_QC="${ORTHOLOG_RESULTS_DIR}/dmel_ortholog_annotation_qc.tsv"
 
@@ -91,6 +92,7 @@ export SO_ALL_SPECIES
 export SO_ALL_SPECIES_FBGN
 export UNRESOLVED_DMEL
 export UNRESOLVED_QC_SUMMARY
+export UNRESOLVED_QC_DIR
 export DMEL_ORTHOLOG_QC
 
 export REFERENCE_CRES_TSV
