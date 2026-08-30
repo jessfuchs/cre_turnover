@@ -1,5 +1,28 @@
 #!/usr/bin/env python3
 
+# ============================================================
+# 04 - Normalize D. melanogaster identifiers to FlyBase FBgn IDs
+#
+# Purpose:
+#   Convert D. melanogaster ortholog identifiers associated with
+#   SCRMshaw peaks to standardized FlyBase FBgn identifiers using
+#   the D. melanogaster GFF3 annotation.
+#
+# Input:
+#   - SO_all_species.tsv
+#   - D. melanogaster GFF3 annotation
+#
+# Output:
+#   - SO_all_species_fbgn.tsv
+#   - unresolved_dmel_identifiers.tsv
+#   - mapping QC summary written to stderr
+#
+# Configuration:
+#   Paths are supplied by run_ortholog_pipeline.sh using
+#   config/ortholog_config.sh.
+# ============================================================
+
+
 from pathlib import Path
 import csv
 import re
@@ -8,12 +31,12 @@ from collections import defaultdict
 
 
 # ============================================================
-# Arguments
+# Command-line arguments
 # ============================================================
 
 if len(sys.argv) != 4:
     sys.exit(
-        "Usage: map_dmel_ids_to_fbgn.py "
+        "Usage: 04_map_dmel_ids_to_fbgn.py "
         "SO_all_species.tsv drosophila_melanogaster.gff3 OUTPUT.tsv"
     )
 
@@ -21,13 +44,25 @@ input_tsv = Path(sys.argv[1])
 gff = Path(sys.argv[2])
 output_tsv = Path(sys.argv[3])
 
+
+# ============================================================
+# Input checks
+# ============================================================
+
 if not input_tsv.is_file():
-    sys.exit(f"FEHLER: Input fehlt: {input_tsv}")
+    sys.exit(
+        f"ERROR: input TSV does not exist: {input_tsv}"
+    )
 
 if not gff.is_file():
-    sys.exit(f"FEHLER: D. melanogaster GFF fehlt: {gff}")
+    sys.exit(
+        f"ERROR: D. melanogaster GFF3 does not exist: {gff}"
+    )
 
-output_tsv.parent.mkdir(parents=True, exist_ok=True)
+output_tsv.parent.mkdir(
+    parents=True,
+    exist_ok=True
+)
 
 unresolved_file = (
     output_tsv.parent
@@ -60,10 +95,10 @@ def parse_attrs(text):
 
 def get_fbgn(attrs):
     """
-    Extract one or more FBgn identifiers from GFF attributes.
+    Extract one or more FBgn identifiers from GFF3 attributes.
 
-    The 301Fly D. melanogaster annotation stores FBgn identifiers
-    primarily in dbxref.
+    The D. melanogaster annotation stores FlyBase gene
+    identifiers primarily in the dbxref attribute.
     """
 
     dbxref = attrs.get("dbxref", "")
@@ -165,7 +200,6 @@ with gff.open(
                 ].add(fbgn)
 
 
-# Convert sets to sorted lists
 id_to_fbgn = {
     key: sorted(values)
     for key, values in id_to_fbgn.items()
@@ -179,22 +213,15 @@ print(
 
 
 # ============================================================
-# Map one field to FBgn
+# Map one Dmel identifier field to FBgn
 # ============================================================
 
 def map_field(value):
     """
-    Map one or multiple D. melanogaster identifiers to FBgn.
+    Map one or multiple D. melanogaster identifiers to FBgn IDs.
 
-    Input examples:
-        rna-NM_001...
-        gene-Dmel_CG1234
-        Dmel_CG1234
-        id1|id2|id3
-
-    Output:
-        FBgn0000001
-        FBgn0000001|FBgn0000002
+    Multiple input and output identifiers are represented as
+    pipe-separated values.
 
     Returns
     -------
@@ -232,11 +259,13 @@ def map_field(value):
             unresolved.append(ident)
 
     if fbgns:
+
         mapped = "|".join(
             sorted(fbgns)
         )
 
     else:
+
         mapped = "NA"
 
     return mapped, identifiers, unresolved
@@ -257,7 +286,7 @@ with input_tsv.open(
 
     if reader.fieldnames is None:
         sys.exit(
-            f"FEHLER: TSV hat keinen Header: "
+            f"ERROR: TSV has no header: "
             f"{input_tsv}"
         )
 
@@ -273,7 +302,7 @@ with input_tsv.open(
 
     if missing:
         sys.exit(
-            "FEHLER: Fehlende Spalten: "
+            "ERROR: missing required columns: "
             + ", ".join(
                 sorted(missing)
             )
@@ -398,6 +427,7 @@ with input_tsv.open(
                 unresolved1
                 + unresolved2
             ):
+
                 unresolved_counts[
                     ident
                 ] += 1
