@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ============================================================
+# 02 - Run pairwise whole-genome alignment against D. melanogaster
+#
+# Purpose:
+#   Align one target genome to the D. melanogaster reference
+#   using LASTZ and the UCSC chain/net workflow, and generate
+#   a synteny-filtered chain file for downstream liftOver.
+#
+# Input:
+#   - twobit/d_melanogaster.2bit
+#   - twobit/<target>.2bit
+#   - chrom_sizes/*.sizes
+#
+# Output:
+#   - alignments_dmel/<target>/*.axt
+#   - alignments_dmel/<target>/*.chain
+#   - alignments_dmel/<target>/*.net
+#   - alignments_dmel/<target>/*.liftover.chain.gz
+#
+# Configuration:
+#   config/wga_config.sh
+# ============================================================
+
 if [[ $# -ne 1 ]]; then
     echo "Usage: $0 TARGET_SPECIES" >&2
     exit 1
@@ -8,17 +31,21 @@ fi
 
 SP="$1"
 
-ROOT="$HOME/cre_turnover/project/pairwise_wga"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PIPELINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-REF="d_melanogaster"
+source "$PIPELINE_ROOT/config/wga_config.sh"
 
-REF_2BIT="$ROOT/twobit/${REF}.2bit"
-QRY_2BIT="$ROOT/twobit/${SP}.2bit"
+SP="$1"
+REF="$REFERENCE_SPECIES"
 
-REF_SIZES="$ROOT/chrom_sizes/${REF}.sizes"
-QRY_SIZES="$ROOT/chrom_sizes/${SP}.sizes"
+REF_2BIT="$TWOBIT_DIR/${REF}.2bit"
+QRY_2BIT="$TWOBIT_DIR/${SP}.2bit"
 
-OUT="$ROOT/alignments_dmel/${SP}"
+REF_SIZES="$CHROM_SIZES_DIR/${REF}.sizes"
+QRY_SIZES="$CHROM_SIZES_DIR/${SP}.sizes"
+
+OUT="$ALIGNMENT_DIR/${SP}"
 
 mkdir -p "$OUT"
 
