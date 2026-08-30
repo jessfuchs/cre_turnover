@@ -69,6 +69,32 @@ SECONDARY_RECURRENCE_MIN_CLADES="${SECONDARY_RECURRENCE_MIN_CLADES:-2}"
 
 
 # ======================================================================
+# Tier-1 candidate QC
+# ======================================================================
+
+MAPPING_ROOT="${PROJECT_ROOT}/02_mapping_orthologs"
+
+# D. melanogaster reference CRE annotation.
+REFERENCE_CRES_TSV="${MAPPING_ROOT}/reference_cres/dmel_reference_cres.tsv"
+
+# Detailed CRE classifications for individual target species.
+TURNOVER_BY_SPECIES_DIR="${CLASSIFICATION_ROOT}/results/turnover_by_species"
+
+# Tier-1 QC outputs.
+TIER1_QC_DIR="${RESULTS_DIR}/qc"
+
+TIER1_QC_SUMMARY="${TIER1_QC_DIR}/tier1_candidate_qc_summary.tsv"
+
+TIER1_QC_DETAILS="${TIER1_QC_DIR}/tier1_candidate_qc_details.tsv"
+
+TIER1_QC_METADATA="${TIER1_QC_DIR}/tier1_candidate_qc_metadata.tsv"
+
+# Minimum reciprocal overlap required for a positional CRE match.
+# This should match the threshold used during CRE classification.
+TIER1_QC_MIN_RECIPROCAL_OVERLAP="${TIER1_QC_MIN_RECIPROCAL_OVERLAP:-0.50}"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -92,3 +118,13 @@ export SECONDARY_TIER1_RECURRENT
 export SECONDARY_CLADE_SUMMARY
 export SECONDARY_RUN_METADATA
 export SECONDARY_RECURRENCE_MIN_CLADES
+
+export REFERENCE_CRES_TSV
+export TURNOVER_BY_SPECIES_DIR
+
+export TIER1_QC_DIR
+export TIER1_QC_SUMMARY
+export TIER1_QC_DETAILS
+export TIER1_QC_METADATA
+
+export TIER1_QC_MIN_RECIPROCAL_OVERLAP
