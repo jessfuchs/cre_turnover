@@ -1,51 +1,53 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# ============================================================
+# Summarize global CRE-classification sensitivity
+#
+# Purpose:
+#   Quantify how CRE-state classifications change across the
+#   complete sensitivity grid relative to the primary analysis
+#   scenario.
+#
+# Analysis:
+#   For each sensitivity scenario, CRE states are compared with
+#   the primary scenario across all target species.
+#
+# Outputs:
+#   - global scenario-level stability summary
+#   - species-level stability summary
+#   - CRE-level stability summary
+#   - state-transition summary
+#   - run metadata
+#
+# Validation:
+#   - scenarios are read from the scenario manifest generated
+#     in Step 01
+#   - all required scenario x species files must exist
+#   - each file must contain exactly the expected number of
+#     reference CREs
+#   - CRE IDs must be unique within species tables
+#   - all scenario tables must contain identical CRE x species
+#     combinations
+#   - only expected CRE-state values are accepted
+#
+# Input/output paths:
+#   Supplied by the pipeline wrapper using
+#   config/sensitivity_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
+import hashlib
+from pathlib import Path
+import platform
+import sys
+
 import pandas as pd
 
 
-PROJECT_DIR = Path.home() / "cre_turnover" / "project"
-
-SENSITIVITY_DIR = (
-    PROJECT_DIR
-    / "cre_classification"
-    / "sensitivity"
-)
-
-TARGETS = (
-    PROJECT_DIR
-    / "pairwise_wga"
-    / "target_species.txt"
-)
-
-OUT_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "sensitivity_analysis"
-    / "results"
-)
-
-
-SCENARIOS = [
-    "ov025_dist12000",
-    "ov025_dist24000",
-    "ov025_dist48000",
-
-    "ov050_dist12000",
-    "ov050_dist24000",
-    "ov050_dist48000",
-
-    "ov075_dist12000",
-    "ov075_dist24000",
-    "ov075_dist48000",
-]
-
-
-PRIMARY_SCENARIO = (
-    "ov050_dist24000"
-)
-
+# ============================================================
+# CRE-state vocabulary
+# ============================================================
 
 VALID_STATES = {
     "present",
@@ -55,32 +57,176 @@ VALID_STATES = {
 }
 
 
+# ============================================================
+# Arguments
+# ============================================================
+
 def parse_args():
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=(
+            "Summarize CRE-state stability across the complete "
+            "sensitivity grid relative to the primary scenario."
+        )
+    )
 
     parser.add_argument(
         "--sensitivity-dir",
         type=Path,
-        default=SENSITIVITY_DIR,
+        required=True,
     )
 
     parser.add_argument(
         "--targets",
         type=Path,
-        default=TARGETS,
+        required=True,
     )
 
     parser.add_argument(
-        "--out-dir",
+        "--scenario-manifest",
         type=Path,
-        default=OUT_DIR,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--primary-scenario",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--out-global",
+        type=Path,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--out-species",
+        type=Path,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--out-transitions",
+        type=Path,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--out-cre",
+        type=Path,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--expected-reference-cres",
+        type=int,
+        required=True,
     )
 
     return parser.parse_args()
 
 
+# ============================================================
+# Helpers
+# ============================================================
+
+def require_file(
+    path,
+    label,
+):
+    """
+    Abort if a required file is missing.
+    """
+
+    if not path.is_file():
+
+        raise SystemExit(
+            f"ERROR: {label} not found:\n"
+            f"{path}"
+        )
+
+
+def require_directory(
+    path,
+    label,
+):
+    """
+    Abort if a required directory is missing.
+    """
+
+    if not path.is_dir():
+
+        raise SystemExit(
+            f"ERROR: {label} not found:\n"
+            f"{path}"
+        )
+
+
+def require_columns(
+    df,
+    required,
+    label,
+):
+    """
+    Verify that all required columns are present.
+    """
+
+    missing = sorted(
+        set(required)
+        - set(df.columns)
+    )
+
+    if missing:
+
+        raise SystemExit(
+            f"ERROR: required columns missing from {label}:\n"
+            + "\n".join(
+                missing
+            )
+        )
+
+
+def file_sha256(path):
+    """
+    Calculate SHA256 checksum for reproducibility metadata.
+    """
+
+    sha = hashlib.sha256()
+
+    with path.open(
+        "rb"
+    ) as handle:
+
+        for block in iter(
+            lambda:
+                handle.read(
+                    1024 * 1024
+                ),
+            b"",
+        ):
+
+            sha.update(
+                block
+            )
+
+    return sha.hexdigest()
+
+
 def load_species(path):
+    """
+    Load unique target-species identifiers.
+    """
+
+    require_file(
+        path,
+        "target-species file",
+    )
 
     species = [
         line.strip()
@@ -90,157 +236,717 @@ def load_species(path):
     ]
 
     if not species:
+
         raise SystemExit(
-            "ERROR: no target species found."
+            "ERROR: no target species found in:\n"
+            f"{path}"
         )
 
+
+    if len(species) != len(set(species)):
+
+        duplicates = sorted({
+            sp
+            for sp in species
+            if species.count(
+                sp
+            ) > 1
+        })
+
+        raise SystemExit(
+            "ERROR: duplicate species in target-species file:\n"
+            + "\n".join(
+                duplicates
+            )
+        )
+
+
     return species
+
+
+def load_scenario_manifest(
+    path,
+    primary_scenario,
+):
+    """
+    Load and validate sensitivity-scenario definitions.
+    """
+
+    require_file(
+        path,
+        "sensitivity scenario manifest",
+    )
+
+
+    manifest = pd.read_csv(
+        path,
+        sep="\t",
+        dtype=str,
+        keep_default_na=False,
+    )
+
+
+    require_columns(
+        manifest,
+        {
+            "scenario",
+            "reciprocal_overlap",
+            "local_gene_distance_bp",
+        },
+        "sensitivity scenario manifest",
+    )
+
+
+    if manifest.empty:
+
+        raise SystemExit(
+            "ERROR: sensitivity scenario manifest is empty."
+        )
+
+
+    # --------------------------------------------------------
+    # Scenario names
+    # --------------------------------------------------------
+
+    missing_scenario = (
+        manifest[
+            "scenario"
+        ]
+        .astype(str)
+        .str.strip()
+        == ""
+    )
+
+    if missing_scenario.any():
+
+        raise SystemExit(
+            "ERROR: empty scenario names in sensitivity "
+            "scenario manifest."
+        )
+
+
+    if manifest[
+        "scenario"
+    ].duplicated().any():
+
+        duplicated = (
+            manifest.loc[
+                manifest[
+                    "scenario"
+                ].duplicated(
+                    keep=False
+                ),
+                "scenario",
+            ]
+            .drop_duplicates()
+            .tolist()
+        )
+
+        raise SystemExit(
+            "ERROR: duplicate sensitivity scenarios:\n"
+            + "\n".join(
+                sorted(
+                    duplicated
+                )
+            )
+        )
+
+
+    # --------------------------------------------------------
+    # Parameter values
+    # --------------------------------------------------------
+
+    try:
+
+        manifest[
+            "reciprocal_overlap"
+        ] = pd.to_numeric(
+            manifest[
+                "reciprocal_overlap"
+            ],
+            errors="raise",
+        )
+
+        manifest[
+            "local_gene_distance_bp"
+        ] = pd.to_numeric(
+            manifest[
+                "local_gene_distance_bp"
+            ],
+            errors="raise",
+        )
+
+    except ValueError as exc:
+
+        raise SystemExit(
+            "ERROR: invalid numeric values in sensitivity "
+            "scenario manifest."
+        ) from exc
+
+
+    invalid_overlap = (
+        (
+            manifest[
+                "reciprocal_overlap"
+            ]
+            <= 0
+        )
+        |
+        (
+            manifest[
+                "reciprocal_overlap"
+            ]
+            > 1
+        )
+    )
+
+    if invalid_overlap.any():
+
+        raise SystemExit(
+            "ERROR: reciprocal-overlap thresholds in scenario "
+            "manifest must be > 0 and <= 1."
+        )
+
+
+    non_integer_distance = (
+        manifest[
+            "local_gene_distance_bp"
+        ]
+        % 1
+        != 0
+    )
+
+    if non_integer_distance.any():
+
+        raise SystemExit(
+            "ERROR: local-gene-distance thresholds must be "
+            "integer base-pair values."
+        )
+
+
+    manifest[
+        "local_gene_distance_bp"
+    ] = manifest[
+        "local_gene_distance_bp"
+    ].astype(
+        int
+    )
+
+
+    if (
+        manifest[
+            "local_gene_distance_bp"
+        ]
+        < 0
+    ).any():
+
+        raise SystemExit(
+            "ERROR: local-gene-distance thresholds must be "
+            ">= 0."
+        )
+
+
+    # --------------------------------------------------------
+    # Primary scenario
+    # --------------------------------------------------------
+
+    primary_matches = (
+        manifest[
+            "scenario"
+        ]
+        == primary_scenario
+    )
+
+    if int(
+        primary_matches.sum()
+    ) != 1:
+
+        raise SystemExit(
+            "ERROR: primary sensitivity scenario must occur "
+            "exactly once in scenario manifest.\n"
+            f"Scenario: {primary_scenario}\n"
+            f"Matches:  {int(primary_matches.sum())}"
+        )
+
+
+    return manifest.reset_index(
+        drop=True
+    )
+
+
+def load_species_state_table(
+    path,
+    species,
+    expected_reference_cres,
+):
+    """
+    Load and validate one scenario x species CRE-state table.
+    """
+
+    require_file(
+        path,
+        f"CRE classification for {species}",
+    )
+
+
+    df = pd.read_csv(
+        path,
+        sep="\t",
+        dtype=str,
+        keep_default_na=False,
+    )
+
+
+    require_columns(
+        df,
+        {
+            "dmel_cre_id",
+            "class",
+        },
+        str(
+            path
+        ),
+    )
+
+
+    # --------------------------------------------------------
+    # Required values
+    # --------------------------------------------------------
+
+    missing_cre = (
+        df[
+            "dmel_cre_id"
+        ]
+        .astype(str)
+        .str.strip()
+        == ""
+    )
+
+    if missing_cre.any():
+
+        raise SystemExit(
+            "ERROR: empty dmel_cre_id values in:\n"
+            f"{path}"
+        )
+
+
+    missing_class = (
+        df[
+            "class"
+        ]
+        .astype(str)
+        .str.strip()
+        == ""
+    )
+
+    if missing_class.any():
+
+        raise SystemExit(
+            "ERROR: empty CRE-state values in:\n"
+            f"{path}"
+        )
+
+
+    # --------------------------------------------------------
+    # Exactly one row per reference CRE
+    # --------------------------------------------------------
+
+    if df[
+        "dmel_cre_id"
+    ].duplicated().any():
+
+        duplicated = (
+            df.loc[
+                df[
+                    "dmel_cre_id"
+                ].duplicated(
+                    keep=False
+                ),
+                "dmel_cre_id",
+            ]
+            .drop_duplicates()
+            .tolist()
+        )
+
+        raise SystemExit(
+            "ERROR: duplicate CRE IDs in:\n"
+            f"{path}\n\n"
+            + "\n".join(
+                sorted(
+                    duplicated
+                )
+            )
+        )
+
+
+    if len(df) != expected_reference_cres:
+
+        raise SystemExit(
+            "ERROR: unexpected number of CRE rows in:\n"
+            f"{path}\n"
+            f"Expected: {expected_reference_cres}\n"
+            f"Observed: {len(df)}"
+        )
+
+
+    # --------------------------------------------------------
+    # CRE-state vocabulary
+    # --------------------------------------------------------
+
+    unknown = sorted(
+        set(
+            df[
+                "class"
+            ]
+        )
+        - VALID_STATES
+    )
+
+    if unknown:
+
+        raise SystemExit(
+            "ERROR: unexpected CRE-state values in:\n"
+            f"{path}\n\n"
+            + "\n".join(
+                unknown
+            )
+        )
+
+
+    out = (
+        df[
+            [
+                "dmel_cre_id",
+                "class",
+            ]
+        ]
+        .copy()
+    )
+
+    out[
+        "species"
+    ] = species
+
+
+    return out
 
 
 def load_scenario(
     sensitivity_dir,
     scenario,
     species,
+    expected_reference_cres,
 ):
+    """
+    Load the complete CRE x species table for one scenario.
+    """
+
+    scenario_dir = (
+        sensitivity_dir
+        / scenario
+    )
+
+
+    require_directory(
+        scenario_dir,
+        f"sensitivity scenario directory '{scenario}'",
+    )
+
 
     parts = []
+
 
     for sp in species:
 
         path = (
-            sensitivity_dir
-            / scenario
+            scenario_dir
             / f"dmel_to_{sp}_cre_turnover.tsv"
         )
 
-        if not path.exists():
 
-            raise SystemExit(
-                f"ERROR: missing:\n{path}"
-            )
-
-        df = pd.read_csv(
+        part = load_species_state_table(
             path,
-            sep="\t",
-            dtype=str,
+            sp,
+            expected_reference_cres,
         )
 
-        required = {
-            "dmel_cre_id",
-            "class",
-        }
-
-        missing = (
-            required
-            - set(df.columns)
+        parts.append(
+            part
         )
 
-        if missing:
-
-            raise SystemExit(
-                f"ERROR: {path} missing columns: "
-                + ", ".join(
-                    sorted(missing)
-                )
-            )
-
-        if df[
-            "dmel_cre_id"
-        ].duplicated().any():
-
-            raise SystemExit(
-                f"ERROR: duplicate CRE IDs in {path}"
-            )
-
-        unknown = sorted(
-            set(df["class"].dropna())
-            - VALID_STATES
-        )
-
-        if unknown:
-
-            raise SystemExit(
-                f"ERROR: unknown state(s) in {path}:\n"
-                + "\n".join(unknown)
-            )
-
-        x = df[
-            [
-                "dmel_cre_id",
-                "class",
-            ]
-        ].copy()
-
-        x["species"] = sp
-
-        parts.append(x)
 
     out = pd.concat(
         parts,
         ignore_index=True,
     )
 
-    if out[
-        [
+
+    # --------------------------------------------------------
+    # Unique CRE x species cells
+    # --------------------------------------------------------
+
+    if out.duplicated(
+        subset=[
             "dmel_cre_id",
             "species",
         ]
-    ].duplicated().any():
+    ).any():
+
+        duplicated = (
+            out.loc[
+                out.duplicated(
+                    subset=[
+                        "dmel_cre_id",
+                        "species",
+                    ],
+                    keep=False,
+                ),
+                [
+                    "dmel_cre_id",
+                    "species",
+                ],
+            ]
+            .drop_duplicates()
+        )
 
         raise SystemExit(
-            f"ERROR: duplicate CRE x species rows "
-            f"in {scenario}"
+            "ERROR: duplicate CRE x species rows in "
+            f"scenario {scenario}:\n\n"
+            + duplicated.to_string(
+                index=False
+            )
         )
+
+
+    expected_rows = (
+        len(
+            species
+        )
+        * expected_reference_cres
+    )
+
+
+    if len(out) != expected_rows:
+
+        raise SystemExit(
+            "ERROR: unexpected CRE x species count for "
+            f"scenario {scenario}.\n"
+            f"Expected: {expected_rows}\n"
+            f"Observed: {len(out)}"
+        )
+
 
     return out
 
+
+# ============================================================
+# Main
+# ============================================================
 
 def main():
 
     args = parse_args()
 
-    args.out_dir.mkdir(
-        parents=True,
-        exist_ok=True,
+
+    # ========================================================
+    # Parameter validation
+    # ========================================================
+
+    if args.expected_reference_cres < 1:
+
+        raise SystemExit(
+            "ERROR: expected-reference-cres must be >= 1."
+        )
+
+
+    if not args.primary_scenario.strip():
+
+        raise SystemExit(
+            "ERROR: primary-scenario must not be empty."
+        )
+
+
+    # ========================================================
+    # Validate inputs
+    # ========================================================
+
+    require_directory(
+        args.sensitivity_dir,
+        "sensitivity scenario directory",
     )
+
+    require_file(
+        args.targets,
+        "target-species file",
+    )
+
+    require_file(
+        args.scenario_manifest,
+        "sensitivity scenario manifest",
+    )
+
 
     species = load_species(
         args.targets
     )
 
-    cache = {
-        scenario:
-            load_scenario(
-                args.sensitivity_dir,
-                scenario,
-                species,
-            )
-        for scenario
-        in SCENARIOS
+
+    scenario_manifest = load_scenario_manifest(
+        args.scenario_manifest,
+        args.primary_scenario,
+    )
+
+
+    scenario_names = (
+        scenario_manifest[
+            "scenario"
+        ]
+        .tolist()
+    )
+
+
+    scenario_parameters = {
+        row[
+            "scenario"
+        ]: {
+            "reciprocal_overlap":
+                float(
+                    row[
+                        "reciprocal_overlap"
+                    ]
+                ),
+
+            "local_gene_distance_bp":
+                int(
+                    row[
+                        "local_gene_distance_bp"
+                    ]
+                ),
+        }
+        for _, row in scenario_manifest.iterrows()
     }
+
+
+    # ========================================================
+    # Prepare outputs
+    # ========================================================
+
+    for path in [
+        args.out_global,
+        args.out_species,
+        args.out_transitions,
+        args.out_cre,
+        args.metadata_out,
+    ]:
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+
+    # ========================================================
+    # Load all sensitivity scenarios
+    # ========================================================
+
+    print()
+    print("=" * 72)
+    print("LOADING SENSITIVITY SCENARIOS")
+    print("=" * 72)
+    print()
+
+
+    cache = {}
+
+
+    for index, scenario in enumerate(
+        scenario_names,
+        start=1,
+    ):
+
+        print(
+            f"[{index:02d}/{len(scenario_names):02d}] "
+            f"{scenario}"
+        )
+
+
+        cache[
+            scenario
+        ] = load_scenario(
+            args.sensitivity_dir,
+            scenario,
+            species,
+            args.expected_reference_cres,
+        )
+
+
+    # ========================================================
+    # Primary scenario
+    # ========================================================
 
     primary = (
         cache[
-            PRIMARY_SCENARIO
+            args.primary_scenario
         ]
         .rename(
             columns={
                 "class":
-                    "primary_class"
+                    "primary_class",
             }
         )
     )
+
+
+    expected_cells = (
+        len(
+            species
+        )
+        * args.expected_reference_cres
+    )
+
+
+    if len(primary) != expected_cells:
+
+        raise SystemExit(
+            "ERROR: unexpected primary-scenario size.\n"
+            f"Expected: {expected_cells}\n"
+            f"Observed: {len(primary)}"
+        )
+
+
+    # ========================================================
+    # Sensitivity comparisons
+    # ========================================================
 
     summary_rows = []
     transition_rows = []
     species_rows = []
     cre_rows = []
 
-    for scenario in SCENARIOS:
+
+    for scenario in scenario_names:
+
+        parameters = scenario_parameters[
+            scenario
+        ]
+
+        overlap = parameters[
+            "reciprocal_overlap"
+        ]
+
+        distance = parameters[
+            "local_gene_distance_bp"
+        ]
+
 
         test = cache[
             scenario
         ]
+
+
+        # ----------------------------------------------------
+        # Match scenario to primary CRE x species universe
+        # ----------------------------------------------------
 
         x = primary.merge(
             test,
@@ -253,39 +959,125 @@ def main():
             indicator=True,
         )
 
+
         if not x[
             "_merge"
         ].eq(
             "both"
         ).all():
 
-            raise SystemExit(
-                f"ERROR: row mismatch for {scenario}"
+            missing_primary = int(
+                (
+                    x[
+                        "_merge"
+                    ]
+                    == "right_only"
+                ).sum()
             )
 
+            missing_test = int(
+                (
+                    x[
+                        "_merge"
+                    ]
+                    == "left_only"
+                ).sum()
+            )
+
+
+            raise SystemExit(
+                "ERROR: CRE x species row mismatch for "
+                f"scenario {scenario}.\n"
+                f"Missing from primary:  {missing_primary}\n"
+                f"Missing from scenario: {missing_test}"
+            )
+
+
         x = x.drop(
-            columns="_merge"
+            columns=[
+                "_merge",
+            ]
         )
+
+
+        if len(x) != expected_cells:
+
+            raise SystemExit(
+                "ERROR: unexpected comparison size for "
+                f"scenario {scenario}.\n"
+                f"Expected: {expected_cells}\n"
+                f"Observed: {len(x)}"
+            )
+
+
+        # ----------------------------------------------------
+        # Global stability
+        # ----------------------------------------------------
 
         same = (
-            x["primary_class"]
-            == x["class"]
+            x[
+                "primary_class"
+            ]
+            == x[
+                "class"
+            ]
         )
 
+
+        n_same = int(
+            same.sum()
+        )
+
+        n_changed = int(
+            (
+                ~same
+            ).sum()
+        )
+
+
         counts = (
-            test["class"]
+            test[
+                "class"
+            ]
             .value_counts()
         )
 
+
         summary_rows.append({
-            "scenario": scenario,
-            "n_cells": len(x),
+            "scenario":
+                scenario,
+
+            "reciprocal_overlap":
+                overlap,
+
+            "local_gene_distance_bp":
+                distance,
+
+            "is_primary_scenario":
+                (
+                    "yes"
+                    if scenario
+                    == args.primary_scenario
+                    else "no"
+                ),
+
+            "n_cells":
+                len(
+                    x
+                ),
+
             "n_same_as_primary":
-                int(same.sum()),
+                n_same,
+
             "n_changed":
-                int((~same).sum()),
+                n_changed,
+
             "percent_stable":
-                100 * same.mean(),
+                100.0
+                * n_same
+                / len(
+                    x
+                ),
 
             "present":
                 int(
@@ -321,104 +1113,231 @@ def main():
         })
 
 
+        # ====================================================
         # State transitions
-        changed = x[
-            ~same
-        ].copy()
+        # ====================================================
+
+        changed = (
+            x.loc[
+                ~same
+            ]
+            .copy()
+        )
+
 
         if not changed.empty:
 
-            trans = (
+            transitions = (
                 changed
                 .groupby(
                     [
                         "primary_class",
                         "class",
-                    ]
+                    ],
+                    sort=True,
                 )
                 .size()
                 .reset_index(
-                    name="n"
+                    name="n",
                 )
             )
 
-            trans.insert(
+
+            transitions[
+                "percent_of_changed"
+            ] = (
+                100.0
+                * transitions[
+                    "n"
+                ]
+                / n_changed
+            )
+
+
+            transitions.insert(
+                0,
+                "local_gene_distance_bp",
+                distance,
+            )
+
+            transitions.insert(
+                0,
+                "reciprocal_overlap",
+                overlap,
+            )
+
+            transitions.insert(
                 0,
                 "scenario",
                 scenario,
             )
 
+
             transition_rows.append(
-                trans
+                transitions
             )
 
 
-        # Species stability
-        for sp, g in x.groupby(
-            "species"
-        ):
+        # ====================================================
+        # Species-level stability
+        # ====================================================
+
+        for sp in species:
+
+            g = x.loc[
+                x[
+                    "species"
+                ]
+                == sp
+            ]
+
+
+            if len(g) != args.expected_reference_cres:
+
+                raise SystemExit(
+                    "ERROR: unexpected number of CREs for "
+                    f"{scenario} / {sp}.\n"
+                    f"Expected: "
+                    f"{args.expected_reference_cres}\n"
+                    f"Observed: {len(g)}"
+                )
+
 
             stable = (
-                g["primary_class"]
-                == g["class"]
+                g[
+                    "primary_class"
+                ]
+                == g[
+                    "class"
+                ]
             )
 
+
+            n_species_changed = int(
+                (
+                    ~stable
+                ).sum()
+            )
+
+
             species_rows.append({
-                "scenario": scenario,
-                "species": sp,
-                "n_cells": len(g),
-                "n_changed":
-                    int(
-                        (~stable).sum()
+                "scenario":
+                    scenario,
+
+                "reciprocal_overlap":
+                    overlap,
+
+                "local_gene_distance_bp":
+                    distance,
+
+                "species":
+                    sp,
+
+                "n_cells":
+                    len(
+                        g
                     ),
+
+                "n_same_as_primary":
+                    int(
+                        stable.sum()
+                    ),
+
+                "n_changed":
+                    n_species_changed,
+
                 "percent_stable":
-                    100
+                    100.0
                     * stable.mean(),
             })
 
 
-        # CRE stability
+        # ====================================================
+        # CRE-level stability
+        # ====================================================
+
         for cre, g in x.groupby(
-            "dmel_cre_id"
+            "dmel_cre_id",
+            sort=True,
         ):
 
+            if len(g) != len(species):
+
+                raise SystemExit(
+                    "ERROR: unexpected species count for CRE "
+                    f"{cre} in scenario {scenario}.\n"
+                    f"Expected: {len(species)}\n"
+                    f"Observed: {len(g)}"
+                )
+
+
             stable = (
-                g["primary_class"]
-                == g["class"]
+                g[
+                    "primary_class"
+                ]
+                == g[
+                    "class"
+                ]
             )
+
+
+            n_cre_changed = int(
+                (
+                    ~stable
+                ).sum()
+            )
+
 
             cre_rows.append({
                 "scenario":
                     scenario,
 
+                "reciprocal_overlap":
+                    overlap,
+
+                "local_gene_distance_bp":
+                    distance,
+
                 "dmel_cre_id":
                     cre,
 
                 "n_species":
-                    len(g),
-
-                "n_changed":
-                    int(
-                        (~stable).sum()
+                    len(
+                        g
                     ),
 
+                "n_same_as_primary":
+                    int(
+                        stable.sum()
+                    ),
+
+                "n_changed":
+                    n_cre_changed,
+
                 "percent_stable":
-                    100
+                    100.0
                     * stable.mean(),
             })
 
+
+    # ========================================================
+    # Build output tables
+    # ========================================================
 
     summary = pd.DataFrame(
         summary_rows
     )
 
+
     species_summary = pd.DataFrame(
         species_rows
     )
 
+
     cre_summary = pd.DataFrame(
         cre_rows
     )
+
 
     if transition_rows:
 
@@ -432,44 +1351,442 @@ def main():
         transitions = pd.DataFrame(
             columns=[
                 "scenario",
+                "reciprocal_overlap",
+                "local_gene_distance_bp",
                 "primary_class",
                 "class",
                 "n",
+                "percent_of_changed",
             ]
         )
 
 
+    # ========================================================
+    # Final output QC
+    # ========================================================
+
+    if len(summary) != len(scenario_names):
+
+        raise SystemExit(
+            "ERROR: global sensitivity summary contains an "
+            "unexpected number of scenarios."
+        )
+
+
+    expected_species_rows = (
+        len(
+            scenario_names
+        )
+        * len(
+            species
+        )
+    )
+
+
+    if len(species_summary) != expected_species_rows:
+
+        raise SystemExit(
+            "ERROR: unexpected number of species-stability "
+            "rows.\n"
+            f"Expected: {expected_species_rows}\n"
+            f"Observed: {len(species_summary)}"
+        )
+
+
+    expected_cre_rows = (
+        len(
+            scenario_names
+        )
+        * args.expected_reference_cres
+    )
+
+
+    if len(cre_summary) != expected_cre_rows:
+
+        raise SystemExit(
+            "ERROR: unexpected number of CRE-stability rows.\n"
+            f"Expected: {expected_cre_rows}\n"
+            f"Observed: {len(cre_summary)}"
+        )
+
+
+    # --------------------------------------------------------
+    # Primary scenario must be completely stable by definition
+    # --------------------------------------------------------
+
+    primary_summary = summary.loc[
+        summary[
+            "scenario"
+        ]
+        == args.primary_scenario
+    ]
+
+
+    if len(primary_summary) != 1:
+
+        raise SystemExit(
+            "ERROR: primary scenario missing or duplicated in "
+            "global sensitivity summary."
+        )
+
+
+    if int(
+        primary_summary.iloc[
+            0
+        ][
+            "n_changed"
+        ]
+    ) != 0:
+
+        raise SystemExit(
+            "ERROR: primary scenario differs from itself."
+        )
+
+
+    # ========================================================
+    # Deterministic ordering
+    # ========================================================
+
+    scenario_order = {
+        scenario:
+            index
+        for index, scenario in enumerate(
+            scenario_names
+        )
+    }
+
+
+    species_order = {
+        sp:
+            index
+        for index, sp in enumerate(
+            species
+        )
+    }
+
+
+    summary[
+        "_scenario_rank"
+    ] = summary[
+        "scenario"
+    ].map(
+        scenario_order
+    )
+
+
+    summary = (
+        summary
+        .sort_values(
+            [
+                "_scenario_rank",
+            ],
+            kind="mergesort",
+        )
+        .drop(
+            columns=[
+                "_scenario_rank",
+            ]
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+
+
+    species_summary[
+        "_scenario_rank"
+    ] = species_summary[
+        "scenario"
+    ].map(
+        scenario_order
+    )
+
+    species_summary[
+        "_species_rank"
+    ] = species_summary[
+        "species"
+    ].map(
+        species_order
+    )
+
+
+    species_summary = (
+        species_summary
+        .sort_values(
+            [
+                "_scenario_rank",
+                "_species_rank",
+            ],
+            kind="mergesort",
+        )
+        .drop(
+            columns=[
+                "_scenario_rank",
+                "_species_rank",
+            ]
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+
+
+    cre_summary[
+        "_scenario_rank"
+    ] = cre_summary[
+        "scenario"
+    ].map(
+        scenario_order
+    )
+
+
+    cre_summary = (
+        cre_summary
+        .sort_values(
+            [
+                "_scenario_rank",
+                "dmel_cre_id",
+            ],
+            kind="mergesort",
+        )
+        .drop(
+            columns=[
+                "_scenario_rank",
+            ]
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+
+
+    if not transitions.empty:
+
+        transitions[
+            "_scenario_rank"
+        ] = transitions[
+            "scenario"
+        ].map(
+            scenario_order
+        )
+
+
+        transitions = (
+            transitions
+            .sort_values(
+                [
+                    "_scenario_rank",
+                    "primary_class",
+                    "class",
+                ],
+                kind="mergesort",
+            )
+            .drop(
+                columns=[
+                    "_scenario_rank",
+                ]
+            )
+            .reset_index(
+                drop=True
+            )
+        )
+
+
+    # ========================================================
+    # Write outputs
+    # ========================================================
+
     summary.to_csv(
-        args.out_dir
-        / "sensitivity_global_summary.tsv",
+        args.out_global,
         sep="\t",
         index=False,
     )
 
 
     species_summary.to_csv(
-        args.out_dir
-        / "sensitivity_species_stability.tsv",
+        args.out_species,
         sep="\t",
         index=False,
     )
 
 
     transitions.to_csv(
-        args.out_dir
-        / "sensitivity_state_transitions.tsv",
+        args.out_transitions,
         sep="\t",
         index=False,
     )
 
 
     cre_summary.to_csv(
-        args.out_dir
-        / "sensitivity_cre_stability.tsv",
+        args.out_cre,
         sep="\t",
         index=False,
     )
 
+
+    # ========================================================
+    # Run metadata
+    # ========================================================
+
+    primary_parameters = (
+        scenario_manifest.loc[
+            scenario_manifest[
+                "scenario"
+            ]
+            == args.primary_scenario
+        ]
+        .iloc[
+            0
+        ]
+    )
+
+
+    non_primary = summary.loc[
+        summary[
+            "scenario"
+        ]
+        != args.primary_scenario
+    ]
+
+
+    if non_primary.empty:
+
+        minimum_stability = 100.0
+        maximum_changed = 0
+
+    else:
+
+        minimum_stability = float(
+            non_primary[
+                "percent_stable"
+            ].min()
+        )
+
+        maximum_changed = int(
+            non_primary[
+                "n_changed"
+            ].max()
+        )
+
+
+    metadata = pd.DataFrame([
+        {
+            "script":
+                Path(
+                    __file__
+                ).name,
+
+            "run_timestamp":
+                datetime.now()
+                .astimezone()
+                .isoformat(),
+
+            "python_version":
+                sys.version.split()[0],
+
+            "pandas_version":
+                pd.__version__,
+
+            "platform":
+                platform.platform(),
+
+            "sensitivity_directory":
+                str(
+                    args.sensitivity_dir.resolve()
+                ),
+
+            "target_species_file":
+                str(
+                    args.targets.resolve()
+                ),
+
+            "target_species_sha256":
+                file_sha256(
+                    args.targets
+                ),
+
+            "scenario_manifest":
+                str(
+                    args.scenario_manifest.resolve()
+                ),
+
+            "scenario_manifest_sha256":
+                file_sha256(
+                    args.scenario_manifest
+                ),
+
+            "primary_scenario":
+                args.primary_scenario,
+
+            "primary_reciprocal_overlap":
+                float(
+                    primary_parameters[
+                        "reciprocal_overlap"
+                    ]
+                ),
+
+            "primary_local_gene_distance_bp":
+                int(
+                    primary_parameters[
+                        "local_gene_distance_bp"
+                    ]
+                ),
+
+            "expected_reference_cres":
+                args.expected_reference_cres,
+
+            "n_target_species":
+                len(
+                    species
+                ),
+
+            "n_scenarios":
+                len(
+                    scenario_names
+                ),
+
+            "n_cre_species_cells_per_scenario":
+                expected_cells,
+
+            "minimum_nonprimary_percent_stable":
+                minimum_stability,
+
+            "maximum_nonprimary_changed_cells":
+                maximum_changed,
+
+            "global_summary_output":
+                str(
+                    args.out_global.resolve()
+                ),
+
+            "species_stability_output":
+                str(
+                    args.out_species.resolve()
+                ),
+
+            "state_transitions_output":
+                str(
+                    args.out_transitions.resolve()
+                ),
+
+            "cre_stability_output":
+                str(
+                    args.out_cre.resolve()
+                ),
+        }
+    ])
+
+
+    metadata.to_csv(
+        args.metadata_out,
+        sep="\t",
+        index=False,
+    )
+
+
+    # ========================================================
+    # Console summary
+    # ========================================================
 
     print()
     print("=" * 72)
@@ -477,20 +1794,94 @@ def main():
     print("=" * 72)
     print()
 
+
     print(
         summary.to_string(
             index=False,
-            float_format=
-                lambda x:
-                    f"{x:.2f}",
+            float_format=lambda value:
+                f"{value:.2f}",
         )
     )
 
+
     print()
+
     print(
-        "Sensitivity analysis completed."
+        f"Primary scenario:      "
+        f"{args.primary_scenario}"
     )
 
+    print(
+        f"Target species:        "
+        f"{len(species)}"
+    )
+
+    print(
+        f"Reference CREs:        "
+        f"{args.expected_reference_cres}"
+    )
+
+    print(
+        f"Sensitivity scenarios: "
+        f"{len(scenario_names)}"
+    )
+
+    print(
+        f"Cells per scenario:    "
+        f"{expected_cells}"
+    )
+
+    print(
+        f"Minimum stability:     "
+        f"{minimum_stability:.2f}%"
+    )
+
+
+    print()
+
+    print(
+        f"Wrote global summary:\n"
+        f"{args.out_global}"
+    )
+
+    print()
+
+    print(
+        f"Wrote species stability:\n"
+        f"{args.out_species}"
+    )
+
+    print()
+
+    print(
+        f"Wrote state transitions:\n"
+        f"{args.out_transitions}"
+    )
+
+    print()
+
+    print(
+        f"Wrote CRE stability:\n"
+        f"{args.out_cre}"
+    )
+
+    print()
+
+    print(
+        f"Wrote metadata:\n"
+        f"{args.metadata_out}"
+    )
+
+    print()
+
+    print(
+        "PASS: global sensitivity analysis completed."
+    )
+
+
+# ============================================================
+# Entry point
+# ============================================================
 
 if __name__ == "__main__":
     main()
