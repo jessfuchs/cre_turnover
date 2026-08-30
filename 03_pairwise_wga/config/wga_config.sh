@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-
 # ======================================================================
 # Pipeline roots
 # ======================================================================
@@ -13,7 +12,6 @@ SCRM_GENERATED_ROOT="${PROJECT_ROOT}/01_scrmshaw/generation"
 SCRM_EXTERNAL_ROOT="${PROJECT_ROOT}/01_scrmshaw/external"
 MAPPING_ROOT="${PROJECT_ROOT}/02_mapping_orthologs"
 
-
 # ======================================================================
 # Upstream input
 # ======================================================================
@@ -24,7 +22,6 @@ GENERATED_GENOME_ROOT="${SCRM_GENERATED_ROOT}/data/selected"
 EXTERNAL_GENOME_ROOT="${SCRM_EXTERNAL_ROOT}/external_data/selected"
 
 REFERENCE_CRES_BED="${MAPPING_ROOT}/reference_cres/dmel_reference_cres.bed"
-
 
 # ======================================================================
 # Pairwise WGA directories
@@ -42,13 +39,26 @@ LOG_DIR="${PIPELINE_ROOT}/logs"
 
 TARGET_SPECIES_FILE="${PIPELINE_ROOT}/target_species.txt"
 
-
 # ======================================================================
 # Reference species
 # ======================================================================
 
 REFERENCE_SPECIES="${REFERENCE_SPECIES:-d_melanogaster}"
 
+# ======================================================================
+# LASTZ parameters
+# ======================================================================
+
+LASTZ_FORMAT="${LASTZ_FORMAT:-axt}"
+LASTZ_AMBIGUOUS="${LASTZ_AMBIGUOUS:-iupac}"
+LASTZ_NOTRANSITION="${LASTZ_NOTRANSITION:-1}"
+
+LASTZ_STEP="${LASTZ_STEP:-20}"
+LASTZ_SEED="${LASTZ_SEED:-12of19}"
+LASTZ_HSPTHRESH="${LASTZ_HSPTHRESH:-2200}"
+LASTZ_GAPPEDTHRESH="${LASTZ_GAPPEDTHRESH:-4000}"
+LASTZ_YDROP="${LASTZ_YDROP:-3400}"
+LASTZ_INNER="${LASTZ_INNER:-2000}"
 
 # ======================================================================
 # Export
@@ -75,3 +85,13 @@ export LOG_DIR
 export TARGET_SPECIES_FILE
 
 export REFERENCE_SPECIES
+
+export LASTZ_FORMAT
+export LASTZ_AMBIGUOUS
+export LASTZ_NOTRANSITION
+export LASTZ_STEP
+export LASTZ_SEED
+export LASTZ_HSPTHRESH
+export LASTZ_GAPPEDTHRESH
+export LASTZ_YDROP
+export LASTZ_INNER
