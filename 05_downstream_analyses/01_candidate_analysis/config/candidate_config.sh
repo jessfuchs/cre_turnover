@@ -112,6 +112,19 @@ FOCAL_RECURRENCE_MIN_CLADES="${FOCAL_RECURRENCE_MIN_CLADES:-2}"
 
 
 # ======================================================================
+# Candidate gene-distance annotation
+# ======================================================================
+
+# Combined SCRMshaw orthology table with FBgn annotations.
+SO_ALL_SPECIES_FBGN="${MAPPING_ROOT}/results/SO_all_species_fbgn.tsv"
+
+# Gene-distance annotation for prioritized Tier-1 candidates.
+TIER1_GENE_DISTANCES="${TIER1_TABLES_DIR}/tier1_candidate_gene_distances.tsv"
+
+TIER1_GENE_DISTANCE_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_gene_distances_metadata.tsv"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -152,4 +165,8 @@ export TIER1_PRIORITIZED
 export TIER1_PRIORITIZATION_METADATA
 
 export FOCAL_RECURRENCE_MIN_CLADES
+
+export SO_ALL_SPECIES_FBGN
+export TIER1_GENE_DISTANCES
+export TIER1_GENE_DISTANCE_METADATA
 
