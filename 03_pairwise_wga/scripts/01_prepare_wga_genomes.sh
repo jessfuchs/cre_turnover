@@ -3,50 +3,69 @@ set -euo pipefail
 
 
 # ============================================================
-# Paths
+# 01 - Prepare genomes for pairwise whole-genome alignment
+#
+# Purpose:
+#   Convert all species genome FASTA files to UCSC 2bit format,
+#   generate chromosome-size files, and define the target
+#   species used for pairwise alignments against D. melanogaster.
+#
+# Input:
+#   - combined_manifest.tsv
+#   - species-specific genome FASTA files
+#   - dmel_reference_cres.bed
+#
+# Output:
+#   - twobit/<species>.2bit
+#   - chrom_sizes/<species>.sizes
+#   - target_species.txt
+#
+# Configuration:
+#   config/wga_config.sh
 # ============================================================
 
-PROJECT="$HOME/cre_turnover/project"
 
-WGA="$PROJECT/pairwise_wga"
-GENERATED_ROOT="$PROJECT/scrmshaw_pipeline"
-EXTERNAL_ROOT="$PROJECT/external_scrmshaw"
+# ============================================================
+# Configuration
+# ============================================================
 
-COMBINED_MANIFEST="$EXTERNAL_ROOT/combined_manifest.tsv"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PIPELINE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-TWOBIT_DIR="$WGA/twobit"
-SIZES_DIR="$WGA/chrom_sizes"
+source "$PIPELINE_ROOT/config/wga_config.sh"
 
-TARGETS="$WGA/target_species.txt"
-
-REF="d_melanogaster"
-
-export PATH="$WGA/bin:$PATH"
+export PATH="$BIN_DIR:$PATH"
 
 
 # ============================================================
-# Input / tool checks
+# Input and tool checks
 # ============================================================
 
 [[ -s "$COMBINED_MANIFEST" ]] || {
-    echo "FEHLER: Combined manifest fehlt:"
-    echo "  $COMBINED_MANIFEST"
+    echo "ERROR: combined manifest missing or empty:" >&2
+    echo "  $COMBINED_MANIFEST" >&2
+    exit 1
+}
+
+[[ -s "$REFERENCE_CRES_BED" ]] || {
+    echo "ERROR: reference CRE BED missing or empty:" >&2
+    echo "  $REFERENCE_CRES_BED" >&2
     exit 1
 }
 
 command -v faToTwoBit >/dev/null 2>&1 || {
-    echo "FEHLER: faToTwoBit nicht gefunden."
+    echo "ERROR: faToTwoBit not found." >&2
     exit 1
 }
 
 command -v twoBitInfo >/dev/null 2>&1 || {
-    echo "FEHLER: twoBitInfo nicht gefunden."
+    echo "ERROR: twoBitInfo not found." >&2
     exit 1
 }
 
 
 # ============================================================
-# Read combined manifest
+# Read combined species manifest
 # ============================================================
 
 MANIFEST_ROWS="$(
@@ -56,20 +75,34 @@ import sys
 
 manifest = sys.argv[1]
 
-with open(manifest, encoding="utf-8-sig", newline="") as handle:
-    reader = csv.DictReader(handle, delimiter="\t")
+with open(
+    manifest,
+    encoding="utf-8-sig",
+    newline=""
+) as handle:
 
-    required = {"slug", "source"}
+    reader = csv.DictReader(
+        handle,
+        delimiter="\t"
+    )
 
-    missing = required - set(reader.fieldnames or [])
+    required = {
+        "slug",
+        "source",
+    }
+
+    missing = required - set(
+        reader.fieldnames or []
+    )
 
     if missing:
         raise SystemExit(
-            "FEHLER: Fehlende Manifest-Spalten: "
+            "ERROR: combined manifest is missing required columns: "
             + ", ".join(sorted(missing))
         )
 
     for row in reader:
+
         slug = row["slug"].strip()
         source = row["source"].strip()
 
@@ -85,19 +118,27 @@ PY
 # Prepare output directories
 # ============================================================
 
-mkdir -p "$TWOBIT_DIR"
-mkdir -p "$SIZES_DIR"
+mkdir -p \
+    "$TWOBIT_DIR" \
+    "$CHROM_SIZES_DIR" \
+    "$ALIGNMENT_DIR" \
+    "$LIFTED_CRES_DIR" \
+    "$LOG_DIR"
 
-rm -f "$TARGETS"
+rm -f "$TARGET_SPECIES_FILE"
 
+
+# ============================================================
+# Header
+# ============================================================
 
 echo "============================================================"
 echo "Prepare genomes for pairwise WGA"
 echo "============================================================"
-echo "Manifest : $COMBINED_MANIFEST"
-echo "2bit     : $TWOBIT_DIR"
-echo "sizes    : $SIZES_DIR"
-echo "reference: $REF"
+echo "Manifest  : $COMBINED_MANIFEST"
+echo "2bit      : $TWOBIT_DIR"
+echo "Sizes     : $CHROM_SIZES_DIR"
+echo "Reference : $REFERENCE_SPECIES"
 echo
 
 
@@ -112,33 +153,33 @@ while IFS=$'\t' read -r slug source; do
     case "$source" in
 
         generated)
-            genome="$GENERATED_ROOT/data/selected/$slug/genome.fa"
+            genome="$GENERATED_GENOME_ROOT/$slug/genome.fa"
             ;;
 
         external)
-            genome="$EXTERNAL_ROOT/external_data/selected/$slug/genome.fa"
+            genome="$EXTERNAL_GENOME_ROOT/$slug/genome.fa"
             ;;
 
         *)
-            echo "FEHLER: Unbekannte source='$source' für '$slug'" >&2
+            echo "ERROR: unknown source='$source' for '$slug'." >&2
             exit 1
             ;;
     esac
 
 
     # --------------------------------------------------------
-    # Validate FASTA
+    # Validate genome FASTA
     # --------------------------------------------------------
 
     if [[ ! -s "$genome" ]]; then
-        echo "FEHLER: Genome fehlt für $slug:" >&2
+        echo "ERROR: genome FASTA missing for $slug:" >&2
         echo "  $genome" >&2
         exit 1
     fi
 
 
     twobit="$TWOBIT_DIR/${slug}.2bit"
-    sizes="$SIZES_DIR/${slug}.sizes"
+    sizes="$CHROM_SIZES_DIR/${slug}.sizes"
 
     echo "[$slug]"
     echo "  source : $source"
@@ -156,7 +197,7 @@ while IFS=$'\t' read -r slug source; do
         "$twobit"
 
     [[ -s "$twobit" ]] || {
-        echo "FEHLER: 2bit wurde nicht erzeugt für $slug" >&2
+        echo "ERROR: 2bit file was not created for $slug." >&2
         exit 1
     }
 
@@ -170,21 +211,21 @@ while IFS=$'\t' read -r slug source; do
         "$sizes"
 
     [[ -s "$sizes" ]] || {
-        echo "FEHLER: sizes-Datei wurde nicht erzeugt für $slug" >&2
+        echo "ERROR: chromosome-size file was not created for $slug." >&2
         exit 1
     }
 
 
     # --------------------------------------------------------
-    # Target list
+    # Target-species list
     # --------------------------------------------------------
 
-    if [[ "$slug" != "$REF" ]]; then
-        printf '%s\n' "$slug" >> "$TARGETS"
+    if [[ "$slug" != "$REFERENCE_SPECIES" ]]; then
+        printf '%s\n' "$slug" >> "$TARGET_SPECIES_FILE"
     fi
 
-    echo "  2bit   : $twobit"
-    echo "  sizes  : $sizes"
+    echo "  2bit  : $twobit"
+    echo "  sizes : $sizes"
     echo
 
 done <<< "$MANIFEST_ROWS"
@@ -200,7 +241,7 @@ echo "============================================================"
 
 
 # ------------------------------------------------------------
-# Number of species
+# Number of prepared species
 # ------------------------------------------------------------
 
 n_twobit="$(
@@ -212,7 +253,7 @@ n_twobit="$(
 )"
 
 n_sizes="$(
-    find "$SIZES_DIR" \
+    find "$CHROM_SIZES_DIR" \
         -maxdepth 1 \
         -type f \
         -name '*.sizes' \
@@ -220,108 +261,102 @@ n_sizes="$(
 )"
 
 n_targets="$(
-    grep -vcE '^(#|$)' "$TARGETS"
+    awk '
+        /^[[:space:]]*#/ {next}
+        NF == 0 {next}
+        {n++}
+        END {print n+0}
+    ' "$TARGET_SPECIES_FILE"
 )"
 
-
 echo "2bit files : $n_twobit"
-echo "size files : $n_sizes"
-echo "targets    : $n_targets"
+echo "Size files : $n_sizes"
+echo "Targets    : $n_targets"
+
 
 # ------------------------------------------------------------
-# Duplicate targets
+# Check duplicate targets
 # ------------------------------------------------------------
 
 duplicates="$(
-    sort "$TARGETS" \
+    sort "$TARGET_SPECIES_FILE" \
         | uniq -d
 )"
 
 if [[ -n "$duplicates" ]]; then
-    echo "FEHLER: Doppelte Target-Arten:"
-    echo "$duplicates"
+
+    echo "ERROR: duplicate target species detected:" >&2
+    echo "$duplicates" >&2
     exit 1
 fi
 
 
 # ------------------------------------------------------------
-# Check reference
+# Check reference genome
 # ------------------------------------------------------------
 
-REF_2BIT="$TWOBIT_DIR/${REF}.2bit"
-REF_SIZES="$SIZES_DIR/${REF}.sizes"
+REF_2BIT="$TWOBIT_DIR/${REFERENCE_SPECIES}.2bit"
+REF_SIZES="$CHROM_SIZES_DIR/${REFERENCE_SPECIES}.sizes"
 
 [[ -s "$REF_2BIT" ]] || {
-    echo "FEHLER: Dmel reference 2bit fehlt."
+    echo "ERROR: D. melanogaster reference 2bit file missing." >&2
     exit 1
 }
 
 [[ -s "$REF_SIZES" ]] || {
-    echo "FEHLER: Dmel reference sizes fehlen."
+    echo "ERROR: D. melanogaster chromosome-size file missing." >&2
     exit 1
 }
 
-
 echo
-echo "Dmel reference sequence IDs:"
+echo "D. melanogaster reference sequence IDs:"
 head "$REF_SIZES"
 
 
 # ------------------------------------------------------------
-# Check reference BED sequence IDs against Dmel 2bit
+# Check reference CRE sequence IDs
 # ------------------------------------------------------------
-
-REF_BED="$PROJECT/mapping_orthologs/reference_cres/dmel_reference_cres.bed"
-
-[[ -s "$REF_BED" ]] || {
-    echo "FEHLER: Reference CRE BED fehlt:"
-    echo "  $REF_BED"
-    exit 1
-}
 
 missing_ref_seqids="$(
     comm -23 \
-        <(cut -f1 "$REF_BED" | sort -u) \
+        <(cut -f1 "$REFERENCE_CRES_BED" | sort -u) \
         <(cut -f1 "$REF_SIZES" | sort -u)
 )"
 
 if [[ -n "$missing_ref_seqids" ]]; then
 
     echo
-    echo "FEHLER: CRE-BED enthält SeqIDs, die im Dmel-Genome fehlen:"
-    echo "$missing_ref_seqids"
+    echo "ERROR: reference CRE BED contains sequence IDs that are" >&2
+    echo "absent from the D. melanogaster reference genome:" >&2
+    echo "$missing_ref_seqids" >&2
     exit 1
 fi
-
 
 echo
 echo "Reference BED sequence IDs: OK"
 
 
 # ------------------------------------------------------------
-# Check reference CRE count
+# Reference CRE count
 # ------------------------------------------------------------
 
 n_ref_cres="$(
-    grep -vcE '^(#|$)' "$REF_BED"
+    grep -vcE '^(#|$)' "$REFERENCE_CRES_BED"
 )"
 
 echo "Reference CREs: $n_ref_cres"
 
 
-# --------------------------------------------------
-# Prepare downstream output directories
-# --------------------------------------------------
-
-mkdir -p "$ROOT/alignments_dmel"
-mkdir -p "$ROOT/lifted_cres_dmel"
-mkdir -p "$ROOT/logs"
+# ============================================================
+# Final summary
+# ============================================================
 
 echo
 echo "============================================================"
 echo "WGA genome preparation completed"
 echo "============================================================"
-echo "All genomes prepared"
-echo "Reference: $REF"
-echo "Targets: $TARGETS"
+echo "Prepared genomes : $n_twobit"
+echo "Reference        : $REFERENCE_SPECIES"
+echo "Target species   : $n_targets"
+echo "Target list      : $TARGET_SPECIES_FILE"
 echo "============================================================"
