@@ -1,8 +1,27 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from datetime import datetime
+# ============================================================
+# QC Tier-1 CRE candidates
+#
+# Purpose:
+#   Validate focal and secondary Tier-1 candidates against
+#   detailed per-species CRE-classification results.
+#
+# Checks:
+#   - expected present/turnover_candidate state pattern
+#   - successful homologous-locus mapping
+#   - reciprocal positional overlap for present CREs
+#   - local same-FBgn support for turnover candidates
+#   - consistency between focal and singleton analyses
+#
+# Input/output paths and QC parameters:
+#   Supplied by the pipeline wrapper using
+#   config/candidate_config.sh.
+# ============================================================
+
 import argparse
+from datetime import datetime
+from pathlib import Path
 import platform
 import sys
 
@@ -10,99 +29,84 @@ import pandas as pd
 
 
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-PROJECT_DIR = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
+def parse_args():
 
-CLASS_DIR = (
-    PROJECT_DIR
-    / "cre_classification"
-)
+    parser = argparse.ArgumentParser(
+        description=(
+            "QC focal and secondary Tier-1 CRE candidates "
+            "against detailed per-species CRE classifications."
+        )
+    )
 
-MAP_DIR = (
-    PROJECT_DIR
-    / "mapping_orthologs"
-)
+    parser.add_argument(
+        "--focal-dir",
+        type=Path,
+        required=True,
+    )
 
-CANDIDATE_DIR = (
-    PROJECT_DIR
-    / "downstream_analyses"
-    / "candidate_analysis"
-)
+    parser.add_argument(
+        "--secondary",
+        type=Path,
+        required=True,
+    )
 
-RESULTS_DIR = (
-    CANDIDATE_DIR
-    / "results"
-)
+    parser.add_argument(
+        "--reference",
+        type=Path,
+        required=True,
+    )
 
-FOCAL_DIR = (
-    RESULTS_DIR
-    / "focal_clades"
-)
+    parser.add_argument(
+        "--turnover-dir",
+        type=Path,
+        required=True,
+    )
 
-SECONDARY_DIR = (
-    RESULTS_DIR
-    / "secondary_clades"
-)
+    parser.add_argument(
+        "--out-summary",
+        type=Path,
+        required=True,
+    )
 
-QC_DIR = (
-    RESULTS_DIR
-    / "qc"
-)
+    parser.add_argument(
+        "--out-detail",
+        type=Path,
+        required=True,
+    )
 
-QC_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
+    parser.add_argument(
+        "--metadata-out",
+        type=Path,
+        required=True,
+    )
 
+    parser.add_argument(
+        "--min-reciprocal-overlap",
+        type=float,
+        default=0.50,
+    )
 
-DEFAULT_REF = (
-    MAP_DIR
-    / "reference_cres/dmel_reference_cres.tsv"
-)
+    parser.add_argument(
+        "--expected-reference-cres",
+        type=int,
+        default=None,
+    )
 
-DEFAULT_TURNOVER_DIR = (
-    CLASS_DIR
-    / "results"
-    / "turnover_by_species"
-)
+    parser.add_argument(
+        "--recurrence-min-clades",
+        type=int,
+        default=2,
+    )
 
-DEFAULT_SECONDARY = (
-    SECONDARY_DIR
-    / "secondary_tier1_all_clades.tsv"
-)
-
-DEFAULT_OUT_SUMMARY = (
-    QC_DIR
-    / "tier1_candidate_qc_summary.tsv"
-)
-
-DEFAULT_OUT_DETAIL = (
-    QC_DIR
-    / "tier1_candidate_qc_details.tsv"
-)
-
-DEFAULT_METADATA = (
-    QC_DIR
-    / "tier1_candidate_qc_metadata.tsv"
-)
-
+    return parser.parse_args()
+    
 
 # ============================================================
-# QC parameters
+# CRE-state definitions
 # ============================================================
-
-MIN_RECIPROCAL_OVERLAP = 0.50
-
-POSITIVE_STATES = {
-    "present",
-    "turnover_candidate",
-}
 
 VALID_TIER1_STATES = {
     "present",
@@ -152,66 +156,6 @@ TURNOVER_REQUIRED_COLUMNS = {
     "shared_fbgn_with_best_peak",
     "gene_support_at_best_peak",
 }
-
-
-# ============================================================
-# Argument parser
-# ============================================================
-
-def parse_args():
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "QC focal and secondary/singleton Tier-1 CRE "
-            "candidates against detailed per-species "
-            "CRE classification tables."
-        )
-    )
-
-    parser.add_argument(
-        "--focal-dir",
-        type=Path,
-        default=FOCAL_DIR,
-    )
-
-    parser.add_argument(
-        "--secondary",
-        type=Path,
-        default=DEFAULT_SECONDARY,
-    )
-
-    parser.add_argument(
-        "--reference",
-        type=Path,
-        default=DEFAULT_REF,
-    )
-
-    parser.add_argument(
-        "--turnover-dir",
-        type=Path,
-        default=DEFAULT_TURNOVER_DIR,
-    )
-
-    parser.add_argument(
-        "--out-summary",
-        type=Path,
-        default=DEFAULT_OUT_SUMMARY,
-    )
-
-    parser.add_argument(
-        "--out-detail",
-        type=Path,
-        default=DEFAULT_OUT_DETAIL,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        default=DEFAULT_METADATA,
-    )
-
-    return parser.parse_args()
-
 
 # ============================================================
 # Helpers
@@ -295,6 +239,7 @@ def is_missing(value):
 def validate_species_row(
     row,
     expected_state,
+    min_reciprocal_overlap,
 ):
     """
     Validate one CRE x species classification record.
@@ -395,18 +340,18 @@ def validate_species_row(
 
         if (
             frac_lifted
-            < MIN_RECIPROCAL_OVERLAP
+            < min_reciprocal_overlap
         ):
             flags.append(
-                "PRESENT_LIFTED_OVERLAP_LT_0.50"
+                "PRESENT_LIFTED_OVERLAP_BELOW_THRESHOLD"
             )
 
         if (
             frac_peak
-            < MIN_RECIPROCAL_OVERLAP
+            < min_reciprocal_overlap
         ):
             flags.append(
-                "PRESENT_PEAK_OVERLAP_LT_0.50"
+                "PRESENT_PEAK_OVERLAP_BELOW_THRESHOLD"
             )
 
     # --------------------------------------------------------
@@ -456,6 +401,21 @@ def validate_species_row(
 def main():
 
     args = parse_args()
+
+    if not (
+        0.0
+        <= args.min_reciprocal_overlap
+        <= 1.0
+    ):
+        raise SystemExit(
+            "ERROR: min-reciprocal-overlap must be between "
+            "0 and 1."
+        )
+    
+    if args.recurrence_min_clades < 1:
+        raise SystemExit(
+            "ERROR: recurrence-min-clades must be >= 1."
+        )
 
     require_directory(
         args.focal_dir
@@ -513,6 +473,18 @@ def main():
             sep="\t",
             dtype=str,
         ).fillna("")
+
+        if (
+            args.expected_reference_cres is not None
+            and
+            len(df) != args.expected_reference_cres
+        ):
+            raise SystemExit(
+                "ERROR: unexpected number of CRE rows in:\n"
+                f"{path}\n"
+                f"Expected: {args.expected_reference_cres}\n"
+                f"Observed: {len(df)}"
+            )
 
         require_columns(
             df,
@@ -966,6 +938,18 @@ def main():
     ).fillna("")
 
     if (
+        args.expected_reference_cres is not None
+        and
+        len(ref) != args.expected_reference_cres
+    ):
+        raise SystemExit(
+            "ERROR: unexpected number of D. melanogaster "
+            "reference CREs.\n"
+            f"Expected: {args.expected_reference_cres}\n"
+            f"Observed: {len(ref)}"
+        )
+
+    if (
         "dmel_cre_id"
         not in ref.columns
     ):
@@ -1155,6 +1139,7 @@ def main():
                     validate_species_row(
                         row,
                         expected_state,
+                        args.min_reciprocal_overlap,
                     )
                 )
 
@@ -1640,7 +1625,17 @@ def main():
                 platform.platform(),
 
             "min_reciprocal_overlap":
-                MIN_RECIPROCAL_OVERLAP,
+                args.min_reciprocal_overlap,
+            
+            "recurrence_min_clades":
+                args.recurrence_min_clades,
+            
+            "expected_reference_cres":
+                (
+                    args.expected_reference_cres
+                    if args.expected_reference_cres is not None
+                    else "NA"
+                ),
 
             "n_focal_tier1_rows":
                 len(
@@ -1841,7 +1836,7 @@ def main():
         recurrent = recurrent[
             recurrent[
                 "n_clades"
-            ] > 1
+            ] >= args.recurrence_min_clades
         ]
 
         if not recurrent.empty:
