@@ -95,6 +95,23 @@ TIER1_QC_MIN_RECIPROCAL_OVERLAP="${TIER1_QC_MIN_RECIPROCAL_OVERLAP:-0.50}"
 
 
 # ======================================================================
+# Tier-1 candidate prioritization
+# ======================================================================
+
+TIER1_TABLES_DIR="${RESULTS_DIR}/tables"
+
+TIER1_CLADE_EVIDENCE="${TIER1_TABLES_DIR}/tier1_candidate_clade_evidence.tsv"
+
+TIER1_PRIORITIZED="${TIER1_TABLES_DIR}/tier1_candidates_prioritized.tsv"
+
+TIER1_PRIORITIZATION_METADATA="${TIER1_TABLES_DIR}/tier1_candidate_prioritization_metadata.tsv"
+
+# Minimum number of focal Tier-1 clades required to classify
+# a candidate as recurrent focal support.
+FOCAL_RECURRENCE_MIN_CLADES="${FOCAL_RECURRENCE_MIN_CLADES:-2}"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -128,3 +145,11 @@ export TIER1_QC_DETAILS
 export TIER1_QC_METADATA
 
 export TIER1_QC_MIN_RECIPROCAL_OVERLAP
+
+export TIER1_TABLES_DIR
+export TIER1_CLADE_EVIDENCE
+export TIER1_PRIORITIZED
+export TIER1_PRIORITIZATION_METADATA
+
+export FOCAL_RECURRENCE_MIN_CLADES
+
