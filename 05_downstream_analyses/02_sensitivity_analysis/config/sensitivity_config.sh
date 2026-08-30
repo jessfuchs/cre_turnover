@@ -70,6 +70,24 @@ EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 
 
 # ======================================================================
+# Primary-scenario regression check
+# ======================================================================
+
+# Baseline CRE classifications from the primary analysis.
+BASELINE_TURNOVER_DIR="${CLASSIFICATION_ROOT}/results/turnover_by_species"
+
+# Sensitivity scenario expected to reproduce the baseline analysis.
+PRIMARY_SENSITIVITY_SCENARIO="${PRIMARY_SENSITIVITY_SCENARIO:-ov050_dist24000}"
+
+# Regression-check outputs.
+PRIMARY_REGRESSION_SUMMARY="${RESULTS_DIR}/primary_regression_check.tsv"
+
+PRIMARY_REGRESSION_CHANGES="${RESULTS_DIR}/primary_regression_state_changes.tsv"
+
+PRIMARY_REGRESSION_METADATA="${RESULTS_DIR}/primary_regression_metadata.tsv"
+
+
+# ======================================================================
 # Export
 # ======================================================================
 
@@ -92,3 +110,10 @@ export SENSITIVITY_SCENARIO_MANIFEST
 export SENSITIVITY_GENERATION_METADATA
 
 export EXPECTED_REFERENCE_CRES
+
+export BASELINE_TURNOVER_DIR
+export PRIMARY_SENSITIVITY_SCENARIO
+
+export PRIMARY_REGRESSION_SUMMARY
+export PRIMARY_REGRESSION_CHANGES
+export PRIMARY_REGRESSION_METADATA
