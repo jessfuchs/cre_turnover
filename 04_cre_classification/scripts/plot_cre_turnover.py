@@ -1,49 +1,20 @@
 #!/usr/bin/env python3
 
-"""
-Generate QC and CRE-turnover figures.
+# ============================================================
+# Generate CRE-turnover summary figures and QC outputs
+#
+# Purpose:
+#   Visualize species- and CRE-level conservation patterns,
+#   mapping quality, and CRE-state composition.
+#
+# Input/output paths:
+#   Supplied by the pipeline wrapper using
+#   config/classification_config.sh.
+# ============================================================
 
-Design
-------
-- D. melanogaster is the reference species.
-- D. melanogaster is shown at its phylogenetic position for visualization,
-  but is NOT included in target-species calculations.
-- Species identity and display names are obtained from
-  external_scrmshaw/combined_manifest.tsv.
-- Phylogenetic order is obtained directly from
-  phylogeny/results/species_order_40_tree_names.txt.
-- Tree names are reconstructed from the scientific species names in the
-  manifest, e.g.:
-
-      Drosophila virilis -> DROSOPHILA_VIRILIS
-
-- Only species listed in pairwise_wga/target_species.txt are included as
-  target species.
-- All newly generated tables and figures are written below
-  cre_classification/results/.
-
-Required input files
---------------------
-cre_classification/results/species_summary.tsv
-cre_classification/results/cre_turnover_matrix.tsv
-cre_classification/results/cre_turnover_all_species.tsv
-pairwise_wga/target_species.txt
-external_scrmshaw/combined_manifest.tsv
-cre_classification/phylogeny/results/species_order_40_tree_names.txt
-
-Optional input
---------------
-cre_classification/results/species_qc_summary.tsv
-
-Outputs
--------
-cre_classification/results/CRE_conservation_summary.tsv
-cre_classification/results/species_plot_qc_summary.tsv
-cre_classification/results/figures/*.png
-"""
-
-from pathlib import Path
+import argparse
 from collections import Counter
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -58,97 +29,114 @@ from matplotlib.lines import Line2D
 
 
 # ============================================================
-# Configuration
+# Arguments
 # ============================================================
 
-DMEL_SLUG = "d_melanogaster"
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-CLASS_DIR = SCRIPT_DIR.parent
-PROJECT_DIR = CLASS_DIR.parent
-
-PHYLO_DIR = CLASS_DIR / "phylogeny"
-
-RESULTS_DIR = CLASS_DIR / "results"
-FIG_DIR = RESULTS_DIR / "figures"
-
-RESULTS_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
+parser = argparse.ArgumentParser(
+    description=(
+        "Generate species- and CRE-level CRE-turnover "
+        "summary figures and QC outputs."
+    )
 )
+
+parser.add_argument(
+    "--species-summary",
+    required=True,
+)
+
+parser.add_argument(
+    "--matrix",
+    required=True,
+)
+
+parser.add_argument(
+    "--long-table",
+    required=True,
+)
+
+parser.add_argument(
+    "--species-qc",
+    required=True,
+)
+
+parser.add_argument(
+    "--targets",
+    required=True,
+)
+
+parser.add_argument(
+    "--manifest",
+    required=True,
+)
+
+parser.add_argument(
+    "--tree-order",
+    required=True,
+)
+
+parser.add_argument(
+    "--traits",
+    required=True,
+)
+
+parser.add_argument(
+    "--fig-dir",
+    required=True,
+)
+
+parser.add_argument(
+    "--cre-summary-out",
+    required=True,
+)
+
+parser.add_argument(
+    "--plot-summary-out",
+    required=True,
+)
+
+args = parser.parse_args()
+
+
+# ============================================================
+# Input and output paths
+# ============================================================
+
+SUMMARY_FILE = Path(args.species_summary)
+MATRIX_FILE = Path(args.matrix)
+LONG_FILE = Path(args.long_table)
+QC_FILE = Path(args.species_qc)
+
+TARGETS_FILE = Path(args.targets)
+MANIFEST_FILE = Path(args.manifest)
+TREE_ORDER_FILE = Path(args.tree_order)
+TRAITS_FILE = Path(args.traits)
+
+FIG_DIR = Path(args.fig_dir)
+
+CRE_SUMMARY_OUT = Path(args.cre_summary_out)
+PLOT_SUMMARY_OUT = Path(args.plot_summary_out)
 
 FIG_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
 
-
-# ------------------------------------------------------------
-# CRE-classification input
-# ------------------------------------------------------------
-
-SUMMARY_FILE = (
-    RESULTS_DIR
-    / "species_summary.tsv"
+CRE_SUMMARY_OUT.parent.mkdir(
+    parents=True,
+    exist_ok=True,
 )
 
-MATRIX_FILE = (
-    RESULTS_DIR
-    / "cre_turnover_matrix.tsv"
-)
-
-LONG_FILE = (
-    RESULTS_DIR
-    / "cre_turnover_all_species.tsv"
-)
-
-QC_FILE = (
-    RESULTS_DIR
-    / "species_qc_summary.tsv"
-)
-
-TRAITS_FILE = (
-    PHYLO_DIR
-    / "data"
-    / "species_traits.tsv"
-)
-
-# ------------------------------------------------------------
-# Species / phylogeny input
-# ------------------------------------------------------------
-
-TARGETS_FILE = (
-    PROJECT_DIR
-    / "pairwise_wga"
-    / "target_species.txt"
-)
-
-MANIFEST_FILE = (
-    PROJECT_DIR
-    / "external_scrmshaw"
-    / "combined_manifest.tsv"
-)
-
-TREE_ORDER_FILE = (
-    PHYLO_DIR
-    / "results"
-    / "species_order_40_tree_names.txt"
+PLOT_SUMMARY_OUT.parent.mkdir(
+    parents=True,
+    exist_ok=True,
 )
 
 
 # ============================================================
-# Output
+# Reference species
 # ============================================================
 
-CRE_SUMMARY_OUT = (
-    RESULTS_DIR
-    / "CRE_conservation_summary.tsv"
-)
-
-PLOT_SUMMARY_OUT = (
-    RESULTS_DIR
-    / "species_plot_qc_summary.tsv"
-)
+DMEL_SLUG = "d_melanogaster"
 
 
 # ============================================================
