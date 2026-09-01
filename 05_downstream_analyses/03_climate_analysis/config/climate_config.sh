@@ -14,7 +14,6 @@ SCRM_EXTERNAL_ROOT="${PROJECT_ROOT}/01_scrmshaw/external"
 RESULTS_DIR="${PIPELINE_ROOT}/results"
 FIGURES_DIR="${RESULTS_DIR}/figures"
 
-
 # ======================================================================
 # Inputs
 # ======================================================================
@@ -22,7 +21,6 @@ FIGURES_DIR="${RESULTS_DIR}/figures"
 SPECIES_SUMMARY="${CLASSIFICATION_ROOT}/results/species_summary.tsv"
 COMBINED_MANIFEST="${SCRM_EXTERNAL_ROOT}/combined_manifest.tsv"
 SPECIES_TRAITS="${CLASSIFICATION_ROOT}/phylogeny/data/species_traits.tsv"
-
 
 # ======================================================================
 # Species-level turnover by climatic zone
@@ -34,3 +32,12 @@ CLIMATE_TURNOVER_KRUSKAL="${RESULTS_DIR}/climate_turnover_kruskal.tsv"
 
 TURNOVER_BY_CLIMATE_PNG="${FIGURES_DIR}/turnover_rate_by_climate.png"
 TURNOVER_BY_CLIMATE_PDF="${FIGURES_DIR}/turnover_rate_by_climate.pdf"
+
+# ======================================================================
+# Phylogenetically controlled climate analysis
+# ======================================================================
+
+PHYLOGENY_TREE="${CLASSIFICATION_ROOT}/phylogeny/results/301Fly_HOG_UCLDtree_40species.nw"
+PGLS_CLIMATE_MODEL_COMPARISON="${RESULTS_DIR}/pgls_climate_model_comparison.tsv"
+PGLS_CLIMATE_COEFFICIENTS="${RESULTS_DIR}/pgls_climate_coefficients.tsv"
+PGLS_CLIMATE_SUMMARY="${RESULTS_DIR}/pgls_climate_summary.txt"
