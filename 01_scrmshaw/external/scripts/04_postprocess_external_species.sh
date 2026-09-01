@@ -56,7 +56,7 @@ row="$(
 )"
 
 if [[ -z "$row" ]]; then
-    echo "FEHLER: Species '$slug' nicht im Manifest gefunden:" >&2
+    echo "ERROR: Species '$slug' not found in manifest:" >&2
     echo "  $EXTERNAL_MANIFEST" >&2
     exit 1
 fi
@@ -73,20 +73,20 @@ IFS=$'\t' read -r index manifest_slug species bed gff <<< "$row"
 # ------------------------------------------------------------
 
 if [[ "$manifest_slug" != "$slug" ]]; then
-    echo "FEHLER: Manifest-Slug stimmt nicht überein." >&2
+    echo "ERROR: Manifest slug does not match." >&2
     echo "  requested: $slug" >&2
     echo "  manifest : $manifest_slug" >&2
     exit 1
 fi
 
 [[ -s "$bed" ]] || {
-    echo "FEHLER: BED fehlt oder ist leer:" >&2
+    echo "ERROR: BED is missing or empty:" >&2
     echo "  $bed" >&2
     exit 1
 }
 
 [[ -s "$gff" ]] || {
-    echo "FEHLER: GFF fehlt oder ist leer:" >&2
+    echo "ERROR: GFF is missing or empty:" >&2
     echo "  $gff" >&2
     exit 1
 }
@@ -155,7 +155,7 @@ shopt -s nullglob
 peaks=(scrmshawOutput_peaksCalled_*)
 
 if (( ${#peaks[@]} == 0 )); then
-    echo "FEHLER: Keine Peaks für $slug erzeugt." >&2
+    echo "ERROR: No peaks generated for $slug." >&2
     exit 1
 fi
 
@@ -164,7 +164,7 @@ cat "${peaks[@]}" > peaks_AllSets.bed
 
 
 [[ -s peaks_AllSets.bed ]] || {
-    echo "FEHLER: peaks_AllSets.bed ist leer für $slug." >&2
+    echo "ERROR: peaks_AllSets.bed is empty for $slug." >&2
     exit 1
 }
 
@@ -190,7 +190,7 @@ n_peaks=$(wc -l < peaks_AllSets.bed)
 
 
 echo
-echo "Externes Postprocessing abgeschlossen: $slug"
+echo "External postprocessing completed: $slug"
 echo "Final peaks: $n_peaks"
 echo "Result dir:"
 echo "  $result"
