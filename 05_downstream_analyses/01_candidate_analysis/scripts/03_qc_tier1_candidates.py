@@ -33,7 +33,8 @@ import pandas as pd
 # ============================================================
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='QC focal and secondary Tier-1 CRE candidates against detailed per-species CRE classifications.')
+    parser = argparse.ArgumentParser(
+        description='QC focal and secondary Tier-1 CRE candidates against detailed per-species CRE classifications.')
     parser.add_argument('--focal-dir', type=Path, required=True)
     parser.add_argument('--secondary', type=Path, required=True)
     parser.add_argument('--reference', type=Path, required=True)
@@ -100,85 +101,33 @@ TURNOVER_REQUIRED_COLUMNS = {
 # ============================================================
 
 def require_file(path):
-
-    if not path.exists():
-        raise SystemExit(
-            "ERROR: required file not found:\n"
-            f"{path}"
-        )
-
+    if not path.is_file():
+        raise SystemExit(f'ERROR: required file not found:\n{path}')
 
 def require_directory(path):
+    if not path.is_dir():
+        raise SystemExit(f'ERROR: required directory not found:\n{path}')
 
-    if not path.exists():
-        raise SystemExit(
-            "ERROR: required directory not found:\n"
-            f"{path}"
-        )
-
-
-def require_columns(
-    df,
-    required,
-    label,
-):
-
-    missing = sorted(
-        set(required)
-        - set(df.columns)
-    )
-
+def require_columns(df, required, label):
+    missing = sorted(set(required) - set(df.columns))
     if missing:
-        raise SystemExit(
-            f"ERROR: missing columns in {label}:\n"
-            + "\n".join(missing)
-        )
-
+        raise SystemExit(f'ERROR: missing columns in {label}:\n' + '\n'.join(missing))
 
 def split_pipe(value):
-
-    return [
-        x
-        for x in str(value).split("|")
-        if x
-    ]
-
+    return [x for x in str(value).split('|') if x]
 
 def as_float(value):
-
     try:
         return float(value)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
+    except (TypeError, ValueError):
         return 0.0
 
-
 def is_missing(value):
-
     if pd.isna(value):
         return True
+    return str(value).strip().lower() in {'', 'na', 'nan', 'none'}
 
-    return (
-        str(value)
-        .strip()
-        .lower()
-        in {
-            "",
-            "na",
-            "nan",
-            "none",
-        }
-    )
-
-
-def validate_species_row(
-    row,
-    expected_state,
-    min_reciprocal_overlap,
-):
+def validate_species_row(row, expected_state, min_reciprocal_overlap):
     """
     Validate one CRE x species classification record.
 
@@ -186,150 +135,61 @@ def validate_species_row(
         present
         turnover_candidate
     """
-
     flags = []
-
-    observed_class = str(
-        row.get(
-            "class",
-            "",
-        )
-    ).strip()
-
-    alignment_status = str(
-        row.get(
-            "alignment_status",
-            "",
-        )
-    ).strip()
-
-    mapped = (
-        alignment_status
-        == "mapped"
-    )
-
-    frac_lifted = as_float(
-        row.get(
-            "best_overlap_fraction_lifted",
-            0,
-        )
-    )
-
-    frac_peak = as_float(
-        row.get(
-            "best_overlap_fraction_peak",
-            0,
-        )
-    )
-
-    positional = (
-        str(
-            row.get(
-                "positional_peak",
-                "",
-            )
-        ).strip()
-        == "yes"
-    )
-
-    same_fbgn_local = (
-        str(
-            row.get(
-                "same_fbgn_peak_local",
-                "",
-            )
-        ).strip()
-        == "yes"
-    )
-
-    local_peak_id = row.get(
-        "local_same_fbgn_peak_id",
-        "",
-    )
+    observed_class = str(row.get('class', '')).strip()
+    alignment_status = str(row.get('alignment_status', '')).strip()
+    mapped = alignment_status == 'mapped'
+    frac_lifted = as_float(row.get('best_overlap_fraction_lifted', 0))
+    frac_peak = as_float(row.get('best_overlap_fraction_peak', 0))
+    positional = str(row.get('positional_peak', '')).strip() == 'yes'
+    same_fbgn_local = str(row.get('same_fbgn_peak_local', '')).strip() == 'yes'
+    local_peak_id = row.get('local_same_fbgn_peak_id', '')
 
     # --------------------------------------------------------
     # Expected state
     # --------------------------------------------------------
 
     if observed_class != expected_state:
-        flags.append(
-            "STATE_MISMATCH"
-        )
+        flags.append('STATE_MISMATCH')
 
     # --------------------------------------------------------
     # Tier-1 requires mapped/evaluable homolog
     # --------------------------------------------------------
 
     if not mapped:
-        flags.append(
-            "NOT_MAPPED"
-        )
-
+        flags.append('NOT_MAPPED')
+        
     # --------------------------------------------------------
     # present
     # --------------------------------------------------------
 
-    if observed_class == "present":
-
+    if observed_class == 'present':
         if not positional:
-            flags.append(
-                "PRESENT_WITHOUT_POSITIONAL_PEAK"
-            )
-
-        if (
-            frac_lifted
-            < min_reciprocal_overlap
-        ):
-            flags.append(
-                "PRESENT_LIFTED_OVERLAP_BELOW_THRESHOLD"
-            )
-
-        if (
-            frac_peak
-            < min_reciprocal_overlap
-        ):
-            flags.append(
-                "PRESENT_PEAK_OVERLAP_BELOW_THRESHOLD"
-            )
+            flags.append('PRESENT_WITHOUT_POSITIONAL_PEAK')
+        if frac_lifted < min_reciprocal_overlap:
+            flags.append('PRESENT_LIFTED_OVERLAP_BELOW_THRESHOLD')
+        if frac_peak < min_reciprocal_overlap:
+            flags.append('PRESENT_PEAK_OVERLAP_BELOW_THRESHOLD')
 
     # --------------------------------------------------------
     # turnover_candidate
     # --------------------------------------------------------
 
-    elif (
-        observed_class
-        == "turnover_candidate"
-    ):
-
+    elif observed_class == 'turnover_candidate':
         if positional:
-            flags.append(
-                "TURNOVER_HAS_POSITIONAL_PEAK"
-            )
-
+            flags.append('TURNOVER_HAS_POSITIONAL_PEAK')
         if not same_fbgn_local:
-            flags.append(
-                "TURNOVER_WITHOUT_LOCAL_SAME_FBGN"
-            )
-
-        if is_missing(
-            local_peak_id
-        ):
-            flags.append(
-                "TURNOVER_WITHOUT_LOCAL_PEAK_ID"
-            )
+            flags.append('TURNOVER_WITHOUT_LOCAL_SAME_FBGN')
+        if is_missing(local_peak_id):
+            flags.append('TURNOVER_WITHOUT_LOCAL_PEAK_ID')
 
     # --------------------------------------------------------
     # Anything else cannot be Tier-1
     # --------------------------------------------------------
 
     else:
-        flags.append(
-            f"UNEXPECTED_CLASS_{observed_class}"
-        )
-
-    return sorted(
-        set(flags)
-    )
+        flags.append(f'UNEXPECTED_CLASS_{observed_class}')
+    return sorted(set(flags))
 
 
 # ============================================================
@@ -337,320 +197,99 @@ def validate_species_row(
 # ============================================================
 
 def main():
-
     args = parse_args()
-
-    if not (
-        0.0
-        <= args.min_reciprocal_overlap
-        <= 1.0
-    ):
-        raise SystemExit(
-            "ERROR: min-reciprocal-overlap must be between "
-            "0 and 1."
-        )
-    
+    if not 0.0 <= args.min_reciprocal_overlap <= 1.0:
+        raise SystemExit('ERROR: min-reciprocal-overlap must be between 0 and 1.')
     if args.recurrence_min_clades < 1:
-        raise SystemExit(
-            "ERROR: recurrence-min-clades must be >= 1."
-        )
-
-    require_directory(
-        args.focal_dir
-    )
-
-    require_file(
-        args.secondary
-    )
-
-    require_file(
-        args.reference
-    )
-
-    require_directory(
-        args.turnover_dir
-    )
-
-    args.out_summary.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    args.out_detail.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    args.metadata_out.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+        raise SystemExit('ERROR: recurrence-min-clades must be >= 1.')
+    require_directory(args.focal_dir)
+    require_file(args.secondary)
+    require_file(args.reference)
+    require_directory(args.turnover_dir)
+    args.out_summary.parent.mkdir(parents=True, exist_ok=True)
+    args.out_detail.parent.mkdir(parents=True, exist_ok=True)
+    args.metadata_out.parent.mkdir(parents=True, exist_ok=True)
 
     # ========================================================
     # Load focal Tier-1 candidates
     # ========================================================
 
-    focal_files = sorted(
-        args.focal_dir.glob(
-            "*_tier1.tsv"
-        )
-    )
-
+    focal_files = sorted(args.focal_dir.glob('*_tier1.tsv'))
     if not focal_files:
-        raise SystemExit(
-            "ERROR: no focal *_tier1.tsv files found in:\n"
-            f"{args.focal_dir}"
-        )
-
+        raise SystemExit(f'ERROR: no focal *_tier1.tsv files found in:\n{args.focal_dir}')
     focal_tables = []
-
     for path in focal_files:
-
-        df = pd.read_csv(
-            path,
-            sep="\t",
-            dtype=str,
-        ).fillna("")
-
-        if (
-            args.expected_reference_cres is not None
-            and
-            len(df) != args.expected_reference_cres
-        ):
-            raise SystemExit(
-                "ERROR: unexpected number of CRE rows in:\n"
-                f"{path}\n"
-                f"Expected: {args.expected_reference_cres}\n"
-                f"Observed: {len(df)}"
-            )
-
-        require_columns(
-            df,
-            FOCAL_REQUIRED_COLUMNS,
-            str(path),
-        )
-
+        df = pd.read_csv(path, sep='\t', dtype=str).fillna('')
+        require_columns(df, FOCAL_REQUIRED_COLUMNS, str(path))
         if df.empty:
             continue
-
-        if not (
-            df["category"]
-            == "tier1"
-        ).all():
-            raise SystemExit(
-                "ERROR: non-tier1 rows found in:\n"
-                f"{path}"
-            )
-
-        focal_tables.append(
-            df
-        )
-
+        if not (df['category'] == 'tier1').all():
+            raise SystemExit(f'ERROR: non-tier1 rows found in:\n{path}')
+        focal_tables.append(df)
     if focal_tables:
-
-        focal = pd.concat(
-            focal_tables,
-            ignore_index=True,
-        )
-
+        focal = pd.concat(focal_tables, ignore_index=True)
     else:
-
-        focal = pd.DataFrame(
-            columns=sorted(
-                FOCAL_REQUIRED_COLUMNS
-            )
-        )
-
+        focal = pd.DataFrame(columns=sorted(FOCAL_REQUIRED_COLUMNS))
+        
     # --------------------------------------------------------
     # Validate focal uniqueness
     # --------------------------------------------------------
 
     if not focal.empty:
-
-        if focal.duplicated(
-            subset=[
-                "group_name",
-                "dmel_cre_id",
-            ]
-        ).any():
-
-            raise SystemExit(
-                "ERROR: duplicate focal group x CRE records."
-            )
+        if focal.duplicated(subset=['group_name', 'dmel_cre_id']).any():
+            raise SystemExit('ERROR: duplicate focal group x CRE records.')
 
     # ========================================================
     # Load secondary/singleton Tier-1 candidates
     # ========================================================
 
-    secondary = pd.read_csv(
-        args.secondary,
-        sep="\t",
-        dtype=str,
-    ).fillna("")
-
-    require_columns(
-        secondary,
-        SECONDARY_REQUIRED_COLUMNS,
-        "secondary Tier-1 table",
-    )
-
+    secondary = pd.read_csv(args.secondary, sep='\t', dtype=str).fillna('')
+    require_columns(secondary, SECONDARY_REQUIRED_COLUMNS, 'secondary Tier-1 table')
     if not secondary.empty:
-
-        if secondary.duplicated(
-            subset=[
-                "group_name",
-                "dmel_cre_id",
-            ]
-        ).any():
-
-            raise SystemExit(
-                "ERROR: duplicate secondary group x CRE records."
-            )
+        if secondary.duplicated(subset=['group_name', 'dmel_cre_id']).any():
+            raise SystemExit('ERROR: duplicate secondary group x CRE records.')
 
     # ========================================================
     # Convert focal records into common evidence representation
     # ========================================================
 
     evidence = {}
-
     for _, row in focal.iterrows():
-
-        group = row[
-            "group_name"
-        ]
-
-        cre = row[
-            "dmel_cre_id"
-        ]
-
-        focal_species = row[
-            "focal_species"
-        ]
-
-        comparisons = split_pipe(
-            row[
-                "comparison_species"
-            ]
-        )
-
-        focal_state = row[
-            "focal_state"
-        ]
-
-        consensus_state = row[
-            "comparison_consensus_state"
-        ]
-
-        expected_states = {
-            focal_species:
-                focal_state,
-        }
-
-        expected_states.update({
-            sp:
-                consensus_state
-            for sp
-            in comparisons
-        })
-
-        evidence[
-            (
-                group,
-                cre,
-            )
-        ] = {
-            "group_name":
-                group,
-
-            "dmel_cre_id":
-                cre,
-
-            "species":
-                [
-                    focal_species,
-                    *comparisons,
-                ],
-
-            "expected_states":
-                expected_states,
-
-            "is_focal_tier1":
-                True,
-
-            "is_singleton_tier1":
-                False,
-
-            "focal_species":
-                focal_species,
-
-            "focal_state":
-                focal_state,
-
-            "comparison_species":
-                "|".join(
-                    comparisons
-                ),
-
-            "comparison_consensus_state":
-                consensus_state,
-
-            "discordant_species":
-                focal_species,
-
-            "discordant_state":
-                focal_state,
-
-            "consensus_state":
-                consensus_state,
-        }
+        group = row['group_name']
+        cre = row['dmel_cre_id']
+        focal_species = row['focal_species']
+        comparisons = split_pipe(row['comparison_species'])
+        focal_state = row['focal_state']
+        consensus_state = row['comparison_consensus_state']
+        expected_states = {focal_species: focal_state}
+        expected_states.update({sp: consensus_state for sp in comparisons})
+        evidence[group, cre] = {'group_name': group, 
+                                'dmel_cre_id': cre, 
+                                'species': [focal_species, *comparisons], 
+                                'expected_states': expected_states, 
+                                'is_focal_tier1': True, 
+                                'is_singleton_tier1': False, 
+                                'focal_species': focal_species, 
+                                'focal_state': focal_state,
+                                'comparison_species': '|'.join(comparisons), 
+                                'comparison_consensus_state': consensus_state, 
+                                'discordant_species': focal_species, 
+                                'discordant_state': focal_state, 
+                                'consensus_state': consensus_state}
 
     # ========================================================
     # Add singleton Tier-1 evidence
     # ========================================================
 
     for _, row in secondary.iterrows():
-
-        group = row[
-            "group_name"
-        ]
-
-        cre = row[
-            "dmel_cre_id"
-        ]
-
-        group_species = split_pipe(
-            row[
-                "group_species"
-            ]
-        )
-
-        discordant_species = row[
-            "discordant_species"
-        ]
-
-        discordant_state = row[
-            "discordant_state"
-        ]
-
-        consensus_state = row[
-            "consensus_state"
-        ]
-
-        expected_states = {
-            sp: (
-                discordant_state
-                if sp
-                == discordant_species
-                else consensus_state
-            )
-            for sp
-            in group_species
-        }
-
-        key = (
-            group,
-            cre,
-        )
+        group = row['group_name']
+        cre = row['dmel_cre_id']
+        group_species = split_pipe(row['group_species'])
+        discordant_species = row['discordant_species']
+        discordant_state = row['discordant_state']
+        consensus_state = row['consensus_state']
+        expected_states = {sp: discordant_state if sp == discordant_species else consensus_state for sp in group_species}
+        key = (group, cre)
 
         # ----------------------------------------------------
         # Same group x CRE may already exist as focal Tier-1.
@@ -659,253 +298,78 @@ def main():
         # ----------------------------------------------------
 
         if key in evidence:
-
-            existing = evidence[
-                key
-            ]
-
-            if (
-                existing[
-                    "expected_states"
-                ]
-                != expected_states
-            ):
-
-                raise SystemExit(
-                    "ERROR: focal and singleton Tier-1 "
-                    "state patterns disagree for:\n"
-                    f"{group} / {cre}\n\n"
-                    f"Focal: "
-                    f"{existing['expected_states']}\n"
-                    f"Singleton: "
-                    f"{expected_states}"
-                )
-
-            existing[
-                "is_singleton_tier1"
-            ] = True
-
-            # The singleton analysis explicitly identifies
-            # the discordant species.
-            existing[
-                "discordant_species"
-            ] = discordant_species
-
-            existing[
-                "discordant_state"
-            ] = discordant_state
-
-            existing[
-                "consensus_state"
-            ] = consensus_state
-
+            existing = evidence[key]
+            if existing['expected_states'] != expected_states:
+                raise SystemExit(f"ERROR: focal and singleton Tier-1 state patterns disagree for:\n{group} / {cre}\n\nFocal: {existing['expected_states']}\nSingleton: {expected_states}")
+            existing['is_singleton_tier1'] = True
+            existing['discordant_species'] = discordant_species
+            existing['discordant_state'] = discordant_state
+            existing['consensus_state'] = consensus_state
         else:
-
-            evidence[
-                key
-            ] = {
-                "group_name":
-                    group,
-
-                "dmel_cre_id":
-                    cre,
-
-                "species":
-                    group_species,
-
-                "expected_states":
-                    expected_states,
-
-                "is_focal_tier1":
-                    False,
-
-                "is_singleton_tier1":
-                    True,
-
-                "focal_species":
-                    "NA",
-
-                "focal_state":
-                    "NA",
-
-                "comparison_species":
-                    "NA",
-
-                "comparison_consensus_state":
-                    "NA",
-
-                "discordant_species":
-                    discordant_species,
-
-                "discordant_state":
-                    discordant_state,
-
-                "consensus_state":
-                    consensus_state,
-            }
-
+            evidence[key] = {'group_name': group, 
+                             'dmel_cre_id': cre, 
+                             'species': group_species, 
+                             'expected_states': expected_states, 
+                             'is_focal_tier1': False, 
+                             'is_singleton_tier1': True, 
+                             'focal_species': 'NA', 
+                             'focal_state': 'NA', 
+                             'comparison_species': 'NA', 
+                             'comparison_consensus_state': 'NA', 
+                             'discordant_species': discordant_species, 
+                             'discordant_state': discordant_state, 
+                             'consensus_state': consensus_state}
     # ========================================================
     # Cross-step consistency:
     # every focal Tier-1 should also be a singleton Tier-1
     # ========================================================
 
-    focal_not_singleton = [
-        (
-            record[
-                "group_name"
-            ],
-            record[
-                "dmel_cre_id"
-            ],
-        )
-        for record in evidence.values()
-        if (
-            record[
-                "is_focal_tier1"
-            ]
-            and not record[
-                "is_singleton_tier1"
-            ]
-        )
-    ]
-
+    focal_not_singleton = [(record['group_name'], record['dmel_cre_id']) for record in evidence.values() if record['is_focal_tier1'] and (not record['is_singleton_tier1'])]
     if focal_not_singleton:
-
-        lines = [
-            f"{group}\t{cre}"
-            for group, cre
-            in focal_not_singleton
-        ]
-
-        raise SystemExit(
-            "ERROR: focal Tier-1 candidates were not found "
-            "by the singleton Tier-1 analysis.\n"
-            "Step 01 and Step 02 are inconsistent:\n"
-            + "\n".join(lines)
-        )
+        lines = [f'{group}\t{cre}' for group, cre in focal_not_singleton]
+        raise SystemExit('ERROR: focal Tier-1 candidates were not found by the singleton Tier-1 analysis.\nStep 01 and Step 02 are inconsistent:\n' + '\n'.join(lines))
 
     # ========================================================
     # Assign evidence type
     # ========================================================
 
     for record in evidence.values():
-
-        if record[
-            "is_focal_tier1"
-        ]:
-
-            record[
-                "tier1_scope"
-            ] = "focal"
-
+        if record['is_focal_tier1']:
+            record['tier1_scope'] = 'focal'
         else:
-
-            record[
-                "tier1_scope"
-            ] = "secondary_only"
+            record['tier1_scope'] = 'secondary_only'
 
     # ========================================================
     # Determine all species required
     # ========================================================
 
-    species_needed = sorted({
-        sp
-        for record
-        in evidence.values()
-        for sp
-        in record[
-            "species"
-        ]
-    })
+    species_needed = sorted({sp for record in evidence.values() for sp in record['species']})
 
     # ========================================================
     # Load per-species turnover tables once
     # ========================================================
 
-    turnover = {}
-
     for species in species_needed:
-
-        path = (
-            args.turnover_dir
-            / (
-                f"dmel_to_{species}"
-                "_cre_turnover.tsv"
-            )
-        )
-
-        require_file(
-            path
-        )
-
-        df = pd.read_csv(
-            path,
-            sep="\t",
-            dtype=str,
-        ).fillna("")
-
-        require_columns(
-            df,
-            TURNOVER_REQUIRED_COLUMNS,
-            str(path),
-        )
-
-        if df[
-            "dmel_cre_id"
-        ].duplicated().any():
-
-            raise SystemExit(
-                "ERROR: duplicate dmel_cre_id values in:\n"
-                f"{path}"
-            )
-
-        turnover[
-            species
-        ] = df.set_index(
-            "dmel_cre_id"
-        )
+        path = args.turnover_dir / f'dmel_to_{species}_cre_turnover.tsv'
+        require_file(path)
+        df = pd.read_csv(path, sep='\t', dtype=str).fillna('')
+        require_columns(df, TURNOVER_REQUIRED_COLUMNS, str(path))
+        if df['dmel_cre_id'].duplicated().any():
+            raise SystemExit(f'ERROR: duplicate dmel_cre_id values in:\n{path}')
+        turnover[species] = df.set_index('dmel_cre_id')
 
     # ========================================================
     # Load Dmel reference annotation
     # ========================================================
 
-    ref = pd.read_csv(
-        args.reference,
-        sep="\t",
-        dtype=str,
-    ).fillna("")
-
-    if (
-        args.expected_reference_cres is not None
-        and
-        len(ref) != args.expected_reference_cres
-    ):
-        raise SystemExit(
-            "ERROR: unexpected number of D. melanogaster "
-            "reference CREs.\n"
-            f"Expected: {args.expected_reference_cres}\n"
-            f"Observed: {len(ref)}"
-        )
-
-    if (
-        "dmel_cre_id"
-        not in ref.columns
-    ):
-        raise SystemExit(
-            "ERROR: Dmel reference table lacks dmel_cre_id."
-        )
-
-    if ref[
-        "dmel_cre_id"
-    ].duplicated().any():
-
-        raise SystemExit(
-            "ERROR: duplicate CRE IDs in Dmel reference table."
-        )
-
-    ref = ref.set_index(
-        "dmel_cre_id"
-    )
+    ref = pd.read_csv(args.reference, sep='\t', dtype=str).fillna('')
+    if args.expected_reference_cres is not None and len(ref) != args.expected_reference_cres:
+        raise SystemExit(f'ERROR: unexpected number of D. melanogaster reference CREs.\nExpected: {args.expected_reference_cres}\nObserved: {len(ref)}')
+    if 'dmel_cre_id' not in ref.columns:
+        raise SystemExit('ERROR: Dmel reference table lacks dmel_cre_id.')
+    if ref['dmel_cre_id'].duplicated().any():
+        raise SystemExit('ERROR: duplicate CRE IDs in Dmel reference table.')
+    ref = ref.set_index('dmel_cre_id')
 
     # ========================================================
     # QC all unique group x CRE evidence records
@@ -914,199 +378,75 @@ def main():
     detail_rows = []
     summary_rows = []
 
-    records = sorted(
-        evidence.values(),
-        key=lambda x: (
-            x[
-                "group_name"
-            ],
-            x[
-                "dmel_cre_id"
-            ],
-        ),
-    )
-
+    records = sorted(evidence.values(), key=lambda x: (x['group_name'], x['dmel_cre_id']))
     for record in records:
-
-        group = record[
-            "group_name"
-        ]
-
-        cre = record[
-            "dmel_cre_id"
-        ]
-
-        species = record[
-            "species"
-        ]
-
-        expected_states = record[
-            "expected_states"
-        ]
-
+        group = record['group_name']
+        cre = record['dmel_cre_id']
+        species = record['species']
+        expected_states = record['expected_states']
         candidate_flags = []
-
+        
         # ----------------------------------------------------
         # Tier-1 pattern itself
         # ----------------------------------------------------
 
-        unique_expected_states = set(
-            expected_states.values()
-        )
-
-        if (
-            not unique_expected_states
-            .issubset(
-                VALID_TIER1_STATES
-            )
-        ):
-            candidate_flags.append(
-                "INVALID_TIER1_STATE"
-            )
-
-        if (
-            unique_expected_states
-            != {
-                "present",
-                "turnover_candidate",
-            }
-        ):
-            candidate_flags.append(
-                "NOT_PRESENT_VS_TURNOVER"
-            )
+        unique_expected_states = set(expected_states.values())
+        if not unique_expected_states.issubset(VALID_TIER1_STATES):
+            candidate_flags.append('INVALID_TIER1_STATE')
+        if unique_expected_states != {'present', 'turnover_candidate'}:
+            candidate_flags.append('NOT_PRESENT_VS_TURNOVER')
 
         # ----------------------------------------------------
         # Dmel annotation
         # ----------------------------------------------------
 
         if cre in ref.index:
-
-            ref_row = ref.loc[
-                cre
-            ]
-
-            dmel_fbgn = ref_row.get(
-                "fbgn_target_genes",
-                "NA",
-            )
-
-            chrom = ref_row.get(
-                "chrom",
-                "NA",
-            )
-
-            start0 = ref_row.get(
-                "start0",
-                "NA",
-            )
-
-            end0 = ref_row.get(
-                "end0",
-                "NA",
-            )
-
-            training_set = ref_row.get(
-                "training_set",
-                "NA",
-            )
-
-            method = ref_row.get(
-                "method",
-                "NA",
-            )
-
-            scrmshaw_score = ref_row.get(
-                "scrmshaw_score",
-                "NA",
-            )
-
-            rank = ref_row.get(
-                "rank",
-                "NA",
-            )
-
+            ref_row = ref.loc[cre]
+            dmel_fbgn = ref_row.get('fbgn_target_genes', 'NA')
+            chrom = ref_row.get('chrom', 'NA')
+            start0 = ref_row.get('start0', 'NA')
+            end0 = ref_row.get('end0', 'NA')
+            training_set = ref_row.get('training_set', 'NA')
+            method = ref_row.get('method', 'NA')
+            scrmshaw_score = ref_row.get('scrmshaw_score', 'NA')
+            rank = ref_row.get('rank', 'NA')
         else:
-
-            dmel_fbgn = "NA"
-            chrom = "NA"
-            start0 = "NA"
-            end0 = "NA"
-            training_set = "NA"
-            method = "NA"
-            scrmshaw_score = "NA"
-            rank = "NA"
-
-            candidate_flags.append(
-                "MISSING_DMel_REFERENCE_ANNOTATION"
-            )
+            dmel_fbgn = 'NA'
+            chrom = 'NA'
+            start0 = 'NA'
+            end0 = 'NA'
+            training_set = 'NA'
+            method = 'NA'
+            scrmshaw_score = 'NA'
+            rank = 'NA'
+            candidate_flags.append('MISSING_DMel_REFERENCE_ANNOTATION')
 
         # ----------------------------------------------------
         # Species-level QC
         # ----------------------------------------------------
 
         n_species_pass = 0
-
         for sp in species:
-
-            expected_state = expected_states[
-                sp
-            ]
-
-            if (
-                cre
-                not in turnover[
-                    sp
-                ].index
-            ):
-
-                species_flags = [
-                    "CRE_MISSING_FROM_SPECIES_TABLE"
-                ]
-
+            expected_state = expected_states[sp]
+            if cre not in turnover[sp].index:
+                species_flags = ['CRE_MISSING_FROM_SPECIES_TABLE']
                 row = None
-
             else:
-
-                row = turnover[
-                    sp
-                ].loc[
-                    cre
-                ]
-
-                species_flags = (
-                    validate_species_row(
-                        row,
-                        expected_state,
-                        args.min_reciprocal_overlap,
-                    )
-                )
-
+                row = turnover[sp].loc[cre]
+                species_flags = validate_species_row(row, expected_state, args.min_reciprocal_overlap)
             if not species_flags:
-
                 n_species_pass += 1
-
             else:
-
-                candidate_flags.append(
-                    f"SPECIES_QC_FAIL_{sp}"
-                )
+                candidate_flags.append(f'SPECIES_QC_FAIL_{sp}')
 
             # ------------------------------------------------
             # Species role
             # ------------------------------------------------
 
-            if (
-                sp
-                == record[
-                    "discordant_species"
-                ]
-            ):
-
-                role = "discordant"
-
+            if sp == record['discordant_species']:
+                role = 'discordant'
             else:
-
-                role = "consensus"
+                role = 'consensus'
 
             # ------------------------------------------------
             # Detail row
@@ -1321,31 +661,11 @@ def main():
         # Candidate-level QC
         # ----------------------------------------------------
 
-        n_expected_species = len(
-            species
-        )
-
-        if (
-            n_species_pass
-            != n_expected_species
-        ):
-            candidate_flags.append(
-                "SPECIES_LEVEL_QC_FAIL"
-            )
-
-        candidate_flags = sorted(
-            set(
-                candidate_flags
-            )
-        )
-
-        final_qc = (
-            "PASS"
-            if not candidate_flags
-            else ";".join(
-                candidate_flags
-            )
-        )
+        n_expected_species = len(species)
+        if n_species_pass != n_expected_species:
+            candidate_flags.append('SPECIES_LEVEL_QC_FAIL')
+        candidate_flags = sorted(set(candidate_flags))
+        final_qc = 'PASS' if not candidate_flags else ';'.join(candidate_flags)
 
         # ----------------------------------------------------
         # Summary row
@@ -1440,376 +760,96 @@ def main():
     # Build output tables
     # ========================================================
 
-    summary = pd.DataFrame(
-        summary_rows
-    )
-
-    detail = pd.DataFrame(
-        detail_rows
-    )
+    summary = pd.DataFrame(summary_rows)
+    detail = pd.DataFrame(detail_rows)
 
     # --------------------------------------------------------
     # Stable sorting
     # --------------------------------------------------------
 
     if not summary.empty:
-
-        summary = (
-            summary
-            .sort_values(
-                [
-                    "tier1_scope",
-                    "group_name",
-                    "dmel_cre_id",
-                ],
-                kind="mergesort",
-            )
-            .reset_index(
-                drop=True
-            )
-        )
-
+        summary = summary.sort_values(['tier1_scope', 'group_name', 'dmel_cre_id'], kind='mergesort').reset_index(drop=True)
     if not detail.empty:
-
-        detail = (
-            detail
-            .sort_values(
-                [
-                    "tier1_scope",
-                    "group_name",
-                    "dmel_cre_id",
-                    "role",
-                    "species",
-                ],
-                kind="mergesort",
-            )
-            .reset_index(
-                drop=True
-            )
-        )
+        detail = detail.sort_values(['tier1_scope', 'group_name', 'dmel_cre_id', 'role', 'species'], kind='mergesort').reset_index(drop=True)
 
     # --------------------------------------------------------
     # Final uniqueness checks
     # --------------------------------------------------------
 
     if not summary.empty:
-
-        if summary.duplicated(
-            subset=[
-                "group_name",
-                "dmel_cre_id",
-            ]
-        ).any():
-
-            raise SystemExit(
-                "ERROR: duplicate group x CRE rows "
-                "in QC summary."
-            )
-
+        if summary.duplicated(subset=['group_name', 'dmel_cre_id']).any():
+            raise SystemExit('ERROR: duplicate group x CRE rows in QC summary.')
     if not detail.empty:
-
-        if detail.duplicated(
-            subset=[
-                "group_name",
-                "dmel_cre_id",
-                "species",
-            ]
-        ).any():
-
-            raise SystemExit(
-                "ERROR: duplicate group x CRE x species rows "
-                "in QC detail table."
-            )
+        if detail.duplicated(subset=['group_name', 'dmel_cre_id', 'species']).any():
+            raise SystemExit('ERROR: duplicate group x CRE x species rows in QC detail table.')
 
     # ========================================================
     # Write outputs
     # ========================================================
 
-    summary.to_csv(
-        args.out_summary,
-        sep="\t",
-        index=False,
-    )
-
-    detail.to_csv(
-        args.out_detail,
-        sep="\t",
-        index=False,
-    )
-
+    summary.to_csv(args.out_summary, sep='\t', index=False)
+    detail.to_csv(args.out_detail, sep='\t', index=False)
+    
     # ========================================================
     # Metadata
     # ========================================================
 
-    metadata = pd.DataFrame([
-        {
-            "script":
-                Path(
-                    __file__
-                ).name,
-
-            "run_timestamp":
-                datetime.now()
-                .astimezone()
-                .isoformat(),
-
-            "python_version":
-                sys.version.split()[0],
-
-            "pandas_version":
-                pd.__version__,
-
-            "platform":
-                platform.platform(),
-
-            "min_reciprocal_overlap":
-                args.min_reciprocal_overlap,
-            
-            "recurrence_min_clades":
-                args.recurrence_min_clades,
-            
-            "expected_reference_cres":
-                (
-                    args.expected_reference_cres
-                    if args.expected_reference_cres is not None
-                    else "NA"
-                ),
-
-            "n_focal_tier1_rows":
-                len(
-                    focal
-                ),
-
-            "n_singleton_tier1_rows":
-                len(
-                    secondary
-                ),
-
-            "n_unique_group_cre_candidates":
-                len(
-                    summary
-                ),
-
-            "n_unique_candidate_cres":
-                (
-                    summary[
-                        "dmel_cre_id"
-                    ].nunique()
-                    if not summary.empty
-                    else 0
-                ),
-
-            "n_focal_candidates":
-                (
-                    (
-                        summary[
-                            "tier1_scope"
-                        ]
-                        == "focal"
-                    ).sum()
-                    if not summary.empty
-                    else 0
-                ),
-
-            "n_secondary_only_candidates":
-                (
-                    (
-                        summary[
-                            "tier1_scope"
-                        ]
-                        == "secondary_only"
-                    ).sum()
-                    if not summary.empty
-                    else 0
-                ),
-
-            "n_qc_pass":
-                (
-                    (
-                        summary[
-                            "candidate_qc"
-                        ]
-                        == "PASS"
-                    ).sum()
-                    if not summary.empty
-                    else 0
-                ),
-
-            "focal_input_dir":
-                str(
-                    args.focal_dir.resolve()
-                ),
-
-            "secondary_input":
-                str(
-                    args.secondary.resolve()
-                ),
-
-            "reference_input":
-                str(
-                    args.reference.resolve()
-                ),
-
-            "turnover_dir":
-                str(
-                    args.turnover_dir.resolve()
-                ),
-        }
-    ])
-
-    metadata.to_csv(
-        args.metadata_out,
-        sep="\t",
-        index=False,
-    )
+    metadata = pd.DataFrame([{'script': Path(__file__).name, 
+                              'run_timestamp': datetime.now().astimezone().isoformat(), 
+                              'python_version': sys.version.split()[0], 
+                              'pandas_version': pd.__version__, 
+                              'platform': platform.platform(), 
+                              'min_reciprocal_overlap': args.min_reciprocal_overlap, 
+                              'recurrence_min_clades': args.recurrence_min_clades, 
+                              'expected_reference_cres': args.expected_reference_cres if args.expected_reference_cres is not None else 'NA', 
+                              'n_focal_tier1_rows': len(focal), 
+                              'n_singleton_tier1_rows': len(secondary), 
+                              'n_unique_group_cre_candidates': len(summary), 
+                              'n_unique_candidate_cres': summary['dmel_cre_id'].nunique() if not summary.empty else 0, 
+                              'n_focal_candidates': (summary['tier1_scope'] == 'focal').sum() if not summary.empty else 0, 
+                              'n_secondary_only_candidates': (summary['tier1_scope'] == 'secondary_only').sum() if not summary.empty else 0, 
+                              'n_qc_pass': (summary['candidate_qc'] == 'PASS').sum() if not summary.empty else 0, 
+                              'focal_input_dir': str(args.focal_dir.resolve()), 
+                              'secondary_input': str(args.secondary.resolve()), 
+                              'reference_input': str(args.reference.resolve()), 
+                              'turnover_dir': str(args.turnover_dir.resolve())}])
+    metadata.to_csv(args.metadata_out, sep='\t', index=False)
 
     # ========================================================
     # Console summary
     # ========================================================
 
-    print()
-    print("=" * 72)
-    print("Tier-1 candidate QC complete")
-    print("=" * 72)
-
-    print(
-        f"Focal Tier-1 rows: "
-        f"{len(focal)}"
-    )
-
-    print(
-        f"Singleton Tier-1 rows: "
-        f"{len(secondary)}"
-    )
-
-    print(
-        f"Unique group x CRE candidates: "
-        f"{len(summary)}"
-    )
-
-    print(
-        "Unique candidate CREs: "
-        f"{summary['dmel_cre_id'].nunique() if not summary.empty else 0}"
-    )
-
+     print()
+    print('=' * 72)
+    print('Tier-1 candidate QC complete')
+    print('=' * 72)
+    print(f'Focal Tier-1 rows: {len(focal)}')
+    print(f'Singleton Tier-1 rows: {len(secondary)}')
+    print(f'Unique group x CRE candidates: {len(summary)}')
+    print(f"Unique candidate CREs: {(summary['dmel_cre_id'].nunique() if not summary.empty else 0)}")
     if not summary.empty:
-
         print()
-        print(
-            "Tier-1 scope:"
-        )
-
-        print(
-            summary[
-                "tier1_scope"
-            ]
-            .value_counts()
-            .to_string()
-        )
-
+        print('Tier-1 scope:')
+        print(summary['tier1_scope'].value_counts().to_string())
         print()
-        print(
-            "Candidate QC:"
-        )
-
-        print(
-            summary[
-                "candidate_qc"
-            ]
-            .value_counts()
-            .to_string()
-        )
-
-        recurrent = (
-            summary.loc[
-                summary[
-                    "candidate_qc"
-                ]
-                == "PASS"
-            ]
-            .groupby(
-                "dmel_cre_id"
-            )
-            .agg(
-                n_clades=(
-                    "group_name",
-                    "nunique",
-                ),
-
-                n_focal_clades=(
-                    "tier1_scope",
-                    lambda x:
-                        int(
-                            (
-                                x
-                                == "focal"
-                            ).sum()
-                        ),
-                ),
-
-                n_secondary_only_clades=(
-                    "tier1_scope",
-                    lambda x:
-                        int(
-                            (
-                                x
-                                == "secondary_only"
-                            ).sum()
-                        ),
-                ),
-            )
-            .reset_index()
-            .sort_values(
-                [
-                    "n_clades",
-                    "dmel_cre_id",
-                ],
-                ascending=[
-                    False,
-                    True,
-                ],
-            )
-        )
-
-        recurrent = recurrent[
-            recurrent[
-                "n_clades"
-            ] >= args.recurrence_min_clades
-        ]
-
+        print('Candidate QC:')
+        print(summary['candidate_qc'].value_counts().to_string())
+        recurrent = summary.loc[summary['candidate_qc'] == 'PASS'].groupby(
+            'dmel_cre_id').agg(n_clades=('group_name', 'nunique'), 
+                               n_focal_clades=('tier1_scope', lambda x: int((x == 'focal').sum())), 
+                               n_secondary_only_clades=('tier1_scope', lambda x: int(
+                                   (x == 'secondary_only').sum()))).reset_index().sort_values(['n_clades', 'dmel_cre_id'], ascending=[False, True])
+        recurrent = recurrent[recurrent['n_clades'] >= args.recurrence_min_clades]
         if not recurrent.empty:
-
             print()
-            print(
-                "QC-passing CREs recurring across clades:"
-            )
-
-            print(
-                recurrent.to_string(
-                    index=False
-                )
-            )
-
+            print('QC-passing CREs recurring across clades:')
+            print(recurrent.to_string(index=False))
     print()
-    print(
-        f"Wrote summary:\n"
-        f"{args.out_summary}"
-    )
-
+    print(f'Wrote summary:\n{args.out_summary}')
     print()
-
-    print(
-        f"Wrote details:\n"
-        f"{args.out_detail}"
-    )
-
+    print(f'Wrote details:\n{args.out_detail}')
     print()
-
-    print(
-        f"Wrote metadata:\n"
-        f"{args.metadata_out}"
-    )
-
+    print(f'Wrote metadata:\n{args.metadata_out}')
 
 # ============================================================
 # Entry point
