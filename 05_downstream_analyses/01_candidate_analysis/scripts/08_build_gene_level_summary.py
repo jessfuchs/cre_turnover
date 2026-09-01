@@ -38,6 +38,9 @@ import sys
 
 import pandas as pd
 
+# ========================================================
+# Required colums
+# ========================================================
 
 REQUIRED_COLUMNS = {
     "dmel_cre_id", "fbgn", "gene_role", "assignment_evidence",
@@ -47,6 +50,10 @@ REQUIRED_COLUMNS = {
     "is_reference_target", "is_primary_candidate",
     "is_secondary_candidate", "gene_assignment_qc",
 }
+
+# ============================================================
+# Priority definitions
+# ============================================================
 
 CANDIDATE_PRIORITY_ORDER = {
     "focal_recurrent": 1,
@@ -64,6 +71,9 @@ RECURRENT_PRIORITIES = {
     "focal_recurrent", "focal_plus_secondary_recurrent", "secondary_recurrent"
 }
 
+# ========================================================
+# Arguments
+# ========================================================
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -74,6 +84,9 @@ def parse_args():
     parser.add_argument("--metadata-out", type=Path, required=True)
     return parser.parse_args()
 
+# ========================================================
+# Helpers
+# ========================================================
 
 def require_file(path):
     if not path.is_file():
@@ -114,12 +127,19 @@ def split_pipe_values(values):
 
 
 def best_value(values, ranking, label):
+    """
+    Return the strongest observed categorical value according
+    to an explicit predefined ranking.
+    """
     clean = [normalize_missing(value) for value in values if normalize_missing(value) != "NA"]
     unknown = sorted(set(clean) - set(ranking))
     if unknown:
         raise SystemExit(f"ERROR: unknown {label} values:\n" + "\n".join(unknown))
     return min(clean, key=ranking.get) if clean else "NA"
 
+# ========================================================
+# Main
+# ========================================================
 
 def main():
     args = parse_args()
@@ -147,6 +167,10 @@ def main():
     df["is_medium_priority_cre"] = df["downstream_priority"] == "medium"
     df["is_exploratory_cre"] = df["downstream_priority"] == "exploratory"
 
+    # ========================================================
+    # Aggregate CRE-level evidence to one row per FBgn
+    # ========================================================
+
     gene_rows = []
     for fbgn, sub in df.groupby("fbgn", sort=True):
         cre_ids = sorted(sub["dmel_cre_id"].unique())
@@ -163,6 +187,10 @@ def main():
             "qc_flagged": sorted(sub.loc[sub["gene_assignment_qc"] != "PASS", "dmel_cre_id"].unique()),
         }
         clades = split_pipe_values(sub["tier1_clades"])
+
+        # ----------------------------------------------------
+        # Gene-level summary record
+        # ----------------------------------------------------
 
         gene_rows.append({
             "fbgn": fbgn,
@@ -203,6 +231,10 @@ def main():
             "has_reference_target_support": "yes" if ids["reference"] else "no",
         })
 
+    # ========================================================
+    # Build final gene-level table
+    # ========================================================
+
     out = pd.DataFrame(gene_rows)
     if out.empty:
         raise SystemExit("ERROR: no gene-level rows generated.")
@@ -223,6 +255,10 @@ def main():
 
     out.to_csv(args.out, sep="\t", index=False)
 
+    # ========================================================
+    # Run metadata
+    # ========================================================
+
     metadata = pd.DataFrame([{
         "script": Path(__file__).name,
         "run_timestamp": datetime.now().astimezone().isoformat(),
@@ -234,6 +270,10 @@ def main():
         "n_genes_with_flagged_cre_evidence": int((out["n_qc_flagged_cres"] > 0).sum()),
     }])
     metadata.to_csv(args.metadata_out, sep="\t", index=False)
+
+    # ========================================================
+    # Console summary
+    # ========================================================
 
     print()
     print("=" * 72)
