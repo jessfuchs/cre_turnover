@@ -5,4 +5,4 @@
 #SBATCH --output=logs/prep_%A_%a.out
 #SBATCH --error=logs/prep_%A_%a.err
 set -euo pipefail
-scripts/prepare_one_species.sh
+scripts/02_prepare_one_species.sh
