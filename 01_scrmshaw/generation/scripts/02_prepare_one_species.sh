@@ -4,9 +4,9 @@ source "$(dirname "$0")/../config/config.sh"
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate "$SCRM_ENV"
 
-task_id="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID fehlt}"
+task_id="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is missing}"
 row="$(awk -F'\t' -v i="$task_id" 'NR>1 && $1==i {print; exit}' "$MANIFEST")"
-[[ -n "$row" ]] || { echo "Kein Manifest-Eintrag für Index $task_id" >&2; exit 1; }
+[[ -n "$row" ]] || { echo "No manifest entry for index $task_id" >&2; exit 1; }
 
 IFS=$'\t' read -r idx slug species genome annotation annotation_format <<< "$row"
 run_dir="$RUNS_DIR/$slug"
@@ -17,14 +17,14 @@ ln -sfn "$genome" "$input_dir/source_genome.fa"
 
 gff="$input_dir/annotation.gff3"
 if [[ "$annotation_format" == "gtf" ]]; then
-    echo "Konvertiere GTF nach GFF3: $annotation"
+    echo "Converting GTF to GFF3: $annotation"
     rm -f "$gff"
     agat_convert_sp_gxf2gxf.pl --gff "$annotation" -o "$gff"
 else
     ln -sfn "$annotation" "$gff"
 fi
 
-echo "Preflight für $species"
+echo "Preflight for $species"
 perl "$UTILITY_ROOT/preflight-scrmshaw.pl" \
     --gff "$gff" \
     --fasta "$genome" \
@@ -44,7 +44,7 @@ python "$PIPELINE_ROOT/scripts/filter_fasta_by_gff.py" \
     > "$run_dir/filter_fasta.log" 2>&1
 
 if [[ "$RUN_TRF" == "1" ]]; then
-    echo "TRF-Masking für $species"
+    echo "TRF masking for $species"
 
     set +e
     (
@@ -64,13 +64,13 @@ if [[ "$RUN_TRF" == "1" ]]; then
     )"
 
     if [[ -z "$masked" || ! -s "$masked" ]]; then
-        echo "FEHLER: TRF erzeugte keine verwendbare .mask-Datei." >&2
-        echo "TRF Exit-Code: $trf_rc" >&2
+        echo "ERROR: TRF did not generate a usable .mask file." >&2
+        echo "TRF exit code: $trf_rc" >&2
         exit 1
     fi
 
     if [[ "$trf_rc" -ne 0 ]]; then
-        echo "WARNUNG: TRF Exit-Code $trf_rc, aber Mask-Datei existiert."
+        echo "WARNING: TRF exit code $trf_rc, but mask file exists."
     fi
 else
     masked="$mapped"
@@ -80,4 +80,4 @@ printf '%s\n' "$(realpath "$masked")" > "$run_dir/masked_genome.path"
 printf '%s\n' "$(realpath "$gff")" > "$run_dir/gff.path"
 touch "$run_dir/PREPARED.ok"
 
-echo "Vorbereitung abgeschlossen: $slug"
+echo "Preparation completed: $slug"
