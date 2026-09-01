@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-Lädt die Genome- und Annotationsarchive des Zenodo-Datensatzes herunter,
-löst die in species.txt genannten Spezies gegen die Archivpfade auf und
-extrahiert nur die ausgewählten Dateien.
+Downloads the genome and annotation archives from the Zenodo dataset,
+resolves the species listed in species.txt against the archive paths, and
+extracts only the selected files.
 
 species.txt:
-    slug<TAB>Suchname
-oder:
-    Suchname
+    slug<TAB>search_name
+or:
+    search_name
 
-Bei uneindeutigen Treffern bricht das Skript bewusst ab und schreibt
-Kandidaten in data/resolution_report.txt.
+For ambiguous matches, the script intentionally aborts and writes
+candidate matches to data/resolution_report.txt.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,13 +41,13 @@ class SpeciesRequest:
 
 
 def die(message: str) -> "NoReturn":
-    raise SystemExit(f"FEHLER: {message}")
+    raise SystemExit(f"ERROR: {message}")
 
 
 def slugify(text: str) -> str:
     value = re.sub(r"[^A-Za-z0-9]+", "_", text.strip()).strip("_").lower()
     if not value:
-        die(f"Kein gültiger slug aus {text!r}")
+        die(f"No valid slug could be generated from {text!r}")
     return value
 
 
@@ -66,29 +67,29 @@ def read_species(path: Path) -> list[SpeciesRequest]:
         if not line or line.startswith("#"):
             continue
 
-        # Erwartetes Format:
+        # Expected format:
         # slug    Scientific name
         #
-        # Funktioniert sowohl mit Tabs als auch mit Leerzeichen.
+        # Works with both tabs and spaces.
         fields = line.split(maxsplit=1)
 
         if len(fields) != 2:
             die(
-                f"Ungültige Zeile in {path}: {raw!r}\n"
-                "Erwartet: slug<TAB/SPACE>Scientific name"
+                f"Invalid line in {path}: {raw!r}\n"
+                "Expected: slug<TAB/SPACE>Scientific name"
             )
 
         slug = slugify(fields[0])
         query = fields[1].strip()
 
         if not slug:
-            die(f"Leerer slug in species.txt: {raw!r}")
+            die(f"Empty slug in species.txt: {raw!r}")
 
         if not query:
-            die(f"Leerer Species-Name für slug {slug}")
+            die(f"Empty species name for slug {slug}")
 
         if slug in seen:
-            die(f"Doppelter slug in species.txt: {slug}")
+            die(f"Duplicate slug in species.txt: {slug}")
 
         seen.add(slug)
 
@@ -101,7 +102,7 @@ def read_species(path: Path) -> list[SpeciesRequest]:
         )
 
     if not requests:
-        die("species.txt enthält keine Spezies.")
+        die("species.txt contains no species.")
 
     return requests
 
@@ -118,12 +119,12 @@ def download(url: str, target: Path, expected_md5: str | None = None) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.exists() and target.stat().st_size > 0:
         if expected_md5 and md5sum(target) == expected_md5:
-            print(f"Vorhanden und MD5 korrekt: {target}")
+            print(f"Existing file with correct MD5: {target}")
             return
         if not expected_md5:
-            print(f"Vorhanden: {target}")
+            print(f"Existing file: {target}")
             return
-        print(f"Vorhandene Datei hat falsche MD5, lade erneut: {target}")
+        print(f"Existing file has incorrect MD5, downloading again: {target}")
         target.unlink()
 
     cmd = [
@@ -135,11 +136,14 @@ def download(url: str, target: Path, expected_md5: str | None = None) -> None:
     if expected_md5:
         observed = md5sum(target)
         if observed != expected_md5:
-            die(f"MD5 für {target.name}: erwartet {expected_md5}, erhalten {observed}")
+            die(
+                f"MD5 for {target.name}: expected {expected_md5}, "
+                f"observed {observed}"
+            )
 
 
 def list_members(archive: Path) -> list[str]:
-    print(f"Lese Inhaltsverzeichnis: {archive}")
+    print(f"Reading archive contents: {archive}")
     with tarfile.open(archive, "r:gz") as tar:
         return [m.name for m in tar.getmembers() if m.isfile()]
 
@@ -169,7 +173,7 @@ def score_candidate(member: str, request: SpeciesRequest, kind: str) -> int:
     base_norm = normalize(Path(member).name)
     score = 0
 
-    # Exakten Taxon-Dateistamm gegenüber längeren Unterartnamen bevorzugen.
+    # Prefer exact taxon filename stem over longer subspecies names.
     exact = re.sub(
         r"[^A-Za-z0-9]+",
         "_",
@@ -200,16 +204,34 @@ def score_candidate(member: str, request: SpeciesRequest, kind: str) -> int:
         elif alias in path_norm:
             score = max(score, 80 + min(len(alias), 40))
 
-    # Der explizite slug darf ebenfalls als Archivmuster dienen.
+    # The explicit slug may also be used as an archive pattern.
     slug_alias = normalize(request.slug)
     if slug_alias and slug_alias in path_norm:
         score = max(score, 70 + len(slug_alias))
 
     lower = member.lower()
     if kind == "genome":
-        if any(x in lower for x in ("protein", "peptide", "pep.", "cds", "transcript", "rna.")):
+        if any(
+            x in lower
+            for x in (
+                "protein",
+                "peptide",
+                "pep.",
+                "cds",
+                "transcript",
+                "rna.",
+            )
+        ):
             score -= 200
-        if any(x in lower for x in ("genome", "assembly", "softmask", "masked")):
+        if any(
+            x in lower
+            for x in (
+                "genome",
+                "assembly",
+                "softmask",
+                "masked",
+            )
+        ):
             score += 10
         if strip_gz(lower).endswith((".fna", ".fa", ".fasta")):
             score += 5
@@ -220,17 +242,30 @@ def score_candidate(member: str, request: SpeciesRequest, kind: str) -> int:
             score += 20
         elif strip_gz(lower).endswith(".gtf"):
             score += 10
-        if any(x in lower for x in ("gene", "annotation", "cat", "braker")):
+        if any(
+            x in lower
+            for x in (
+                "gene",
+                "annotation",
+                "cat",
+                "braker",
+            )
+        ):
             score += 5
     return score
 
 
 def resolve_one(
-    members: list[str], request: SpeciesRequest, kind: str
+    members: list[str],
+    request: SpeciesRequest,
+    kind: str,
 ) -> tuple[str | None, list[tuple[int, str]]]:
     valid = [
         m for m in members
-        if has_extension(m, GENOME_EXTS if kind == "genome" else ANNOT_EXTS)
+        if has_extension(
+            m,
+            GENOME_EXTS if kind == "genome" else ANNOT_EXTS,
+        )
     ]
 
     query_norm = normalize(request.query)
@@ -240,12 +275,12 @@ def resolve_one(
         basename = Path(member).name
 
         if kind == "genome":
-            # Beispiel:
+            # Example:
             # Drosophila_pseudoananassae.GCA_021223845.1.rm.fna.gz
             taxon_name = basename.split(".", 1)[0]
 
         else:
-            # Beispiel:
+            # Example:
             # DROSOPHILA_PSEUDOANANASSAE_final.gff.gz
             taxon_name = basename
 
@@ -283,11 +318,25 @@ def resolve_one(
 
     return None, ranked[:15]
 
-def extract_members(archive: Path, members: list[str], target: Path) -> None:
+
+def extract_members(
+    archive: Path,
+    members: list[str],
+    target: Path,
+) -> None:
     target.mkdir(parents=True, exist_ok=True)
-    # Ein tar-Aufruf pro Archiv: das gzip-Archiv wird nur einmal durchlaufen.
-    cmd = ["tar", "-xzf", str(archive), "-C", str(target), "--"] + members
-    print(f"Extrahiere {len(members)} Dateien aus {archive.name}")
+
+    # One tar call per archive: the gzip archive is traversed only once.
+    cmd = [
+        "tar",
+        "-xzf",
+        str(archive),
+        "-C",
+        str(target),
+        "--",
+    ] + members
+
+    print(f"Extracting {len(members)} files from {archive.name}")
     subprocess.run(cmd, check=True)
 
 
@@ -331,7 +380,8 @@ def main() -> None:
         annotations_archive,
         args.annotations_md5 or None,
     )
-    # Kleine Metadatendateien sind hilfreich zur manuellen Kontrolle.
+
+    # Small metadata files are useful for manual verification.
     download(
         f"{base}/README.md?download=1",
         download_dir / "README.md",
@@ -348,36 +398,67 @@ def main() -> None:
 
     resolved: list[tuple[SpeciesRequest, str, str]] = []
     problems: list[str] = []
+
     for req in requests:
-        genome, genome_ranked = resolve_one(genome_members, req, "genome")
-        annot, annot_ranked = resolve_one(annotation_members, req, "annotation")
+        genome, genome_ranked = resolve_one(
+            genome_members,
+            req,
+            "genome",
+        )
+        annot, annot_ranked = resolve_one(
+            annotation_members,
+            req,
+            "annotation",
+        )
+
         if not genome or not annot:
             problems.append(f"\n[{req.slug}] {req.query}")
-            problems.append("  Genome-Kandidaten:")
-            problems.extend(f"    {s:4d}  {m}" for s, m in genome_ranked)
-            problems.append("  Annotation-Kandidaten:")
-            problems.extend(f"    {s:4d}  {m}" for s, m in annot_ranked)
+            problems.append("  Genome candidates:")
+            problems.extend(
+                f"    {s:4d}  {m}"
+                for s, m in genome_ranked
+            )
+            problems.append("  Annotation candidates:")
+            problems.extend(
+                f"    {s:4d}  {m}"
+                for s, m in annot_ranked
+            )
         else:
             resolved.append((req, genome, annot))
 
     report.write_text(
-        "\n".join(problems) if problems else "Alle Spezies eindeutig aufgelöst.\n",
+        "\n".join(problems)
+        if problems
+        else "All species resolved unambiguously.\n",
         encoding="utf-8",
     )
+
     if problems:
         die(
-            f"{len(problems)} Auflösungsprobleme. Siehe {report}. "
-            "Nutze in species.txt als zweite Spalte ein eindeutigeres Archiv-Muster."
+            f"{len(problems)} resolution problems. See {report}. "
+            "Use a more specific archive pattern as the second column "
+            "in species.txt."
         )
 
     if staging.exists():
         shutil.rmtree(staging)
-    extract_members(genomes_archive, [g for _, g, _ in resolved], staging / "genomes")
+
     extract_members(
-        annotations_archive, [a for _, _, a in resolved], staging / "annotations"
+        genomes_archive,
+        [g for _, g, _ in resolved],
+        staging / "genomes",
     )
 
-    rows = ["index\tslug\tspecies\tgenome\tannotation\tannotation_format"]
+    extract_members(
+        annotations_archive,
+        [a for _, _, a in resolved],
+        staging / "annotations",
+    )
+
+    rows = [
+        "index\tslug\tspecies\tgenome\tannotation\tannotation_format"
+    ]
+
     for req, genome_member, annotation_member in resolved:
         species_dir = selected / req.slug
         species_dir.mkdir(parents=True, exist_ok=True)
@@ -387,6 +468,7 @@ def main() -> None:
 
         genome_target = species_dir / "genome.fa"
         ann_no_gz = strip_gz(annotation_member).lower()
+
         if ann_no_gz.endswith(".gtf"):
             annotation_target = species_dir / "annotation.gtf"
             annotation_format = "gtf"
@@ -410,9 +492,13 @@ def main() -> None:
             )
         )
 
-    manifest.write_text("\n".join(rows) + "\n", encoding="utf-8")
-    print(f"Manifest geschrieben: {manifest}")
-    print(f"Aufgelöste Spezies: {len(resolved)}")
+    manifest.write_text(
+        "\n".join(rows) + "\n",
+        encoding="utf-8",
+    )
+
+    print(f"Manifest written: {manifest}")
+    print(f"Resolved species: {len(resolved)}")
 
 
 if __name__ == "__main__":
