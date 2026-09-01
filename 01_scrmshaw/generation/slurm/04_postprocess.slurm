@@ -5,4 +5,4 @@
 #SBATCH --output=logs/post_%A_%a.out
 #SBATCH --error=logs/post_%A_%a.err
 set -euo pipefail
-scripts/postprocess_one_species.sh
+scripts/04_postprocess_one_species.sh
