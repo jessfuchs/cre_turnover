@@ -57,7 +57,7 @@ These variables can be modified if different environment names are used.
 Required third-party software and training data are installed using:
 
 ```bash
-bash scripts/setup_software.sh
+bash scripts/00_setup_software.sh
 ```
 
 The setup includes the components required for the SCRMshaw workflow, including:
