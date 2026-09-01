@@ -145,24 +145,12 @@ def validate_species_row(row, expected_state, min_reciprocal_overlap):
     same_fbgn_local = str(row.get('same_fbgn_peak_local', '')).strip() == 'yes'
     local_peak_id = row.get('local_same_fbgn_peak_id', '')
 
-    # --------------------------------------------------------
-    # Expected state
-    # --------------------------------------------------------
-
     if observed_class != expected_state:
         flags.append('STATE_MISMATCH')
-
-    # --------------------------------------------------------
-    # Tier-1 requires mapped/evaluable homolog
-    # --------------------------------------------------------
 
     if not mapped:
         flags.append('NOT_MAPPED')
         
-    # --------------------------------------------------------
-    # present
-    # --------------------------------------------------------
-
     if observed_class == 'present':
         if not positional:
             flags.append('PRESENT_WITHOUT_POSITIONAL_PEAK')
@@ -171,10 +159,6 @@ def validate_species_row(row, expected_state, min_reciprocal_overlap):
         if frac_peak < min_reciprocal_overlap:
             flags.append('PRESENT_PEAK_OVERLAP_BELOW_THRESHOLD')
 
-    # --------------------------------------------------------
-    # turnover_candidate
-    # --------------------------------------------------------
-
     elif observed_class == 'turnover_candidate':
         if positional:
             flags.append('TURNOVER_HAS_POSITIONAL_PEAK')
@@ -182,10 +166,6 @@ def validate_species_row(row, expected_state, min_reciprocal_overlap):
             flags.append('TURNOVER_WITHOUT_LOCAL_SAME_FBGN')
         if is_missing(local_peak_id):
             flags.append('TURNOVER_WITHOUT_LOCAL_PEAK_ID')
-
-    # --------------------------------------------------------
-    # Anything else cannot be Tier-1
-    # --------------------------------------------------------
 
     else:
         flags.append(f'UNEXPECTED_CLASS_{observed_class}')
@@ -452,210 +432,31 @@ def main():
             # Detail row
             # ------------------------------------------------
 
-            detail_rows.append({
-                "group_name":
-                    group,
-
-                "dmel_cre_id":
-                    cre,
-
-                "tier1_scope":
-                    record[
-                        "tier1_scope"
-                    ],
-
-                "is_focal_tier1":
-                    "yes"
-                    if record[
-                        "is_focal_tier1"
-                    ]
-                    else "no",
-
-                "is_singleton_tier1":
-                    "yes"
-                    if record[
-                        "is_singleton_tier1"
-                    ]
-                    else "no",
-
-                "species":
-                    sp,
-
-                "role":
-                    role,
-
-                "expected_state":
-                    expected_state,
-
-                "observed_class":
-                    (
-                        row.get(
-                            "class",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "alignment_status":
-                    (
-                        row.get(
-                            "alignment_status",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "target_chrom":
-                    (
-                        row.get(
-                            "target_chrom",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "target_start0":
-                    (
-                        row.get(
-                            "target_start0",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "target_end0":
-                    (
-                        row.get(
-                            "target_end0",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "best_peak_id":
-                    (
-                        row.get(
-                            "best_peak_id",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "best_overlap_bp":
-                    (
-                        row.get(
-                            "best_overlap_bp",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "best_overlap_fraction_lifted":
-                    (
-                        row.get(
-                            "best_overlap_fraction_lifted",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "best_overlap_fraction_peak":
-                    (
-                        row.get(
-                            "best_overlap_fraction_peak",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "positional_peak":
-                    (
-                        row.get(
-                            "positional_peak",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "same_fbgn_peak_local":
-                    (
-                        row.get(
-                            "same_fbgn_peak_local",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "local_same_fbgn_peak_id":
-                    (
-                        row.get(
-                            "local_same_fbgn_peak_id",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "local_same_fbgn":
-                    (
-                        row.get(
-                            "local_same_fbgn",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "best_local_same_fbgn_distance_bp":
-                    (
-                        row.get(
-                            "best_local_same_fbgn_distance_bp",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "shared_fbgn_with_best_peak":
-                    (
-                        row.get(
-                            "shared_fbgn_with_best_peak",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "gene_support_at_best_peak":
-                    (
-                        row.get(
-                            "gene_support_at_best_peak",
-                            "NA",
-                        )
-                        if row is not None
-                        else "NA"
-                    ),
-
-                "species_qc":
-                    (
-                        "PASS"
-                        if not species_flags
-                        else ";".join(
-                            species_flags
-                        )
-                    ),
-            })
+            detail_rows.append({'group_name': group, 
+                                'dmel_cre_id': cre, 
+                                'tier1_scope': record['tier1_scope'], 
+                                'is_focal_tier1': 'yes' if record['is_focal_tier1'] else 'no', 
+                                'is_singleton_tier1': 'yes' if record['is_singleton_tier1'] else 'no', 
+                                'species': sp, 
+                                'role': role, 
+                                'expected_state': expected_state, 
+                                'observed_class': row.get('class', 'NA') if row is not None else 'NA', 
+                                'alignment_status': row.get('alignment_status', 'NA') if row is not None else 'NA', 
+                                'target_chrom': row.get('target_chrom', 'NA') if row is not None else 'NA', 
+                                'target_start0': row.get('target_start0', 'NA') if row is not None else 'NA', 
+                                'target_end0': row.get('target_end0', 'NA') if row is not None else 'NA', 
+                                'best_peak_id': row.get('best_peak_id', 'NA') if row is not None else 'NA', 
+                                'best_overlap_bp': row.get('best_overlap_bp', 'NA') if row is not None else 'NA', 
+                                'best_overlap_fraction_lifted': row.get('best_overlap_fraction_lifted', 'NA') if row is not None else 'NA', 
+                                'best_overlap_fraction_peak': row.get('best_overlap_fraction_peak', 'NA') if row is not None else 'NA', 
+                                'positional_peak': row.get('positional_peak', 'NA') if row is not None else 'NA', 
+                                'same_fbgn_peak_local': row.get('same_fbgn_peak_local', 'NA') if row is not None else 'NA', 
+                                'local_same_fbgn_peak_id': row.get('local_same_fbgn_peak_id', 'NA') if row is not None else 'NA', 
+                                'local_same_fbgn': row.get('local_same_fbgn', 'NA') if row is not None else 'NA', 
+                                'best_local_same_fbgn_distance_bp': row.get('best_local_same_fbgn_distance_bp', 'NA') if row is not None else 'NA', 
+                                'shared_fbgn_with_best_peak': row.get('shared_fbgn_with_best_peak', 'NA') if row is not None else 'NA', 
+                                'gene_support_at_best_peak': row.get('gene_support_at_best_peak', 'NA') if row is not None else 'NA', 
+                                'species_qc': 'PASS' if not species_flags else ';'.join(species_flags)})
 
         # ----------------------------------------------------
         # Candidate-level QC
@@ -672,89 +473,27 @@ def main():
         # ----------------------------------------------------
 
         summary_rows.append({
-            "group_name":
-                group,
-
-            "dmel_cre_id":
-                cre,
-
-            "tier1_scope":
-                record[
-                    "tier1_scope"
-                ],
-
-            "is_focal_tier1":
-                "yes"
-                if record[
-                    "is_focal_tier1"
-                ]
-                else "no",
-
-            "is_singleton_tier1":
-                "yes"
-                if record[
-                    "is_singleton_tier1"
-                ]
-                else "no",
-
-            "discordant_species":
-                record[
-                    "discordant_species"
-                ],
-
-            "discordant_state":
-                record[
-                    "discordant_state"
-                ],
-
-            "consensus_state":
-                record[
-                    "consensus_state"
-                ],
-
-            "group_species":
-                "|".join(
-                    species
-                ),
-
-            "n_group_species":
-                len(
-                    species
-                ),
-
-            "dmel_fbgn_target_genes":
-                dmel_fbgn,
-
-            "dmel_chrom":
-                chrom,
-
-            "dmel_start0":
-                start0,
-
-            "dmel_end0":
-                end0,
-
-            "training_set":
-                training_set,
-
-            "method":
-                method,
-
-            "dmel_scrmshaw_score":
-                scrmshaw_score,
-
-            "dmel_rank":
-                rank,
-
-            "n_species_expected":
-                n_expected_species,
-
-            "n_species_passing_qc":
-                n_species_pass,
-
-            "candidate_qc":
-                final_qc,
-        })
+            "group_name": group,
+            "dmel_cre_id": cre,
+            "tier1_scope": record["tier1_scope"],
+            "is_focal_tier1": "yes" if record["is_focal_tier1"] else "no",
+            "is_singleton_tier1": "yes" if record["is_singleton_tier1"] else "no",
+            "discordant_species": record["discordant_species"],
+            "discordant_state": record["discordant_state"],
+            'consensus_state': record['consensus_state'], 
+            'group_species': '|'.join(species), 
+            'n_group_species': len(species), 
+            'dmel_fbgn_target_genes': dmel_fbgn, 
+            'dmel_chrom': chrom, 
+            'dmel_start0': start0, 
+            'dmel_end0': end0, 
+            'training_set': training_set, 
+            'method': method, 
+            'dmel_scrmshaw_score': scrmshaw_score, 
+            'dmel_rank': rank, 
+            'n_species_expected': n_expected_species, 
+            'n_species_passing_qc': n_species_pass, 
+            'candidate_qc': final_qc})
 
     # ========================================================
     # Build output tables
