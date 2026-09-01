@@ -41,13 +41,13 @@ THEORETICAL_MAX=$((EXPECTED_OFFSETS * MAX_RANK))
 # ------------------------------------------------------------
 
 [[ -s "$SPECIES_FILE" ]] || {
-    echo "FEHLER: Species-Datei fehlt oder ist leer:" >&2
+    echo "ERROR: Species file is missing or empty:" >&2
     echo "  $SPECIES_FILE" >&2
     exit 1
 }
 
 [[ -d "$EXTERNAL_BED_DIR" ]] || {
-    echo "FEHLER: External-BED-Verzeichnis fehlt:" >&2
+    echo "ERROR: External BED directory is missing:" >&2
     echo "  $EXTERNAL_BED_DIR" >&2
     exit 1
 }
@@ -194,15 +194,15 @@ EOF
           -z "${genus:-}" ||
           -z "${epithet:-}" ]]; then
 
-        echo "FEHLER: Ungültige Species-Zeile:" >&2
+        echo "ERROR: Invalid species line:" >&2
         echo "  $line" >&2
-        echo "Erwartet:" >&2
+        echo "Expected:" >&2
         echo "  slug Genus species" >&2
         exit 1
     fi
 
     if [[ -n "${extra:-}" ]]; then
-        echo "FEHLER: Zu viele Felder in Species-Zeile:" >&2
+        echo "ERROR: Too many fields in species line:" >&2
         echo "  $line" >&2
         exit 1
     fi
@@ -231,8 +231,8 @@ EOF
 
     if [[ -s "$output_bed" ]]; then
 
-        echo "  vorhandene gefilterte BED gefunden"
-        echo "  prüfe QC..."
+        echo "  existing filtered BED found"
+        echo "  checking QC..."
 
         if validate_filtered_bed "$output_bed"; then
 
@@ -261,12 +261,12 @@ EOF
                 END {print n+0}
             ' "$output_bed")"
 
-            echo "  OK: vorhandene Datei ist gültig"
+            echo "  OK: existing file is valid"
             echo "      rows     : $rows"
             echo "      rank1    : $rank1"
             echo "      min rank : $min_rank"
             echo "      max rank : $max_rank"
-            echo "  -> überspringe Filtern"
+            echo "  -> skipping filtering"
 
             n_skipped=$((n_skipped + 1))
 
@@ -275,8 +275,8 @@ EOF
 
         else
 
-            echo "  WARNUNG: vorhandene Datei besteht QC nicht"
-            echo "  -> wird neu erzeugt"
+            echo "  WARNING: existing file does not pass QC"
+            echo "  -> will be rebuilt"
 
             n_rebuilt=$((n_rebuilt + 1))
         fi
@@ -289,7 +289,7 @@ EOF
     # ========================================================
 
     if [[ ! -s "$input_bed" ]]; then
-        echo "FEHLER: Roh-BED fehlt oder ist leer:" >&2
+        echo "ERROR: Raw BED is missing or empty:" >&2
         echo "  $input_bed" >&2
         exit 1
     fi
@@ -306,7 +306,7 @@ EOF
     #   17 = rank
     # ========================================================
 
-    echo "  filtere ${TRAINING_SET} / ${METHOD} ..."
+    echo "  filtering ${TRAINING_SET} / ${METHOD} ..."
 
     rm -f "$tmp_bed"
 
@@ -321,7 +321,7 @@ EOF
 
         NF != 17 {
             printf(
-                "FEHLER: Zeile %d hat %d statt 17 Felder\n",
+                "ERROR: Line %d has %d fields instead of 17\n",
                 NR,
                 NF
             ) > "/dev/stderr"
@@ -343,7 +343,7 @@ EOF
 
         rm -f "$tmp_bed"
 
-        echo "FEHLER: neu gefilterte BED besteht QC nicht:" >&2
+        echo "ERROR: Newly filtered BED does not pass QC:" >&2
         echo "  $input_bed" >&2
         echo "  Training: $TRAINING_SET" >&2
         echo "  Method  : $METHOD" >&2
