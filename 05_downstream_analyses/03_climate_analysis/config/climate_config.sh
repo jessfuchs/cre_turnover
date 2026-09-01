@@ -77,3 +77,6 @@ FOCAL_TIER1_ENRICHMENT_PDF="${FIGURES_DIR}/focal_tier1_enrichment.pdf"
 
 CLIMATE_PGLS_PNG="${FIGURES_DIR}/climate_PGLS.png"
 CLIMATE_PGLS_PDF="${FIGURES_DIR}/climate_PGLS.pdf"
+
+FOCAL_TIER1_SUMMARY_PNG="${FIGURES_DIR}/focal_tier1_summary.png"
+FOCAL_TIER1_SUMMARY_PDF="${FIGURES_DIR}/focal_tier1_summary.pdf"
