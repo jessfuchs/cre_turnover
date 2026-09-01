@@ -16,8 +16,6 @@ The workflow is organized into five major stages:
 
 ## Workflow overview
 
-GitHub renders the following Mermaid diagram directly as a flowchart.
-
 ```mermaid
 flowchart TD
     A[Genome FASTA + GFF3 annotations] --> B1[01_scrmshaw/generation<br/>Generate SCRMshaw predictions]
