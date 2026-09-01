@@ -102,3 +102,6 @@ TIER1_ROBUSTNESS_RANKED_PDF="${FIGURES_DIR}/tier1_candidate_robustness_ranked.pd
 TIER1_SENSITIVITY_MATRIX_PNG="${FIGURES_DIR}/tier1_sensitivity_matrix.png"
 TIER1_SENSITIVITY_MATRIX_PDF="${FIGURES_DIR}/tier1_sensitivity_matrix.pdf"
 
+RECURRENCE_ROBUSTNESS_PNG="${FIGURES_DIR}/candidate_recurrence_robustness.png"
+RECURRENCE_ROBUSTNESS_PDF="${FIGURES_DIR}/candidate_recurrence_robustness.pdf"
+
