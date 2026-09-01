@@ -10,4 +10,4 @@ source config/config.sh
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate "$POST_ENV"
 
-python scripts/make_summary.py --manifest "$MANIFEST" --results "$RESULTS_DIR"
+python scripts/05_make_summary.py --manifest "$MANIFEST" --results "$RESULTS_DIR"
