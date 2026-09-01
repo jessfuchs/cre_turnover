@@ -8,10 +8,10 @@ clone_or_update() {
     local url="$1"
     local dest="$2"
     if [[ -d "$dest/.git" ]]; then
-        echo "Aktualisiere $dest"
+        echo "Updating $dest"
         git -C "$dest" pull --ff-only
     elif [[ -e "$dest" ]]; then
-        echo "FEHLER: $dest existiert, ist aber kein Git-Repository." >&2
+        echo "ERROR: $dest exists but is not a Git repository." >&2
         exit 1
     else
         git clone "$url" "$dest"
@@ -32,7 +32,7 @@ fi
 
 for f in crms.fasta neg.fasta; do
     [[ -s "$TRAINING_SET/$f" ]] || {
-        echo "FEHLER: Trainingsdatei fehlt: $TRAINING_SET/$f" >&2
+        echo "ERROR: Training file is missing: $TRAINING_SET/$f" >&2
         exit 1
     }
 done
@@ -42,5 +42,5 @@ chmod +x "$PIPELINE_ROOT/bin/macs2"
 find "$PIPELINE_ROOT/scripts" "$PIPELINE_ROOT/slurm" -type f -name '*.sh' -o -name '*.slurm' | xargs chmod +x
 
 echo
-echo "Software und Trainingssatz sind vorbereitet."
+echo "Software and training set are prepared."
 echo "Training list: $TRAINING_LIST"
