@@ -5,9 +5,9 @@ source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate "$POST_ENV"
 export PATH="$PIPELINE_ROOT/bin:$PATH"
 
-species_idx="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID fehlt}"
+species_idx="${SLURM_ARRAY_TASK_ID:?SLURM_ARRAY_TASK_ID is missing}"
 row="$(awk -F'\t' -v i="$species_idx" 'NR>1 && $1==i {print; exit}' "$MANIFEST")"
-[[ -n "$row" ]] || { echo "Kein Manifest-Eintrag für Index $species_idx" >&2; exit 1; }
+[[ -n "$row" ]] || { echo "No manifest entry for index $species_idx" >&2; exit 1; }
 IFS=$'\t' read -r idx slug species genome annotation annotation_format <<< "$row"
 
 run_dir="$RUNS_DIR/$slug"
@@ -18,12 +18,12 @@ for offset_idx in $(seq 0 24); do
     lb=$((offset_idx * 10))
     task_num=$((offset_idx + 1))
     test -f "task_offset_${lb}_${task_num}/SCRM_FINISHED.ok" || {
-        echo "Fehlender Offset: task_offset_${lb}_${task_num}" >&2
+        echo "Missing offset: task_offset_${lb}_${task_num}" >&2
         exit 1
     }
 done
 
-# Reruns sicher machen; keine task_offset-Ordner löschen.
+# Make reruns safe; do not delete task_offset directories.
 rm -f scrmshawOutput_offset_0to240.bed peaks_AllSets.bed
 rm -f scrmshawOutput_peaksCalled_* sumScoredsorted_*
 rm -rf tmp scrmsIndividualHits_0to240offset
@@ -54,7 +54,7 @@ python "$POSTPROC_ROOT/postProcessingScrmshawPipeline.py" \
 shopt -s nullglob
 peak_files=(scrmshawOutput_peaksCalled_*)
 (( ${#peak_files[@]} > 0 )) || {
-    echo "Postprocessing erzeugte keine Peak-Datei." >&2
+    echo "Postprocessing did not generate a peak file." >&2
     exit 1
 }
 cat "${peak_files[@]}" > peaks_AllSets.bed
@@ -67,4 +67,4 @@ cp "${peak_files[@]}" "$RESULTS_DIR/$slug/"
 wc -l peaks_AllSets.bed > "$RESULTS_DIR/$slug/peak_count.txt"
 touch POSTPROCESS_FINISHED.ok
 
-echo "Postprocessing abgeschlossen: $slug"
+echo "Postprocessing completed: $slug"
