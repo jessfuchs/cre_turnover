@@ -63,6 +63,8 @@ get_arg <- function(name) {
 
 INPUT_FILE <- get_arg("--input")
 TREE_FILE <- get_arg("--tree")
+OUT_PREDICTIONS <- get_arg("--out-predictions")
+OUT_STATS <- get_arg("--out-stats")
 OUT_MODEL <- get_arg("--out-model")
 OUT_COEFFICIENTS <- get_arg("--out-coefficients")
 OUT_SUMMARY <- get_arg("--out-summary")
@@ -314,6 +316,52 @@ lambda_estimate <- as.numeric(
         model_climate$modelStruct$corStruct,
         unconstrained = FALSE
     )
+)
+
+# ============================================================
+# Model-based climate estimates
+# ============================================================
+
+newdat <- data.frame(
+    climatic_zone = factor(CLIMATE_LEVELS, levels = CLIMATE_LEVELS)
+)
+
+X <- model.matrix(~ climatic_zone, data = newdat)
+beta <- coef(model_climate)
+V <- vcov(model_climate)
+
+eta <- as.numeric(X %*% beta)
+se_eta <- sqrt(diag(X %*% V %*% t(X)))
+
+predictions <- data.frame(
+    climatic_zone = CLIMATE_LEVELS,
+    estimate = plogis(eta),
+    ci95_low = plogis(eta - 1.96 * se_eta),
+    ci95_high = plogis(eta + 1.96 * se_eta)
+)
+
+write.table(
+    predictions,
+    OUT_PREDICTIONS,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+)
+
+p_global <- comparison$"p-value"[2]
+
+stats <- data.frame(
+    n_species = nrow(dat),
+    pagel_lambda = lambda_estimate,
+    p_global = p_global
+)
+
+write.table(
+    stats,
+    OUT_STATS,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
 )
 
 
