@@ -27,10 +27,17 @@ from datetime import datetime
 import argparse
 import pandas as pd
 
+# ============================================================
+# CRE-state definitions
+# ============================================================
+
 VALID_STATES = {"present", "turnover_candidate", "no_detected_CRE", "uncertain"}
 POSITIVE_STATES = {"present", "turnover_candidate"}
 OUTPUT_TIERS = ["tier1", "tier2", "tier3", "other_pattern"]
 
+# ============================================================
+# Arguments
+# ============================================================
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -47,6 +54,9 @@ def parse_args():
     parser.add_argument("--recurrence-min-clades", type=int, required=True)
     return parser.parse_args()
 
+# ============================================================
+# Helpers
+# ============================================================
 
 def require_file(path):
     if not path.is_file():
@@ -98,6 +108,23 @@ def empty_pattern(pattern_class="not_singleton_contrast"):
 
 
 def classify_secondary_pattern(row, species):
+    """
+    Classify one CRE across one phylogenetic clade.
+    
+    A secondary singleton pattern requires exactly one species
+    to differ from all other species in the clade.
+    
+    Examples
+    --------
+    3 species:
+        A != B = B
+    
+    4 species:
+        A != B = B = B
+    
+    5 species:
+        A != B = B = B = B
+    """
     states = {sp: row[sp] for sp in species}
     if set(states.values()) - VALID_STATES:
         return empty_pattern("invalid_state")
@@ -123,18 +150,33 @@ def classify_secondary_pattern(row, species):
     consensus_state = next(iter(consensus_states))
     n_consensus = len(species) - 1
 
+    # --------------------------------------------------------
+    # Tier 1:
+    # present <-> turnover_candidate
+    # --------------------------------------------------------
     if (
         discordant_state in POSITIVE_STATES
         and consensus_state in POSITIVE_STATES
         and discordant_state != consensus_state
     ):
         pattern_class, tier = "present_vs_turnover", "tier1"
+
+    # --------------------------------------------------------
+    # Tier 2:
+    # positive <-> no_detected_CRE
+    # --------------------------------------------------------
     elif (
         discordant_state == "no_detected_CRE" and consensus_state in POSITIVE_STATES
     ) or (
         consensus_state == "no_detected_CRE" and discordant_state in POSITIVE_STATES
     ):
         pattern_class, tier = "detection_contrast", "tier2"
+
+    # --------------------------------------------------------
+    # Tier 3:
+    # singleton contrast exists, but involves uncertain
+    # or another non-priority combination
+    # --------------------------------------------------------
     else:
         pattern_class, tier = "other_singleton_contrast", "tier3"
 
@@ -147,6 +189,9 @@ def classify_secondary_pattern(row, species):
         "n_consensus_species": n_consensus,
     }
 
+# ============================================================
+# Main
+# ============================================================
 
 def main():
     args = parse_args()
@@ -166,6 +211,10 @@ def main():
             f"Expected: {args.expected_reference_cres}\nObserved: {len(df)}"
         )
 
+    # ========================================================
+    # Validate required species
+    # ========================================================
+
     required_species = sorted({sp for _, species in groups for sp in species})
     missing = sorted(set(required_species) - set(df.columns))
     if missing:
@@ -178,6 +227,10 @@ def main():
     for path in [args.outdir, args.out_long.parent, args.out_summary.parent,
                  args.out_group_summary.parent, args.metadata_out.parent]:
         path.mkdir(parents=True, exist_ok=True)
+
+    # ========================================================
+    # Analyze each clade
+    # ========================================================
 
     group_summary_rows = []
     secondary_tier1_rows = []
@@ -215,6 +268,10 @@ def main():
                 "pattern_class": row["pattern_class"],
             })
 
+        # ----------------------------------------------------
+        # Group-level summary
+        # ----------------------------------------------------
+
         counts = sub["tier"].value_counts()
         group_summary_rows.append({
             "group_name": group_name,
@@ -236,6 +293,10 @@ def main():
         print(f"Tier 2: {counts.get('tier2', 0)}")
         print(f"Tier 3: {counts.get('tier3', 0)}")
         print(f"Other patterns: {counts.get('other_pattern', 0)}")
+
+    # ========================================================
+    # Combined Secondary Tier-1 long table
+    # ========================================================
 
     secondary_long = pd.DataFrame(secondary_tier1_rows)
     if not secondary_long.empty:
@@ -273,6 +334,10 @@ def main():
         args.out_group_summary, sep="\t", index=False
     )
 
+    # ========================================================
+    # Run metadata
+    # ========================================================
+
     metadata = pd.DataFrame([{
         "script": Path(__file__).name,
         "run_timestamp": datetime.now().astimezone().isoformat(),
@@ -284,6 +349,10 @@ def main():
         "n_recurrent_secondary_cres": int((secondary_summary["secondary_recurrence"] == "recurrent").sum()) if not secondary_summary.empty else 0,
     }])
     metadata.to_csv(args.metadata_out, sep="\t", index=False)
+
+    # ========================================================
+    # Final console summary
+    # ========================================================
 
     print()
     print("=" * 72)
