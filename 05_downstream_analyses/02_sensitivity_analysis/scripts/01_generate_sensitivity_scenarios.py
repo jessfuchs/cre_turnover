@@ -44,30 +44,11 @@ def parse_args():
     parser.add_argument("--scenario-manifest", type=Path, required=True)
     parser.add_argument("--metadata-out", type=Path, required=True)
 
-    parser.add_argument(
-        "--overlaps",
-        type=float,
-        nargs="+",
-        required=True,
-    )
+    parser.add_argument("--overlaps", type=float, nargs="+", required=True)
+    parser.add_argument("--distances", type=int, nargs="+", required=True)
 
-    parser.add_argument(
-        "--distances",
-        type=int,
-        nargs="+",
-        required=True,
-    )
-
-    parser.add_argument(
-        "--expected-reference-cres",
-        type=int,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--force",
-        action="store_true",
-    )
+    parser.add_argument("--expected-reference-cres", type=int, required=True)
+    parser.add_argument("--force", action="store_true")
 
     return parser.parse_args()
 
