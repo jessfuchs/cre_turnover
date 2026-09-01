@@ -80,3 +80,6 @@ CLIMATE_PGLS_PDF="${FIGURES_DIR}/climate_PGLS.pdf"
 
 FOCAL_TIER1_SUMMARY_PNG="${FIGURES_DIR}/focal_tier1_summary.png"
 FOCAL_TIER1_SUMMARY_PDF="${FIGURES_DIR}/focal_tier1_summary.pdf"
+
+RECURRENCE_ROBUSTNESS_PNG="${FIGURES_DIR}/candidate_recurrence_robustness.png"
+RECURRENCE_ROBUSTNESS_PDF="${FIGURES_DIR}/candidate_recurrence_robustness.pdf"
