@@ -86,7 +86,7 @@ and is not included in the Git repository.
 
 ## 3. Define the target species
 
-The 25 newly analyzed species are specified in:
+Species to generate are listed in:
 
 ```text
 species.txt
