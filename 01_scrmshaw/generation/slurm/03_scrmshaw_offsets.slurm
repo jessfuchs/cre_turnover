@@ -5,4 +5,4 @@
 #SBATCH --output=logs/offset_%A_%a.out
 #SBATCH --error=logs/offset_%A_%a.err
 set -euo pipefail
-scripts/run_one_offset.sh
+scripts/03_run_one_offset.sh
