@@ -24,10 +24,17 @@ from pathlib import Path
 import argparse
 import pandas as pd
 
+# ============================================================
+# CRE-state definitions
+# ============================================================
+
 POSITIVE_STATES = {"present", "turnover_candidate"}
 VALID_STATES = {"present", "turnover_candidate", "no_detected_CRE", "uncertain"}
 OUTPUT_CATEGORIES = ["tier1", "tier2", "tier3", "comparison_mixed", "all_same", "invalid"]
 
+# ============================================================
+# Arguments
+# ============================================================
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -43,6 +50,9 @@ def parse_args():
     parser.add_argument("--expected-reference-cres", type=int, required=True)
     return parser.parse_args()
 
+# ============================================================
+# Helpers
+# ============================================================
 
 def require_file(path):
     if not path.is_file():
@@ -79,6 +89,11 @@ def load_groups(path):
 
 
 def load_climates(manifest_path, traits_path):
+    """
+    Map pipeline species slugs to phylogeny names and climatic zones.
+    The manifest links slugs to species names; species_traits.tsv
+    links phylogeny-compatible tree names to climatic zones.
+    """
     manifest = pd.read_csv(manifest_path, sep="\t", dtype=str, keep_default_na=False)
     traits = pd.read_csv(traits_path, sep="\t", dtype=str, keep_default_na=False)
     require_columns(manifest, {"slug", "species", "source"}, "combined manifest")
@@ -99,6 +114,11 @@ def load_climates(manifest_path, traits_path):
 
 
 def classify_focal(row, focal, comparisons):
+    """
+    Classify one reference CRE within one focal clade.
+    Tier 1 requires unanimous comparison species and a strict
+    present <-> turnover_candidate contrast with the focal species.
+    """
     focal_state = row[focal]
     comparison_states = [row[sp] for sp in comparisons]
     all_states = [focal_state, *comparison_states]
@@ -126,6 +146,9 @@ def comparison_consensus(row, comparisons):
     values = [row[sp] for sp in comparisons]
     return values[0] if len(set(values)) == 1 else "mixed"
 
+# ============================================================
+# Main
+# ============================================================
 
 def main():
     args = parse_args()
@@ -150,6 +173,10 @@ def main():
             f"Expected: {args.expected_reference_cres}\nObserved: {len(df)}"
         )
 
+    # --------------------------------------------------------
+    # Validate focal-clade species and annotations
+    # --------------------------------------------------------
+
     required_species = sorted({sp for _, focal, comps in groups for sp in [focal, *comps]})
     missing = sorted(set(required_species) - set(df.columns))
     if missing:
@@ -171,6 +198,10 @@ def main():
     args.out_dir.mkdir(parents=True, exist_ok=True)
     args.summary_out.parent.mkdir(parents=True, exist_ok=True)
     summary_rows = []
+
+    # ========================================================
+    # Analyze each predefined focal clade independently
+    # ========================================================
 
     for group_name, focal, comparisons in groups:
         species = [focal, *comparisons]
@@ -205,6 +236,10 @@ def main():
                 args.out_dir / f"{group_name}_{category}.tsv", sep="\t", index=False
             )
 
+        # ----------------------------------------------------
+        # Group-level summary
+        # ----------------------------------------------------
+
         counts = sub["category"].value_counts()
         row = {
             "group_name": group_name,
@@ -231,6 +266,11 @@ def main():
         print(f"Comparison mixed: {row['n_comparison_mixed']}")
         print(f"All same: {row['n_all_same']}")
         print(f"Invalid: {row['n_invalid']}")
+
+    
+    # ========================================================
+    # Cross-clade summary
+    # ========================================================
 
     summary = pd.DataFrame(summary_rows)
     summary.to_csv(args.summary_out, sep="\t", index=False)
