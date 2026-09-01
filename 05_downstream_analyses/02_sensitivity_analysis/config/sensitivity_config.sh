@@ -90,3 +90,12 @@ CANDIDATE_SENSITIVITY_MERGE_METADATA="${RESULTS_DIR}/candidate_sensitivity_merge
 
 CANDIDATES_WITH_SENSITIVITY="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized_with_sensitivity.tsv"
 
+# ======================================================================
+# Figures
+# ======================================================================
+
+FIGURES_DIR="${RESULTS_DIR}/figures"
+
+TIER1_ROBUSTNESS_RANKED_PNG="${FIGURES_DIR}/tier1_candidate_robustness_ranked.png"
+TIER1_ROBUSTNESS_RANKED_PDF="${FIGURES_DIR}/tier1_candidate_robustness_ranked.pdf"
+
