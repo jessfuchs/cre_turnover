@@ -62,8 +62,18 @@ AZTECA_FOCAL_CLADE="${AZTECA_FOCAL_CLADE:-azteca_affinis_miranda_group}"
 AZTECA_FOCAL_CANDIDATES="${RESULTS_DIR}/azteca_focal_tier1_candidates.tsv"
 
 # ======================================================================
+# PGLS plotting
+# ======================================================================
+
+PGLS_CLIMATE_PREDICTIONS="${RESULTS_DIR}/pgls_climate_predictions.tsv"
+PGLS_CLIMATE_STATS="${RESULTS_DIR}/pgls_climate_stats.tsv"
+
+# ======================================================================
 # Figures
 # ======================================================================
 
 FOCAL_TIER1_ENRICHMENT_PNG="${FIGURES_DIR}/focal_tier1_enrichment.png"
 FOCAL_TIER1_ENRICHMENT_PDF="${FIGURES_DIR}/focal_tier1_enrichment.pdf"
+
+CLIMATE_PGLS_PNG="${FIGURES_DIR}/climate_PGLS.png"
+CLIMATE_PGLS_PDF="${FIGURES_DIR}/climate_PGLS.pdf"
