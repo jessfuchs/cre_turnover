@@ -5,12 +5,12 @@ set -euo pipefail
 #   original pipeline results
 #
 # Optional:
-#   bash qc_peaks_outputs.sh /pfad/zu/results
+#   bash qc_peaks_outputs.sh /path/to/results
 
 RESULTS_DIR="${1:-$HOME/cre_turnover/project/scrmshaw_pipeline/results}"
 
 [[ -d "$RESULTS_DIR" ]] || {
-    echo "FEHLER: Results-Verzeichnis nicht gefunden: $RESULTS_DIR" >&2
+    echo "ERROR: Results directory not found: $RESULTS_DIR" >&2
     exit 1
 }
 
