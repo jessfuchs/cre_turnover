@@ -29,8 +29,6 @@ BASELINE_TURNOVER_DIR="${CLASSIFICATION_ROOT}/results/turnover_by_species"
 CANDIDATE_TIER1_TABLE="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized.tsv"
 FOCAL_CLADES_FILE="${CANDIDATE_ANALYSIS_ROOT}/config/focal_clades.tsv"
 
-CANDIDATES_WITH_SENSITIVITY="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized_with_sensitivity.tsv"
-
 # ======================================================================
 # Sensitivity parameters
 # ======================================================================
@@ -88,41 +86,7 @@ CANDIDATE_SENSITIVITY_SUMMARY="${RESULTS_DIR}/candidate_sensitivity_summary.tsv"
 CANDIDATE_SENSITIVITY_PRIORITY_MATRIX="${RESULTS_DIR}/candidate_sensitivity_priority_matrix.tsv"
 CANDIDATE_SENSITIVITY_RETENTION_MATRIX="${RESULTS_DIR}/candidate_sensitivity_retention_matrix.tsv"
 CANDIDATE_SENSITIVITY_METADATA="${RESULTS_DIR}/candidate_sensitivity_metadata.tsv"
-CANDIDATE_SENSITIVITY_MERGE_METADATA="${RESULTS_DIR}/candidate_sensitivity_merge_metadata.tsv"
+CANDIDATE_SENSITIVITY_MERGE_METADATA="${RESULTS_DIR}/candidate_sensitivity_merge_metadata.tsv
 
-# ======================================================================
-# Export
-# ======================================================================
+CANDIDATES_WITH_SENSITIVITY="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized_with_sensitivity.tsv"
 
-export PIPELINE_ROOT
-export PROJECT_ROOT
-
-export CLASSIFICATION_ROOT
-export MAPPING_ROOT
-export WGA_ROOT
-
-export CLASSIFIER_SCRIPT
-export TARGET_SPECIES_FILE
-export REFERENCE_CRES_TSV
-export SO_ALL_SPECIES_FBGN
-export LIFTED_CRES_DIR
-
-export RESULTS_DIR
-export SENSITIVITY_SCENARIOS_DIR
-export SENSITIVITY_SCENARIO_MANIFEST
-export SENSITIVITY_GENERATION_METADATA
-
-export EXPECTED_REFERENCE_CRES
-
-export BASELINE_TURNOVER_DIR
-export PRIMARY_SENSITIVITY_SCENARIO
-
-export PRIMARY_REGRESSION_SUMMARY
-export PRIMARY_REGRESSION_CHANGES
-export PRIMARY_REGRESSION_METADATA
-
-export GLOBAL_SENSITIVITY_SUMMARY
-export SENSITIVITY_SPECIES_STABILITY
-export SENSITIVITY_STATE_TRANSITIONS
-export SENSITIVITY_CRE_STABILITY
-export GLOBAL_SENSITIVITY_METADATA
