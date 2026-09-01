@@ -9,12 +9,12 @@ source "$ROOT/config/external_config.sh"
 SPECIES_LIST="${1:-$ROOT/species_external.txt}"
 
 [[ -s "$SPECIES_LIST" ]] || {
-    echo "FEHLER: Species-Datei fehlt oder ist leer: $SPECIES_LIST" >&2
+    echo "ERROR: Species file is missing or empty: $SPECIES_LIST" >&2
     exit 1
 }
 
 [[ -d "$SOURCE_GFF_ROOT" ]] || {
-    echo "FEHLER: selected-Verzeichnis fehlt: $SOURCE_GFF_ROOT" >&2
+    echo "ERROR: selected directory is missing: $SOURCE_GFF_ROOT" >&2
     exit 1
 }
 
@@ -68,13 +68,13 @@ EOF
           -z "${genus:-}" ||
           -z "${epithet:-}" ]]; then
 
-        echo "FEHLER: Ungültige Species-Zeile:" >&2
+        echo "ERROR: Invalid species line:" >&2
         echo "  $line" >&2
         exit 1
     fi
 
     if [[ -n "${extra:-}" ]]; then
-        echo "FEHLER: Zu viele Felder in Species-Zeile:" >&2
+        echo "ERROR: Too many fields in species line:" >&2
         echo "  $line" >&2
         exit 1
     fi
@@ -90,7 +90,7 @@ EOF
 
     # Already prepared?
     if validate_gff "$target_gff"; then
-        echo "  OK: GFF bereits vorbereitet:"
+        echo "  OK: GFF already prepared:"
         echo "      $target_gff"
 
         n_existing=$((n_existing + 1))
@@ -100,13 +100,13 @@ EOF
 
     # Check source GFF
     if ! validate_gff "$source_gff"; then
-        echo "FEHLER: Keine gültige source-GFF gefunden:" >&2
+        echo "ERROR: No valid source GFF found:" >&2
         echo "  Species: $scientific_name ($slug)" >&2
-        echo "  Erwartet: $source_gff" >&2
+        echo "  Expected: $source_gff" >&2
         exit 1
     fi
 
-    echo "  Quelle:"
+    echo "  Source:"
     echo "      $source_gff"
 
     # Remove existing/stale target file or symlink
@@ -119,12 +119,12 @@ EOF
     if ! validate_gff "$target_gff"; then
         rm -f "$target_gff"
 
-        echo "FEHLER: kopierte GFF ist ungültig:" >&2
+        echo "ERROR: Copied GFF is invalid:" >&2
         echo "  $target_gff" >&2
         exit 1
     fi
 
-    echo "  kopiert als:"
+    echo "  copied as:"
     echo "      $target_gff"
 
     n_copied=$((n_copied + 1))
