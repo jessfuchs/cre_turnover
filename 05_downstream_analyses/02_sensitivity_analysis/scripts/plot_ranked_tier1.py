@@ -1,6 +1,28 @@
 #!/usr/bin/env python3
 
+# ============================================================
+# Plot ranked Tier-1 candidate robustness
+#
+# Purpose:
+#   Visualize the sensitivity robustness of prioritized Tier-1
+#   CRE candidates.
+#
+# Encoding:
+#   - x position: candidate retention across scenarios
+#   - marker shape: primary candidate priority
+#   - marker color: robustness class
+#   - black outline: candidate priority stable across all scenarios
+#
+# Candidate categories and robustness classes are taken directly
+# from the sensitivity-annotated candidate table and are not
+# recalculated by this plotting script.
+#
+# Input/output paths and the moderate-robustness threshold are
+# supplied by config/sensitivity_config.sh via the wrapper.
+# ============================================================
+
 from pathlib import Path
+import argparse
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -8,41 +30,7 @@ import pandas as pd
 
 
 # ============================================================
-# Paths
-# ============================================================
-
-PROJECT = (
-    Path.home()
-    / "cre_turnover"
-    / "project"
-)
-
-SENS_DIR = (
-    PROJECT
-    / "downstream_analyses"
-    / "sensitivity_analysis"
-)
-
-INPUT = (
-    SENS_DIR
-    / "results"
-    / "candidate_sensitivity_summary.tsv"
-)
-
-FIG_DIR = (
-    SENS_DIR
-    / "results"
-    / "figures"
-)
-
-FIG_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-
-# ============================================================
-# Candidate priority setup
+# Candidate-priority plotting setup
 # ============================================================
 
 PRIORITY_ORDER = {
@@ -71,7 +59,7 @@ PRIORITY_LABELS = {
 
 
 # ============================================================
-# Robustness colors
+# Robustness plotting setup
 # ============================================================
 
 ROBUSTNESS_COLORS = {
@@ -80,422 +68,585 @@ ROBUSTNESS_COLORS = {
     "sensitive": "#C62828",
 }
 
-
-# ============================================================
-# Load input
-# ============================================================
-
-df = pd.read_csv(
-    INPUT,
-    sep="\t",
-)
-
-required = {
-    "dmel_cre_id",
-    "primary_candidate_priority",
-    "percent_candidate_retained",
-    "percent_same_priority_as_primary",
-    "robust_priority_all_9",
+BACKGROUND_COLORS = {
+    "robust": "#E6F4EA",
+    "moderate": "#FFF5D6",
+    "sensitive": "#FCE8E6",
 }
 
-missing = required - set(df.columns)
 
-if missing:
-    raise SystemExit(
-        "ERROR: missing required columns:\n"
-        + "\n".join(sorted(missing))
+# ============================================================
+# Arguments
+# ============================================================
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Plot ranked robustness of Tier-1 CRE candidates "
+            "across sensitivity scenarios."
+        )
+    )
+    
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--out-png", type=Path, required=True)
+    parser.add_argument("--out-pdf", type=Path, required=True)
+    parser.add_argument("--moderate-robustness-min", type=float, required=True)
+    
+    return parser.parse_args()
+
+
+# ============================================================
+# Helpers
+# ============================================================
+
+def require_file(path):
+    if not path.is_file():
+        raise SystemExit(
+            f"ERROR: required file not found:\n{path}"
+        )
+
+
+def require_columns(df, required):
+    missing = sorted(
+        set(required)
+        - set(df.columns)
+    )
+
+    if missing:
+        raise SystemExit(
+            "ERROR: input table missing columns:\n"
+            + "\n".join(missing)
+        )
+
+
+# ============================================================
+# Main
+# ============================================================
+
+def main():
+
+    args = parse_args()
+
+    require_file(args.input)
+    
+    if not 0 <= args.moderate_robustness_min < 100:
+        raise SystemExit(
+            "ERROR: moderate-robustness-min must be "
+            "between 0 and <100."
+        )
+    args.out_png.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+    args.out_pdf.parent.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
 
-# ============================================================
-# Robustness class
-# ============================================================
+    # ========================================================
+    # Load candidate table
+    # ========================================================
 
-def classify_robustness(value):
-    if value >= 99.999:
-        return "robust"
-    if value >= 66.6:
-        return "moderate"
-    return "sensitive"
-
-
-df["robustness_class"] = df[
-    "percent_candidate_retained"
-].apply(classify_robustness)
-
-
-# ============================================================
-# Priority rank
-# ============================================================
-
-df["priority_rank"] = df[
-    "primary_candidate_priority"
-].map(PRIORITY_ORDER)
-
-if df["priority_rank"].isna().any():
-    unknown = sorted(
-        df.loc[
-            df["priority_rank"].isna(),
-            "primary_candidate_priority",
-        ].unique()
-    )
-    raise SystemExit(
-        "ERROR: unknown priority categories:\n"
-        + "\n".join(unknown)
+    df = pd.read_csv(
+        args.input,
+        sep="\t",
+        dtype=str,
+        keep_default_na=False,
     )
 
-
-# ============================================================
-# Sort candidates
-#
-# Order:
-# 1. highest retention first
-# 2. strongest priority class first
-# 3. most priority-stable first
-# 4. CRE ID
-# ============================================================
-
-df = (
-    df
-    .sort_values(
-        [
-            "percent_candidate_retained",
-            "priority_rank",
-            "percent_same_priority_as_primary",
+    require_columns(
+        df,
+        {
             "dmel_cre_id",
+            "candidate_priority",
+            "percent_candidate_retained",
+            "robustness_class",
+            "percent_same_priority_as_primary",
+            "priority_stability",
+        },
+    )
+
+    if df.empty:
+        raise SystemExit(
+            "ERROR: candidate table is empty."
+        )
+
+    if df["dmel_cre_id"].duplicated().any():
+        raise SystemExit(
+            "ERROR: duplicate CRE IDs in candidate table."
+        )
+
+
+    # ========================================================
+    # Prepare plotting variables
+    # ========================================================
+
+    for column in [
+        "percent_candidate_retained",
+        "percent_same_priority_as_primary",
+    ]:
+        df[column] = pd.to_numeric(
+            df[column],
+            errors="raise",
+        )
+
+    unknown_priorities = sorted(
+        set(df["candidate_priority"])
+        - set(PRIORITY_ORDER)
+    )
+
+    if unknown_priorities:
+        raise SystemExit(
+            "ERROR: unknown candidate priorities:\n"
+            + "\n".join(unknown_priorities)
+        )
+
+    unknown_robustness = sorted(
+        set(df["robustness_class"])
+        - set(ROBUSTNESS_COLORS)
+    )
+
+    if unknown_robustness:
+        raise SystemExit(
+            "ERROR: unknown robustness classes:\n"
+            + "\n".join(unknown_robustness)
+        )
+
+    unknown_stability = sorted(
+        set(df["priority_stability"])
+        - {"stable", "variable"}
+    )
+
+    if unknown_stability:
+        raise SystemExit(
+            "ERROR: unknown priority-stability values:\n"
+            + "\n".join(unknown_stability)
+        )
+
+    df["priority_rank"] = (
+        df["candidate_priority"]
+        .map(PRIORITY_ORDER)
+    )
+
+
+    # ========================================================
+    # Candidate ordering
+    # ========================================================
+
+    # Candidates with the strongest robustness evidence are
+    # displayed first. Candidate priority and exact priority
+    # stability are used as secondary ordering criteria.
+    df = (
+        df
+        .sort_values(
+            [
+                "percent_candidate_retained",
+                "priority_rank",
+                "percent_same_priority_as_primary",
+                "dmel_cre_id",
+            ],
+            ascending=[
+                False,
+                True,
+                False,
+                True,
+            ],
+            kind="mergesort",
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+
+    # Reverse y coordinates so the strongest candidate appears
+    # at the top of the figure.
+    df["y"] = range(
+        len(df),
+        0,
+        -1,
+    )
+
+
+    # ========================================================
+    # Figure layout
+    # ========================================================
+
+    height = max(
+        7,
+        len(df) * 0.26,
+    )
+
+    fig = plt.figure(
+        figsize=(
+            13.5,
+            height,
+        )
+    )
+
+    gs = fig.add_gridspec(
+        nrows=1,
+        ncols=2,
+        width_ratios=[
+            4.8,
+            1.8,
         ],
-        ascending=[
-            False,
-            True,
-            False,
-            True,
-        ],
-    )
-    .reset_index(drop=True)
-)
-
-# strongest / most robust at top
-df["y"] = list(
-    range(len(df), 0, -1)
-)
-
-
-# ============================================================
-# Figure and axes
-# Use a dedicated legend axis so legends never get clipped.
-# ============================================================
-
-height = max(
-    9,
-    len(df) * 0.26,
-)
-
-fig = plt.figure(
-    figsize=(13.5, height)
-)
-
-gs = fig.add_gridspec(
-    nrows=1,
-    ncols=2,
-    width_ratios=[4.8, 1.8],
-    wspace=0.03,
-)
-
-ax = fig.add_subplot(gs[0, 0])
-ax_leg = fig.add_subplot(gs[0, 1])
-
-ax_leg.axis("off")
-
-
-# ============================================================
-# Background robustness zones
-# ============================================================
-
-ax.axvspan(
-    25,
-    66.6,
-    color="#FCE8E6",
-    alpha=0.45,
-    zorder=0,
-)
-
-ax.axvspan(
-    66.6,
-    99.999,
-    color="#FFF5D6",
-    alpha=0.45,
-    zorder=0,
-)
-
-ax.axvspan(
-    99.999,
-    103,
-    color="#E6F4EA",
-    alpha=0.55,
-    zorder=0,
-)
-
-ax.axvline(
-    66.6,
-    linestyle="--",
-    linewidth=1,
-    color="grey",
-    alpha=0.8,
-)
-
-ax.axvline(
-    100,
-    linestyle="--",
-    linewidth=1,
-    color="grey",
-    alpha=0.8,
-)
-
-
-# ============================================================
-# Plot points
-#
-# Shape = candidate priority
-# Fill color = robustness class
-# Black outline = same priority in all 9 scenarios
-# ============================================================
-
-MARKER_SIZE = 95
-
-for row in df.itertuples():
-    priority = row.primary_candidate_priority
-    robustness = row.robustness_class
-    priority_stable = (
-        str(row.robust_priority_all_9).lower() == "yes"
+        wspace=0.03,
     )
 
-    ax.scatter(
-        row.percent_candidate_retained,
-        row.y,
-        s=MARKER_SIZE,
-        marker=MARKERS[priority],
-        facecolor=ROBUSTNESS_COLORS[robustness],
-        edgecolor="black" if priority_stable else "none",
-        linewidth=1.5 if priority_stable else 0,
-        zorder=3,
+    ax = fig.add_subplot(
+        gs[0, 0]
+    )
+
+    ax_leg = fig.add_subplot(
+        gs[0, 1]
+    )
+
+    ax_leg.axis(
+        "off"
     )
 
 
-# ============================================================
-# Axis formatting
-# ============================================================
+    # ========================================================
+    # Robustness zones
+    # ========================================================
 
-ax.set_yticks(df["y"])
-ax.set_yticklabels(
-    df["dmel_cre_id"],
-    fontsize=8,
-)
-
-ax.set_xlim(25, 103)
-
-ax.set_xlabel(
-    "Candidate retention across sensitivity scenarios (%)",
-    fontsize=11,
-)
-
-ax.set_ylabel(
-    "Tier-1 CRE candidate",
-    fontsize=11,
-)
-
-ax.set_title(
-    "Robustness of Tier-1 CRE candidates",
-    fontsize=14,
-    pad=10,
-)
-
-ax.grid(
-    axis="x",
-    linestyle=":",
-    linewidth=0.8,
-    alpha=0.35,
-)
-
-
-# ============================================================
-# Zone labels
-# ============================================================
-
-top = df["y"].max() + 1.6
-
-ax.text(
-    45,
-    top,
-    "sensitive",
-    ha="center",
-    va="center",
-    fontsize=10,
-    fontweight="bold",
-    color=ROBUSTNESS_COLORS["sensitive"],
-)
-
-ax.text(
-    83,
-    top,
-    "moderate",
-    ha="center",
-    va="center",
-    fontsize=10,
-    fontweight="bold",
-    color=ROBUSTNESS_COLORS["moderate"],
-)
-
-ax.text(
-    100.6,
-    top,
-    "robust",
-    ha="center",
-    va="center",
-    fontsize=10,
-    fontweight="bold",
-    color=ROBUSTNESS_COLORS["robust"],
-)
-
-ax.set_ylim(0, top + 0.8)
-
-
-# ============================================================
-# Legends in dedicated legend axis
-# ============================================================
-
-# ---- priority legend
-priority_handles = [
-    Line2D(
-        [0],
-        [0],
-        marker=MARKERS[key],
-        color="none",
-        markerfacecolor="grey",
-        markeredgecolor="grey",
-        markersize=8,
-        label=PRIORITY_LABELS[key],
+    moderate_min = (
+        args.moderate_robustness_min
     )
-    for key in PRIORITY_ORDER
-]
 
-legend1 = ax_leg.legend(
-    handles=priority_handles,
-    title="Primary candidate priority",
-    loc="upper left",
-    bbox_to_anchor=(0.0, 1.0),
-    frameon=False,
-    borderaxespad=0.0,
-    labelspacing=0.55,
-    handletextpad=0.7,
-    fontsize=9,
-    title_fontsize=10,
-)
-ax_leg.add_artist(legend1)
-
-
-# ---- robustness legend
-robustness_handles = [
-    Line2D(
-        [0],
-        [0],
-        marker="o",
-        color="none",
-        markerfacecolor=color,
-        markeredgecolor="none",
-        markersize=8,
-        label=label.capitalize(),
+    # Sensitive candidates.
+    ax.axvspan(
+        0,
+        moderate_min,
+        color=BACKGROUND_COLORS["sensitive"],
+        alpha=0.45,
+        zorder=0,
     )
-    for label, color in ROBUSTNESS_COLORS.items()
-]
 
-legend2 = ax_leg.legend(
-    handles=robustness_handles,
-    title="Candidate robustness",
-    loc="upper left",
-    bbox_to_anchor=(0.0, 0.62),
-    frameon=False,
-    borderaxespad=0.0,
-    labelspacing=0.55,
-    handletextpad=0.7,
-    fontsize=9,
-    title_fontsize=10,
-)
-ax_leg.add_artist(legend2)
+    # Moderately robust candidates.
+    ax.axvspan(
+        moderate_min,
+        100,
+        color=BACKGROUND_COLORS["moderate"],
+        alpha=0.45,
+        zorder=0,
+    )
 
+    # Fully robust candidates occur exactly at 100% retention.
+    # A narrow region beyond 100 visually separates this class.
+    ax.axvspan(
+        100,
+        103,
+        color=BACKGROUND_COLORS["robust"],
+        alpha=0.55,
+        zorder=0,
+    )
 
-# ---- priority stability legend
-stability_handles = [
-    Line2D(
-        [0],
-        [0],
-        marker="o",
-        color="none",
-        markerfacecolor="lightgrey",
-        markeredgecolor="black",
-        markeredgewidth=1.5,
-        markersize=8,
-        label="Same priority in all 9",
-    ),
-    Line2D(
-        [0],
-        [0],
-        marker="o",
-        color="none",
-        markerfacecolor="lightgrey",
-        markeredgecolor="none",
-        markersize=8,
-        label="Priority changes",
-    ),
-]
+    ax.axvline(
+        moderate_min,
+        linestyle="--",
+        linewidth=1,
+        color="grey",
+        alpha=0.8,
+    )
 
-legend3 = ax_leg.legend(
-    handles=stability_handles,
-    title="Priority stability",
-    loc="upper left",
-    bbox_to_anchor=(0.0, 0.34),
-    frameon=False,
-    borderaxespad=0.0,
-    labelspacing=0.55,
-    handletextpad=0.7,
-    fontsize=9,
-    title_fontsize=10,
-)
-ax_leg.add_artist(legend3)
+    ax.axvline(
+        100,
+        linestyle="--",
+        linewidth=1,
+        color="grey",
+        alpha=0.8,
+    )
 
 
-# left-align legend contents
-for lg in [legend1, legend2, legend3]:
-    lg._legend_box.align = "left"
+    # ========================================================
+    # Candidate points
+    # ========================================================
+
+    # Marker shape represents the original candidate priority.
+    # Color represents sensitivity robustness.
+    # A black outline indicates an unchanged priority category
+    # across all sensitivity scenarios.
+    for row in df.itertuples():
+
+        priority_stable = (
+            row.priority_stability
+            == "stable"
+        )
+
+        ax.scatter(
+            row.percent_candidate_retained,
+            row.y,
+            s=95,
+            marker=MARKERS[
+                row.candidate_priority
+            ],
+            facecolor=ROBUSTNESS_COLORS[
+                row.robustness_class
+            ],
+            edgecolor=(
+                "black"
+                if priority_stable
+                else "none"
+            ),
+            linewidth=(
+                1.5
+                if priority_stable
+                else 0
+            ),
+            zorder=3,
+        )
 
 
-# ============================================================
-# Final layout
-# ============================================================
+    # ========================================================
+    # Axes
+    # ========================================================
 
-fig.subplots_adjust(
-    left=0.18,
-    right=0.98,
-    top=0.95,
-    bottom=0.06,
-)
+    ax.set_yticks(
+        df["y"]
+    )
+
+    ax.set_yticklabels(
+        df["dmel_cre_id"],
+        fontsize=8,
+    )
+
+    ax.set_xlim(
+        0,
+        103,
+    )
+
+    ax.set_xlabel(
+        "Candidate retention across sensitivity scenarios (%)",
+        fontsize=11,
+    )
+
+    ax.set_ylabel(
+        "Tier-1 CRE candidate",
+        fontsize=11,
+    )
+
+    ax.set_title(
+        "Robustness of Tier-1 CRE candidates",
+        fontsize=14,
+        pad=10,
+    )
+
+    ax.grid(
+        axis="x",
+        linestyle=":",
+        linewidth=0.8,
+        alpha=0.35,
+    )
 
 
-# ============================================================
-# Save
-# Since the legends are inside the figure canvas, no clipping.
-# ============================================================
+    # ========================================================
+    # Robustness-zone labels
+    # ========================================================
 
-for extension in ["png"]:
-    out = (
-        FIG_DIR
-        / f"tier1_candidate_robustness_ranked.{extension}"
+    top = (
+        df["y"].max()
+        + 1.6
+    )
+
+    ax.text(
+        moderate_min / 2,
+        top,
+        "sensitive",
+        ha="center",
+        va="center",
+        fontsize=10,
+        fontweight="bold",
+        color=ROBUSTNESS_COLORS["sensitive"],
+    )
+
+    ax.text(
+        (
+            moderate_min
+            + 100
+        ) / 2,
+        top,
+        "moderate",
+        ha="center",
+        va="center",
+        fontsize=10,
+        fontweight="bold",
+        color=ROBUSTNESS_COLORS["moderate"],
+    )
+
+    ax.text(
+        101.2,
+        top,
+        "robust",
+        ha="center",
+        va="center",
+        fontsize=10,
+        fontweight="bold",
+        color=ROBUSTNESS_COLORS["robust"],
+    )
+
+    ax.set_ylim(
+        0,
+        top + 0.8,
+    )
+
+
+    # ========================================================
+    # Legends
+    # ========================================================
+
+    priority_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker=MARKERS[key],
+            color="none",
+            markerfacecolor="grey",
+            markeredgecolor="grey",
+            markersize=8,
+            label=PRIORITY_LABELS[key],
+        )
+        for key in PRIORITY_ORDER
+    ]
+
+    legend1 = ax_leg.legend(
+        handles=priority_handles,
+        title="Primary candidate priority",
+        loc="upper left",
+        bbox_to_anchor=(
+            0.0,
+            1.0,
+        ),
+        frameon=False,
+        fontsize=9,
+        title_fontsize=10,
+    )
+
+    ax_leg.add_artist(
+        legend1
+    )
+
+
+    robustness_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor=color,
+            markeredgecolor="none",
+            markersize=8,
+            label=label.capitalize(),
+        )
+        for label, color
+        in ROBUSTNESS_COLORS.items()
+    ]
+
+    legend2 = ax_leg.legend(
+        handles=robustness_handles,
+        title="Candidate robustness",
+        loc="upper left",
+        bbox_to_anchor=(
+            0.0,
+            0.62,
+        ),
+        frameon=False,
+        fontsize=9,
+        title_fontsize=10,
+    )
+
+    ax_leg.add_artist(
+        legend2
+    )
+
+
+    stability_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor="lightgrey",
+            markeredgecolor="black",
+            markeredgewidth=1.5,
+            markersize=8,
+            label="Same priority in all scenarios",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor="lightgrey",
+            markeredgecolor="none",
+            markersize=8,
+            label="Priority changes",
+        ),
+    ]
+
+    legend3 = ax_leg.legend(
+        handles=stability_handles,
+        title="Priority stability",
+        loc="upper left",
+        bbox_to_anchor=(
+            0.0,
+            0.34,
+        ),
+        frameon=False,
+        fontsize=9,
+        title_fontsize=10,
+    )
+
+    ax_leg.add_artist(
+        legend3
+    )
+
+    for legend in [
+        legend1,
+        legend2,
+        legend3,
+    ]:
+        legend._legend_box.align = "left"
+
+
+    # ========================================================
+    # Save
+    # ========================================================
+
+    fig.subplots_adjust(
+        left=0.18,
+        right=0.98,
+        top=0.95,
+        bottom=0.07,
     )
 
     fig.savefig(
-        out,
+        args.out_png,
         dpi=300,
+        bbox_inches="tight",
     )
 
-    print(f"Wrote: {out}")
+    fig.savefig(
+        args.out_pdf,
+        bbox_inches="tight",
+    )
 
-plt.close(fig)
+    plt.close(
+        fig
+    )
+
+    print(
+        f"Wrote PNG:\n"
+        f"{args.out_png}"
+    )
+
+    print(
+        f"Wrote PDF:\n"
+        f"{args.out_pdf}"
+    )
+
+
+if __name__ == "__main__":
+    main()
