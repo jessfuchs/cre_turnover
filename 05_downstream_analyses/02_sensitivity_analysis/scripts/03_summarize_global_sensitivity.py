@@ -46,64 +46,18 @@ def parse_args():
         )
     )
 
-    parser.add_argument(
-        "--sensitivity-dir",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--targets",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--scenario-manifest",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--primary-scenario",
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-global",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-species",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-transitions",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--out-cre",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--metadata-out",
-        type=Path,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--expected-reference-cres",
-        type=int,
-        required=True,
-    )
+    parser.add_argument("--sensitivity-dir", type=Path, required=True)
+    parser.add_argument("--targets", type=Path, required=True)
+    parser.add_argument("--scenario-manifest", type=Path, required=True)
+    parser.add_argument("--primary-scenario", required=True)
+    
+    parser.add_argument("--out-global", type=Path, required=True)
+    parser.add_argument("--out-species", type=Path, required=True)
+    parser.add_argument("--out-transitions", type=Path, required=True)
+    parser.add_argument("--out-cre", type=Path, required=True)
+    
+    parser.add_argument("--metadata-out", type=Path, required=True)
+    parser.add_argument("--expected-reference-cres", type=int, required=True)
 
     return parser.parse_args()
 
