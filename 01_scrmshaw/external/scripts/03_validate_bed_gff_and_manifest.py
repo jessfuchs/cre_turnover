@@ -31,11 +31,11 @@ class BedStats:
 # ======================================================================
 
 def fail(message: str) -> None:
-    raise SystemExit(f"FEHLER: {message}")
+    raise SystemExit(f"ERROR: {message}")
 
 
 def warn(message: str) -> None:
-    print(f"WARNUNG: {message}", file=sys.stderr)
+    print(f"WARNING: {message}", file=sys.stderr)
 
 
 # ======================================================================
@@ -45,7 +45,7 @@ def warn(message: str) -> None:
 def read_species_file(path: Path) -> list[Species]:
 
     if not path.is_file() or path.stat().st_size == 0:
-        fail(f"Species-Datei fehlt oder ist leer: {path}")
+        fail(f"Species file is missing or empty: {path}")
 
     species = []
 
@@ -67,8 +67,8 @@ def read_species_file(path: Path) -> list[Species]:
 
             if len(fields) != 2:
                 fail(
-                    f"{path}:{line_no}: erwartet 2 Felder "
-                    f"(slug, scientific_name), erhalten: {line}"
+                    f"{path}:{line_no}: expected 2 fields "
+                    f"(slug, scientific_name), received: {line}"
                 )
 
             slug, scientific_name = fields
@@ -77,13 +77,13 @@ def read_species_file(path: Path) -> list[Species]:
 
             if len(scientific_parts) != 2:
                 fail(
-                    f"{path}:{line_no}: wissenschaftlicher Name muss "
-                    f"'Genus species' sein: {scientific_name}"
+                    f"{path}:{line_no}: scientific name must be "
+                    f"'Genus species': {scientific_name}"
                 )
 
             if slug in seen_slugs:
                 fail(
-                    f"{path}:{line_no}: doppelter Slug: {slug}"
+                    f"{path}:{line_no}: duplicate slug: {slug}"
                 )
 
             seen_slugs.add(slug)
@@ -96,7 +96,7 @@ def read_species_file(path: Path) -> list[Species]:
             )
 
     if not species:
-        fail(f"Keine Arten in {path} gefunden")
+        fail(f"No species found in {path}")
 
     return species
 
@@ -130,8 +130,8 @@ def inspect_bed(
 
             if len(fields) != 17:
                 fail(
-                    f"{path}:{line_no}: erwartet 17 BED-Felder, "
-                    f"gefunden: {len(fields)}"
+                    f"{path}:{line_no}: expected 17 BED fields, "
+                    f"found: {len(fields)}"
                 )
 
             training = fields[14]
@@ -139,27 +139,27 @@ def inspect_bed(
 
             if training != expected_training:
                 fail(
-                    f"{path}:{line_no}: Training set ist "
-                    f"'{training}' statt '{expected_training}'"
+                    f"{path}:{line_no}: training set is "
+                    f"'{training}' instead of '{expected_training}'"
                 )
 
             if method != expected_method:
                 fail(
-                    f"{path}:{line_no}: Methode ist "
-                    f"'{method}' statt '{expected_method}'"
+                    f"{path}:{line_no}: method is "
+                    f"'{method}' instead of '{expected_method}'"
                 )
 
             try:
                 rank = int(fields[16])
             except ValueError:
                 fail(
-                    f"{path}:{line_no}: Rank in Spalte 17 "
-                    f"ist nicht ganzzahlig: {fields[16]}"
+                    f"{path}:{line_no}: rank in column 17 "
+                    f"is not an integer: {fields[16]}"
                 )
 
             if rank < 1:
                 fail(
-                    f"{path}:{line_no}: ungültiger Rank: {rank}"
+                    f"{path}:{line_no}: invalid rank: {rank}"
                 )
 
             seqids.add(fields[0])
@@ -176,7 +176,7 @@ def inspect_bed(
                 max_rank = rank
 
     if n_rows == 0:
-        fail(f"BED-Datei ist leer: {path}")
+        fail(f"BED file is empty: {path}")
 
     return BedStats(
         n_rows=n_rows,
@@ -208,7 +208,7 @@ def seqids_gff(path: Path) -> set[str]:
                 ids.add(fields[0])
 
     if not ids:
-        fail(f"Keine SeqIDs im GFF gefunden: {path}")
+        fail(f"No SeqIDs found in GFF: {path}")
 
     return ids
 
@@ -258,16 +258,16 @@ def resolve_gff(
     if legacy.is_file() and legacy.stat().st_size > 0:
 
         warn(
-            f"{species.slug}: verwende Legacy-GFF-Namen "
-            f"'{legacy.name}'. Besser wäre '{preferred.name}'."
+            f"{species.slug}: using legacy GFF name "
+            f"'{legacy.name}'. '{preferred.name}' would be preferred."
         )
 
         return legacy
 
     fail(
-        f"GFF fehlt für {species.scientific_name}.\n"
-        f"  erwartet: {preferred}\n"
-        f"  alternativ: {legacy}"
+        f"GFF is missing for {species.scientific_name}.\n"
+        f"  expected: {preferred}\n"
+        f"  alternative: {legacy}"
     )
 
 
@@ -378,19 +378,19 @@ def main():
         if stats.min_rank != 1:
             fail(
                 f"{sp.slug}: min rank = {stats.min_rank}; "
-                f"erwartet wurde 1"
+                f"expected 1"
             )
 
         if stats.n_rank1 != args.expected_offsets:
             fail(
-                f"{sp.slug}: Rank 1 kommt {stats.n_rank1}x vor; "
-                f"erwartet wurden {args.expected_offsets} Offsets"
+                f"{sp.slug}: rank 1 occurs {stats.n_rank1} times; "
+                f"expected {args.expected_offsets} offsets"
             )
 
         if stats.max_rank > args.max_rank:
             fail(
                 f"{sp.slug}: max rank = {stats.max_rank}; "
-                f"erlaubt sind maximal {args.max_rank}"
+                f"maximum allowed is {args.max_rank}"
             )
 
         # We deliberately do NOT require exactly 125,000 rows.
@@ -409,8 +409,8 @@ def main():
 
         if stats.n_rows > theoretical_max:
             fail(
-                f"{sp.slug}: {stats.n_rows} Zeilen überschreiten "
-                f"das theoretische Maximum von {theoretical_max}"
+                f"{sp.slug}: {stats.n_rows} rows exceed "
+                f"the theoretical maximum of {theoretical_max}"
             )
 
         print(f"  BED            : {bed}")
@@ -442,9 +442,9 @@ def main():
             )
 
             fail(
-                f"{sp.slug}: BED/GFF-Mismatch. "
-                f"{len(missing)} BED-SeqIDs fehlen im GFF. "
-                f"Beispiele: {example}"
+                f"{sp.slug}: BED/GFF mismatch. "
+                f"{len(missing)} BED SeqIDs are missing from the GFF. "
+                f"Examples: {example}"
             )
 
         manifest_rows.append(
