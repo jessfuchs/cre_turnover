@@ -513,10 +513,7 @@ def main():
     print(f'Wrote annotation:\n{args.out}')
     print()
     print(f'Wrote metadata:\n{args.metadata_out}')
-    
-# ============================================================
-# Entry point
-# ============================================================
+
 
 if __name__ == "__main__":
     main()
