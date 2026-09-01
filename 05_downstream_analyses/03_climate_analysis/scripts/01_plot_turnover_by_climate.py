@@ -1,141 +1,40 @@
 #!/usr/bin/env python3
 
-"""
-Plot species-level CRE turnover rates by climatic zone.
-
-Input
------
-cre_classification/results/species_summary.tsv
-
-This table already contains the species-level CRE-state counts and rates,
-including:
-
-    turnover_candidate
-    mapped
-    uncertain
-    turnover_rate_evaluable
-
-The column called "species" in species_summary.tsv contains species slugs
-(e.g. dazt, dbif, d_repleta), not scientific names.
-
-Additional metadata are joined from:
-
-    external_scrmshaw/combined_manifest.tsv
-    cre_classification/phylogeny/data/species_traits.tsv
-
-Primary metric
---------------
-turnover_rate_evaluable
-
-This corresponds to:
-
-    turnover_candidate / mapped
-
-where "mapped" is the number of evaluable reference CREs.
-
-Outputs
--------
-downstream_analyses/climate_analysis/results/
-    climate_turnover_summary.tsv
-    climate_turnover_descriptive_statistics.tsv
-    climate_turnover_kruskal.tsv
-
-downstream_analyses/climate_analysis/results/figures/
-    turnover_rate_by_climate.png
-    turnover_rate_by_climate.pdf
-
-The Kruskal-Wallis test is exploratory only because it does not account
-for phylogenetic non-independence. The phylogenetically controlled
-inference is performed separately using PGLS.
-"""
+# ============================================================
+# Plot species-level CRE turnover by climatic zone
+#
+# Purpose:
+#   Compare species-level CRE turnover rates among climatic
+#   zones and generate descriptive statistics and an
+#   exploratory Kruskal-Wallis test.
+#
+# Primary metric:
+#   turnover_rate_evaluable =
+#       turnover_candidate / mapped reference CREs
+#
+# Notes:
+#   The Kruskal-Wallis test is exploratory because species are
+#   not phylogenetically independent. Phylogenetically
+#   controlled inference is performed separately using PGLS.
+#
+# Input/output paths are supplied by the climate-analysis
+# configuration via the pipeline wrapper.
+# ============================================================
 
 from pathlib import Path
-
-import numpy as np
-import pandas as pd
+import argparse
 
 import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
-
+import numpy as np
+import pandas as pd
 from scipy.stats import kruskal
 
 
 # ============================================================
-# Paths
-# ============================================================
-
-SCRIPT_DIR = Path(__file__).resolve().parent
-ANALYSIS_DIR = SCRIPT_DIR.parent
-DOWNSTREAM_DIR = ANALYSIS_DIR.parent
-PROJECT_DIR = DOWNSTREAM_DIR.parent
-
-CLASS_DIR = PROJECT_DIR / "cre_classification"
-
-SPECIES_SUMMARY_FILE = (
-    CLASS_DIR
-    / "results"
-    / "species_summary.tsv"
-)
-
-MANIFEST_FILE = (
-    PROJECT_DIR
-    / "external_scrmshaw"
-    / "combined_manifest.tsv"
-)
-
-TRAITS_FILE = (
-    CLASS_DIR
-    / "phylogeny"
-    / "data"
-    / "species_traits.tsv"
-)
-
-RESULTS_DIR = (
-    ANALYSIS_DIR
-    / "results"
-)
-
-FIG_DIR = (
-    RESULTS_DIR
-    / "figures"
-)
-
-RESULTS_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-FIG_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-
-OUT_SUMMARY = (
-    RESULTS_DIR
-    / "climate_turnover_summary.tsv"
-)
-
-OUT_DESCRIPTIVE = (
-    RESULTS_DIR
-    / "climate_turnover_descriptive_statistics.tsv"
-)
-
-OUT_KRUSKAL = (
-    RESULTS_DIR
-    / "climate_turnover_kruskal.tsv"
-)
-
-OUT_PNG = (
-    FIG_DIR
-    / "turnover_rate_by_climate.png"
-)
-
-
-# ============================================================
-# Constants
+# Analysis setup
 # ============================================================
 
 METRIC = "turnover_rate_evaluable"
@@ -163,21 +62,52 @@ CLIMATE_COLORS = {
 
 
 # ============================================================
+# Arguments
+# ============================================================
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Analyze and plot species-level CRE turnover "
+            "across climatic zones."
+        )
+    )
+
+    parser.add_argument("--species-summary", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--traits", type=Path, required=True)
+    parser.add_argument("--out-summary", type=Path, required=True)
+    parser.add_argument("--out-descriptive", type=Path, required=True)
+    parser.add_argument("--out-kruskal", type=Path, required=True)
+    parser.add_argument("--out-png", type=Path, required=True)
+    parser.add_argument("--out-pdf", type=Path, required=True)
+
+    return parser.parse_args()
+
+
+# ============================================================
 # Helpers
 # ============================================================
 
 def require_file(path):
-
-    if not path.exists():
-
+    if not path.is_file():
         raise SystemExit(
             f"ERROR: required file not found:\n{path}"
         )
 
 
-def tree_name_from_species(
-    scientific_name,
-):
+def require_columns(df, required, label):
+    missing = sorted(set(required) - set(df.columns))
+    if missing:
+        raise SystemExit(
+            f"ERROR: {label} missing columns:\n"
+            + "\n".join(missing)
+        )
+
+
+def tree_name_from_species(scientific_name):
+    """Convert a scientific species name to the tree-name format."""
 
     return (
         str(scientific_name)
@@ -188,1027 +118,540 @@ def tree_name_from_species(
 
 
 # ============================================================
-# Input checks
+# Main
 # ============================================================
 
-for path in [
-    SPECIES_SUMMARY_FILE,
-    MANIFEST_FILE,
-    TRAITS_FILE,
-]:
+def main():
 
-    require_file(
-        path
-    )
+    args = parse_args()
 
+    for path in [
+        args.species_summary,
+        args.manifest,
+        args.traits,
+    ]:
+        require_file(path)
 
-# ============================================================
-# Load species summary
-#
-# Important:
-# The column "species" contains SLUGS.
-# ============================================================
-
-summary = pd.read_csv(
-    SPECIES_SUMMARY_FILE,
-    sep="\t",
-)
-
-
-required_summary_columns = {
-    "species",
-    "n_reference_cres",
-    "mapped",
-    "unmapped",
-    "mapping_rate",
-    "present",
-    "turnover_candidate",
-    "no_detected_CRE",
-    "uncertain",
-    "turnover_rate_evaluable",
-}
-
-
-missing = (
-    required_summary_columns
-    - set(summary.columns)
-)
-
-
-if missing:
-
-    raise SystemExit(
-        "ERROR: species_summary.tsv missing columns:\n"
-        + "\n".join(
-            sorted(
-                missing
-            )
+    for path in [
+        args.out_summary,
+        args.out_descriptive,
+        args.out_kruskal,
+        args.out_png,
+        args.out_pdf,
+    ]:
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
         )
-    )
 
 
-summary["species"] = (
-    summary["species"]
-    .astype(str)
-    .str.strip()
-)
+    # ========================================================
+    # Species-level CRE turnover
+    # ========================================================
 
+    summary = pd.read_csv(args.species_summary, sep="\t")
 
-if summary["species"].duplicated().any():
-
-    duplicates = (
-        summary.loc[
-            summary["species"].duplicated(
-                keep=False
-            ),
-            "species",
-        ]
-        .unique()
-        .tolist()
-    )
-
-    raise SystemExit(
-        "ERROR: duplicate species slugs "
-        "in species_summary.tsv:\n"
-        + "\n".join(
-            sorted(
-                duplicates
-            )
-        )
-    )
-
-
-# ============================================================
-# Validate species-summary arithmetic
-# ============================================================
-
-expected_mapped = (
-    summary["present"]
-    + summary["turnover_candidate"]
-    + summary["no_detected_CRE"]
-)
-
-
-bad_mapped = (
-    expected_mapped
-    != summary["mapped"]
-)
-
-
-if bad_mapped.any():
-
-    bad = summary.loc[
-        bad_mapped,
-        [
+    require_columns(
+        summary,
+        {
             "species",
             "mapped",
-            "present",
             "turnover_candidate",
-            "no_detected_CRE",
-        ],
-    ]
-
-    raise SystemExit(
-        "ERROR: mapped does not equal "
-        "present + turnover_candidate + no_detected_CRE:\n"
-        + bad.to_string(
-            index=False
-        )
-    )
-
-
-expected_total = (
-    summary["mapped"]
-    + summary["uncertain"]
-)
-
-
-bad_total = (
-    expected_total
-    != summary["n_reference_cres"]
-)
-
-
-if bad_total.any():
-
-    bad = summary.loc[
-        bad_total,
-        [
-            "species",
-            "n_reference_cres",
-            "mapped",
-            "uncertain",
-        ],
-    ]
-
-    raise SystemExit(
-        "ERROR: mapped + uncertain does not equal "
-        "n_reference_cres:\n"
-        + bad.to_string(
-            index=False
-        )
-    )
-
-
-# ============================================================
-# Validate turnover_rate_evaluable
-# ============================================================
-
-recomputed_turnover_rate = (
-    summary["turnover_candidate"]
-    / summary["mapped"]
-)
-
-
-rate_difference = (
-    recomputed_turnover_rate
-    - summary[METRIC]
-).abs()
-
-
-bad_rate = (
-    rate_difference
-    > 1e-6
-)
-
-
-if bad_rate.any():
-
-    bad = summary.loc[
-        bad_rate,
-        [
-            "species",
-            "turnover_candidate",
-            "mapped",
             METRIC,
-        ],
-    ].copy()
-
-
-    bad[
-        "recomputed_turnover_rate"
-    ] = recomputed_turnover_rate.loc[
-        bad_rate
-    ].values
-
-
-    raise SystemExit(
-        "ERROR: turnover_rate_evaluable does not match "
-        "turnover_candidate / mapped:\n"
-        + bad.to_string(
-            index=False
-        )
+        },
+        "species summary",
     )
 
-
-# ============================================================
-# Load manifest
-# ============================================================
-
-manifest = pd.read_csv(
-    MANIFEST_FILE,
-    sep="\t",
-    dtype=str,
-).fillna("")
-
-
-required_manifest_columns = {
-    "slug",
-    "species",
-    "source",
-}
-
-
-missing = (
-    required_manifest_columns
-    - set(manifest.columns)
-)
-
-
-if missing:
-
-    raise SystemExit(
-        "ERROR: combined_manifest.tsv missing columns:\n"
-        + "\n".join(
-            sorted(
-                missing
-            )
+    if summary["species"].duplicated().any():
+        raise SystemExit(
+            "ERROR: duplicate species in species summary."
         )
-    )
 
-
-for column in [
-    "slug",
-    "species",
-    "source",
-]:
-
-    manifest[column] = (
-        manifest[column]
+    summary["species"] = (
+        summary["species"]
         .astype(str)
         .str.strip()
     )
 
-
-# Scientific species name -> tree-style name.
-manifest["tree_name"] = (
-    manifest["species"]
-    .map(
-        tree_name_from_species
+    summary["mapped"] = pd.to_numeric(
+        summary["mapped"],
+        errors="raise",
     )
-)
+
+    summary["turnover_candidate"] = pd.to_numeric(
+        summary["turnover_candidate"],
+        errors="raise",
+    )
+
+    summary[METRIC] = pd.to_numeric(
+        summary[METRIC],
+        errors="raise",
+    )
+
+    # Verify the metric used for all downstream climate analyses.
+    expected_rate = (
+        summary["turnover_candidate"]
+        / summary["mapped"]
+    )
+
+    if not np.allclose(
+        summary[METRIC],
+        expected_rate,
+        atol=1e-6,
+        rtol=0,
+    ):
+        raise SystemExit(
+            "ERROR: turnover_rate_evaluable does not match "
+            "turnover_candidate / mapped."
+        )
 
 
-# Rename scientific-name column to avoid ambiguity with the
-# "species" slug column in species_summary.tsv.
-manifest_small = (
-    manifest[
-        [
+    # ========================================================
+    # Species manifest
+    # ========================================================
+
+    manifest = pd.read_csv(
+        args.manifest,
+        sep="\t",
+        dtype=str,
+        keep_default_na=False,
+    )
+
+    require_columns(
+        manifest,
+        {
             "slug",
             "species",
             "source",
-            "tree_name",
-        ]
-    ]
-    .rename(
-        columns={
-            "species": "scientific_name"
-        }
-    )
-    .copy()
-)
-
-
-if manifest_small["slug"].duplicated().any():
-
-    duplicates = (
-        manifest_small.loc[
-            manifest_small["slug"].duplicated(
-                keep=False
-            ),
-            "slug",
-        ]
-        .unique()
-        .tolist()
+        },
+        "combined manifest",
     )
 
-    raise SystemExit(
-        "ERROR: duplicate slugs "
-        "in combined_manifest.tsv:\n"
-        + "\n".join(
-            sorted(
-                duplicates
-            )
+    if manifest["slug"].duplicated().any():
+        raise SystemExit(
+            "ERROR: duplicate species slugs in manifest."
+        )
+
+    manifest["tree_name"] = (
+        manifest["species"]
+        .map(tree_name_from_species)
+    )
+
+    manifest = (
+        manifest[
+            [
+                "slug",
+                "species",
+                "source",
+                "tree_name",
+            ]
+        ]
+        .rename(
+            columns={
+                "species":
+                    "scientific_name",
+            }
         )
     )
 
 
-if manifest_small["tree_name"].duplicated().any():
+    # ========================================================
+    # Climatic-zone annotation
+    # ========================================================
 
-    duplicates = (
-        manifest_small.loc[
-            manifest_small[
-                "tree_name"
-            ].duplicated(
-                keep=False
-            ),
-            "tree_name",
-        ]
-        .unique()
-        .tolist()
+    traits = pd.read_csv(
+        args.traits,
+        sep="\t",
+        dtype=str,
+        keep_default_na=False,
     )
 
-    raise SystemExit(
-        "ERROR: duplicate inferred tree names "
-        "in combined_manifest.tsv:\n"
-        + "\n".join(
-            sorted(
-                duplicates
-            )
-        )
-    )
-
-
-# ============================================================
-# Merge species summary with manifest
-#
-# species_summary.species = slug
-# manifest_small.slug      = slug
-# ============================================================
-
-df = summary.merge(
-    manifest_small,
-    left_on="species",
-    right_on="slug",
-    how="left",
-    validate="one_to_one",
-)
-
-
-missing_manifest = (
-    df["tree_name"].isna()
-    | (
-        df["tree_name"]
-        .astype(str)
-        .str.strip()
-        == ""
-    )
-)
-
-
-if missing_manifest.any():
-
-    missing_species = (
-        df.loc[
-            missing_manifest,
-            "species",
-        ]
-        .tolist()
-    )
-
-    raise SystemExit(
-        "ERROR: species slugs missing from "
-        "combined_manifest.tsv:\n"
-        + "\n".join(
-            missing_species
-        )
-    )
-
-
-# ============================================================
-# Load climate traits
-# ============================================================
-
-traits = pd.read_csv(
-    TRAITS_FILE,
-    sep="\t",
-    dtype=str,
-).fillna("")
-
-
-required_trait_columns = {
-    "tree_name",
-    "climatic_zone",
-}
-
-
-missing = (
-    required_trait_columns
-    - set(traits.columns)
-)
-
-
-if missing:
-
-    raise SystemExit(
-        "ERROR: species_traits.tsv missing columns:\n"
-        + "\n".join(
-            sorted(
-                missing
-            )
-        )
-    )
-
-
-traits["tree_name"] = (
-    traits["tree_name"]
-    .astype(str)
-    .str.strip()
-)
-
-
-traits["climatic_zone"] = (
-    traits["climatic_zone"]
-    .astype(str)
-    .str.strip()
-)
-
-
-if traits["tree_name"].duplicated().any():
-
-    duplicates = (
-        traits.loc[
-            traits["tree_name"].duplicated(
-                keep=False
-            ),
-            "tree_name",
-        ]
-        .unique()
-        .tolist()
-    )
-
-    raise SystemExit(
-        "ERROR: duplicate tree names "
-        "in species_traits.tsv:\n"
-        + "\n".join(
-            sorted(
-                duplicates
-            )
-        )
-    )
-
-
-# ============================================================
-# Merge climate annotation
-# ============================================================
-
-df = df.merge(
-    traits[
-        [
+    require_columns(
+        traits,
+        {
             "tree_name",
             "climatic_zone",
-        ]
-    ],
-    on="tree_name",
-    how="left",
-    validate="many_to_one",
-)
-
-
-missing_climate = (
-    df["climatic_zone"].isna()
-    | (
-        df["climatic_zone"]
-        .astype(str)
-        .str.strip()
-        == ""
+        },
+        "species traits",
     )
-)
 
+    if traits["tree_name"].duplicated().any():
+        raise SystemExit(
+            "ERROR: duplicate tree names in species traits."
+        )
 
-if missing_climate.any():
+    # species_summary uses species slugs, while climatic-zone
+    # annotations are linked through scientific/tree names.
+    df = summary.merge(
+        manifest,
+        left_on="species",
+        right_on="slug",
+        how="left",
+        validate="one_to_one",
+    )
 
-    missing_species = (
-        df.loc[
-            missing_climate,
+    df = df.merge(
+        traits[
             [
-                "species",
-                "scientific_name",
                 "tree_name",
-            ],
+                "climatic_zone",
+            ]
+        ],
+        on="tree_name",
+        how="left",
+        validate="many_to_one",
+    )
+
+    if df["climatic_zone"].isna().any():
+        bad = df.loc[
+            df["climatic_zone"].isna(),
+            "species",
         ]
-    )
 
-    raise SystemExit(
-        "ERROR: missing climate annotation for:\n"
-        + missing_species.to_string(
-            index=False
+        raise SystemExit(
+            "ERROR: missing climatic-zone annotation for:\n"
+            + "\n".join(bad)
         )
+
+    unknown_climates = sorted(
+        set(df["climatic_zone"])
+        - set(CLIMATE_ORDER)
     )
 
+    if unknown_climates:
+        raise SystemExit(
+            "ERROR: unknown climatic-zone values:\n"
+            + "\n".join(unknown_climates)
+        )
 
-unknown_climate = sorted(
-    set(
+
+    # ========================================================
+    # Sort and write joined species table
+    # ========================================================
+
+    climate_rank = {
+        climate: rank
+        for rank, climate
+        in enumerate(CLIMATE_ORDER)
+    }
+
+    df["_climate_rank"] = (
         df["climatic_zone"]
-    )
-    - set(
-        CLIMATE_ORDER
-    )
-)
-
-
-if unknown_climate:
-
-    raise SystemExit(
-        "ERROR: unknown climatic-zone values:\n"
-        + "\n".join(
-            unknown_climate
-        )
+        .map(climate_rank)
     )
 
-
-# ============================================================
-# Sort output
-# ============================================================
-
-climate_rank = {
-    climate: rank
-    for rank, climate
-    in enumerate(
-        CLIMATE_ORDER
-    )
-}
-
-
-df["_climate_rank"] = (
-    df["climatic_zone"]
-    .map(
-        climate_rank
-    )
-)
-
-
-df = (
-    df
-    .sort_values(
-        [
-            "_climate_rank",
-            "scientific_name",
-        ],
-        kind="mergesort",
-    )
-    .drop(
-        columns="_climate_rank"
-    )
-    .reset_index(
-        drop=True
-    )
-)
-
-
-# ============================================================
-# Write joined species-level table
-# ============================================================
-
-df.to_csv(
-    OUT_SUMMARY,
-    sep="\t",
-    index=False,
-)
-
-
-# ============================================================
-# Descriptive statistics by climate
-# ============================================================
-
-descriptive_rows = []
-
-
-for climate in CLIMATE_ORDER:
-
-    values = (
-        df.loc[
-            df["climatic_zone"]
-            == climate,
-            METRIC,
-        ]
-        .astype(float)
-        .to_numpy()
-    )
-
-
-    if len(values) == 0:
-        continue
-
-
-    descriptive_rows.append({
-        "climatic_zone": climate,
-        "climate_label": CLIMATE_LABELS[
-            climate
-        ],
-        "n_species": len(
-            values
-        ),
-        "mean": float(
-            np.mean(
-                values
-            )
-        ),
-        "median": float(
-            np.median(
-                values
-            )
-        ),
-        "sd": (
-            float(
-                np.std(
-                    values,
-                    ddof=1,
-                )
-            )
-            if len(values) > 1
-            else np.nan
-        ),
-        "min": float(
-            np.min(
-                values
-            )
-        ),
-        "max": float(
-            np.max(
-                values
-            )
-        ),
-    })
-
-
-descriptive_df = pd.DataFrame(
-    descriptive_rows
-)
-
-
-descriptive_df.to_csv(
-    OUT_DESCRIPTIVE,
-    sep="\t",
-    index=False,
-)
-
-
-# ============================================================
-# Exploratory Kruskal-Wallis test
-# ============================================================
-
-groups = []
-
-used_climates = []
-
-
-for climate in CLIMATE_ORDER:
-
-    values = (
-        df.loc[
-            df["climatic_zone"]
-            == climate,
-            METRIC,
-        ]
-        .dropna()
-        .astype(float)
-        .to_numpy()
-    )
-
-
-    if len(values) > 0:
-
-        groups.append(
-            values
-        )
-
-        used_climates.append(
-            climate
-        )
-
-
-if len(groups) >= 2:
-
-    test = kruskal(
-        *groups
-    )
-
-
-    kruskal_df = pd.DataFrame([
-        {
-            "test": "Kruskal-Wallis",
-            "metric": METRIC,
-            "groups": ",".join(
-                used_climates
-            ),
-            "statistic": float(
-                test.statistic
-            ),
-            "p_value": float(
-                test.pvalue
-            ),
-            "phylogenetically_corrected": False,
-        }
-    ])
-
-else:
-
-    kruskal_df = pd.DataFrame([
-        {
-            "test": "Kruskal-Wallis",
-            "metric": METRIC,
-            "groups": ",".join(
-                used_climates
-            ),
-            "statistic": np.nan,
-            "p_value": np.nan,
-            "phylogenetically_corrected": False,
-        }
-    ])
-
-
-kruskal_df.to_csv(
-    OUT_KRUSKAL,
-    sep="\t",
-    index=False,
-)
-
-
-# ============================================================
-# Plot
-# ============================================================
-
-fig, ax = plt.subplots(
-    figsize=(
-        7.8,
-        5.8,
-    )
-)
-
-
-x_positions = {
-    climate: i
-    for i, climate
-    in enumerate(
-        CLIMATE_ORDER
-    )
-}
-
-
-# ------------------------------------------------------------
-# Plot individual species
-#
-# Deterministic offsets are used instead of random jitter so
-# the plot is exactly reproducible.
-# ------------------------------------------------------------
-
-for climate in CLIMATE_ORDER:
-
-    sub = (
-        df.loc[
-            df["climatic_zone"]
-            == climate
-        ]
+    df = (
+        df
         .sort_values(
-            "scientific_name"
+            [
+                "_climate_rank",
+                "scientific_name",
+            ],
+            kind="mergesort",
+        )
+        .drop(
+            columns="_climate_rank"
+        )
+        .reset_index(
+            drop=True
         )
     )
 
-
-    n_species = len(
-        sub
+    df.to_csv(
+        args.out_summary,
+        sep="\t",
+        index=False,
     )
 
 
-    if n_species == 0:
-        continue
+    # ========================================================
+    # Descriptive statistics
+    # ========================================================
+
+    descriptive_rows = []
+
+    for climate in CLIMATE_ORDER:
+
+        values = (
+            df.loc[
+                df["climatic_zone"] == climate,
+                METRIC,
+            ]
+            .dropna()
+            .to_numpy(
+                dtype=float
+            )
+        )
+
+        if len(values) == 0:
+            continue
+
+        descriptive_rows.append({
+            "climatic_zone": climate,
+            "climate_label": CLIMATE_LABELS[climate],
+            "n_species": len(values),
+            "mean": float(np.mean(values)),
+            "median": float(np.median(values)),
+            "sd":(float(np.std(values, ddof=1)) if len(values) > 1 else np.nan),
+            "min": float(np.min(values)),
+            "max": float(np.max(values)),
+        })
+
+    descriptive = pd.DataFrame(descriptive_rows)
+
+    descriptive.to_csv(
+        args.out_descriptive,
+        sep="\t",
+        index=False,
+    )
 
 
-    if n_species == 1:
+    # ========================================================
+    # Exploratory Kruskal-Wallis test
+    # ========================================================
 
-        offsets = np.array([
-            0.0
-        ])
+    groups = []
+    used_climates = []
+
+    for climate in CLIMATE_ORDER:
+
+        values = (
+            df.loc[
+                df["climatic_zone"] == climate,
+                METRIC,
+            ]
+            .dropna()
+            .to_numpy(
+                dtype=float
+            )
+        )
+
+        if len(values) > 0:
+            groups.append(values)
+            used_climates.append(climate)
+
+    if len(groups) >= 2:
+
+        test = kruskal(*groups)
+        statistic = float(test.statistic)
+        p_value = float(test.pvalue)
 
     else:
 
-        offsets = np.linspace(
-            -0.16,
-            0.16,
-            n_species,
+        statistic = np.nan
+        p_value = np.nan
+
+    kruskal_df = pd.DataFrame([{
+        "test": "Kruskal-Wallis",
+        "metric": METRIC,
+        "groups": ",".join(used_climates),
+        "statistic": statistic,
+        "p_value": p_value,
+        "phylogenetically_corrected": False,
+    }])
+
+    kruskal_df.to_csv(
+        args.out_kruskal,
+        sep="\t",
+        index=False,
+    )
+
+
+    # ========================================================
+    # Plot
+    # ========================================================
+
+    fig, ax = plt.subplots(figsize=(7.8, 5.8))
+
+    x_positions = {
+        climate: index
+        for index, climate
+        in enumerate(CLIMATE_ORDER)
+    }
+
+    for climate in CLIMATE_ORDER:
+
+        sub = (
+            df.loc[
+                df["climatic_zone"] == climate
+            ]
+            .sort_values(
+                "scientific_name"
+            )
+        )
+
+        if sub.empty:
+            continue
+
+        # Deterministic horizontal offsets avoid random jitter
+        # and keep the figure exactly reproducible.
+        if len(sub) == 1:
+
+            offsets = np.array([0.0])
+
+        else:
+
+            offsets = np.linspace(-0.16, 0.16, len(sub))
+
+        x = (x_positions[climate] + offsets)
+
+        y = (sub[METRIC].to_numpy(dtype=float) * 100)
+
+        ax.scatter(
+            x,
+            y,
+            s=60,
+            facecolor=CLIMATE_COLORS[climate],
+            edgecolor="#222222",
+            linewidth=0.6,
+            alpha=0.90,
+            zorder=3,
+        )
+
+        # Horizontal line indicates the climatic-zone median.
+        median = float(
+            np.median(y)
+        )
+
+        ax.plot(
+            [
+                x_positions[climate] - 0.22,
+                x_positions[climate] + 0.22,
+            ],
+            [
+                median,
+                median,
+            ],
+            color="#222222",
+            linewidth=2.0,
+            zorder=4,
         )
 
 
-    x = (
-        x_positions[
-            climate
-        ]
-        + offsets
+    # ========================================================
+    # Figure formatting
+    # ========================================================
+
+    ax.set_xticks(
+        range(
+            len(CLIMATE_ORDER)
+        )
     )
 
-
-    y = (
-        sub[
-            METRIC
-        ]
-        .astype(float)
-        .to_numpy()
-        * 100
-    )
-
-
-    ax.scatter(
-        x,
-        y,
-        s=60,
-        facecolor=CLIMATE_COLORS[
-            climate
+    ax.set_xticklabels(
+        [
+            CLIMATE_LABELS[climate]
+            for climate in CLIMATE_ORDER
         ],
-        edgecolor="#222222",
+        fontsize=10,
+    )
+
+    ax.set_ylabel(
+        "Turnover candidates among evaluable CRE loci (%)",
+        fontsize=11,
+    )
+
+    ax.set_xlabel(
+        "Climatic zone",
+        fontsize=11,
+    )
+
+    ax.set_title(
+        "Species-level CRE turnover across climatic zones",
+        fontsize=13,
+        pad=10,
+    )
+
+    ax.grid(
+        axis="y",
+        linestyle=":",
         linewidth=0.6,
-        alpha=0.90,
-        zorder=3,
+        alpha=0.5,
+    )
+
+    ax.set_axisbelow(
+        True
+    )
+
+    ax.spines[
+        "top"
+    ].set_visible(
+        False
+    )
+
+    ax.spines[
+        "right"
+    ].set_visible(
+        False
+    )
+
+    fig.tight_layout()
+
+
+    # ========================================================
+    # Save
+    # ========================================================
+
+    fig.savefig(
+        args.out_png,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    fig.savefig(
+        args.out_pdf,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        fig
     )
 
 
-    # --------------------------------------------------------
-    # Median line
-    # --------------------------------------------------------
+    # ========================================================
+    # Console summary
+    # ========================================================
 
-    median = float(
-        np.median(
-            y
-        )
-    )
-
-
-    ax.plot(
-        [
-            x_positions[
-                climate
-            ] - 0.22,
-
-            x_positions[
-                climate
-            ] + 0.22,
-        ],
-        [
-            median,
-            median,
-        ],
-        color="#222222",
-        linewidth=2.0,
-        zorder=4,
-    )
-
-
-# ============================================================
-# Formatting
-# ============================================================
-
-ax.set_xticks(
-    range(
-        len(
-            CLIMATE_ORDER
-        )
-    )
-)
-
-
-ax.set_xticklabels(
-    [
-        CLIMATE_LABELS[
-            climate
-        ]
-        for climate in CLIMATE_ORDER
-    ],
-    fontsize=10,
-)
-
-
-ax.set_ylabel(
-    "Turnover candidates among evaluable CRE loci (%)",
-    fontsize=11,
-)
-
-
-ax.set_xlabel(
-    "Climatic zone",
-    fontsize=11,
-)
-
-
-ax.set_title(
-    "Species-level CRE turnover across climatic zones",
-    fontsize=13,
-    pad=10,
-)
-
-
-ax.grid(
-    axis="y",
-    linestyle=":",
-    linewidth=0.6,
-    alpha=0.5,
-)
-
-
-ax.set_axisbelow(
-    True
-)
-
-
-# Remove unnecessary spines.
-ax.spines[
-    "top"
-].set_visible(
-    False
-)
-
-ax.spines[
-    "right"
-].set_visible(
-    False
-)
-
-
-fig.tight_layout()
-
-
-# ============================================================
-# Save
-# ============================================================
-
-fig.savefig(
-    OUT_PNG,
-    dpi=300,
-    bbox_inches="tight",
-)
-
-
-plt.close(
-    fig
-)
-
-
-# ============================================================
-# Console summary
-# ============================================================
-
-print()
-print("=" * 72)
-print("SPECIES-LEVEL TURNOVER BY CLIMATE")
-print("=" * 72)
-print()
-
-
-print(
-    f"Species analysed: "
-    f"{len(df)}"
-)
-
-print()
-
-
-for _, row in descriptive_df.iterrows():
-
+    print()
+    print("=" * 72)
+    print("SPECIES-LEVEL TURNOVER BY CLIMATIC ZONE")
+    print("=" * 72)
     print(
-        f"{row['climatic_zone']:4s}  "
-        f"n={int(row['n_species']):2d}  "
-        f"mean={row['mean']:.4f}  "
-        f"median={row['median']:.4f}  "
-        f"range="
-        f"{row['min']:.4f}-"
-        f"{row['max']:.4f}"
+        f"Species analyzed: "
+        f"{len(df)}"
+    )
+
+    print()
+    for row in descriptive.itertuples():
+        print(
+            f"{row.climatic_zone:4s}  "
+            f"n={row.n_species:2d}  "
+            f"mean={row.mean:.4f}  "
+            f"median={row.median:.4f}  "
+            f"range={row.min:.4f}-{row.max:.4f}"
+        )
+    print()
+    print("Exploratory Kruskal-Wallis test:")
+    print(kruskal_df.to_string(index=False))
+    print()
+    print(
+        "NOTE: Kruskal-Wallis does not account for "
+        "phylogenetic non-independence."
+    )
+    print(
+        "Use the PGLS analysis for phylogenetically "
+        "controlled inference."
+    )
+    print()
+    print(
+        f"Wrote PNG:\n"
+        f"{args.out_png}"
+    )
+    print(
+        f"Wrote PDF:\n"
+        f"{args.out_pdf}"
     )
 
 
-print()
-print("Exploratory test:")
-print(
-    kruskal_df.to_string(
-        index=False
-    )
-)
-
-
-print()
-print(
-    "NOTE: Kruskal-Wallis does not account for "
-    "phylogenetic non-independence."
-)
-
-print(
-    "Use the PGLS analysis for the primary "
-    "phylogenetically corrected inference."
-)
-
-
-print()
-print("Wrote:")
-print(
-    OUT_SUMMARY
-)
-
-print(
-    OUT_DESCRIPTIVE
-)
-
-print(
-    OUT_KRUSKAL
-)
-
-print(
-    OUT_PNG
-)
+if __name__ == "__main__":
+    main()
