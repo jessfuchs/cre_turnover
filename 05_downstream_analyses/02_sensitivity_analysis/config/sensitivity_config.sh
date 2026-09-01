@@ -12,6 +12,8 @@ CLASSIFICATION_ROOT="${PROJECT_ROOT}/04_cre_classification"
 MAPPING_ROOT="${PROJECT_ROOT}/02_mapping_orthologs"
 WGA_ROOT="${PROJECT_ROOT}/03_pairwise_wga"
 
+CANDIDATE_ANALYSIS_ROOT="${DOWNSTREAM_ROOT}/01_candidate_analysis"
+
 
 # ======================================================================
 # Inputs
@@ -23,6 +25,9 @@ REFERENCE_CRES_TSV="${MAPPING_ROOT}/reference_cres/dmel_reference_cres.tsv"
 SO_ALL_SPECIES_FBGN="${MAPPING_ROOT}/results/SO_all_species_fbgn.tsv"
 LIFTED_CRES_DIR="${WGA_ROOT}/lifted_cres_dmel"
 BASELINE_TURNOVER_DIR="${CLASSIFICATION_ROOT}/results/turnover_by_species"
+
+CANDIDATE_TIER1_TABLE="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized.tsv"
+FOCAL_CLADES_FILE="${CANDIDATE_ANALYSIS_ROOT}/config/focal_clades.tsv"
 
 
 # ======================================================================
@@ -43,6 +48,11 @@ SENSITIVITY_DISTANCES=(
 
 PRIMARY_SENSITIVITY_SCENARIO="${PRIMARY_SENSITIVITY_SCENARIO:-ov050_dist24000}"
 EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
+
+# Candidate-priority recurrence thresholds.
+# These must match the thresholds used in candidate_analysis.
+FOCAL_RECURRENCE_MIN_CLADES="${FOCAL_RECURRENCE_MIN_CLADES:-2}"
+SECONDARY_RECURRENCE_MIN_CLADES="${SECONDARY_RECURRENCE_MIN_CLADES:-2}"
 
 
 # ======================================================================
@@ -68,6 +78,13 @@ SENSITIVITY_STATE_TRANSITIONS="${RESULTS_DIR}/sensitivity_state_transitions.tsv"
 SENSITIVITY_CRE_STABILITY="${RESULTS_DIR}/sensitivity_cre_stability.tsv"
 GLOBAL_SENSITIVITY_METADATA="${RESULTS_DIR}/sensitivity_global_summary_metadata.tsv"
 
+# Candidate sensitivity
+
+CANDIDATE_SENSITIVITY_LONG="${RESULTS_DIR}/candidate_sensitivity_long.tsv"
+CANDIDATE_SENSITIVITY_SUMMARY="${RESULTS_DIR}/candidate_sensitivity_summary.tsv"
+CANDIDATE_SENSITIVITY_PRIORITY_MATRIX="${RESULTS_DIR}/candidate_sensitivity_priority_matrix.tsv"
+CANDIDATE_SENSITIVITY_RETENTION_MATRIX="${RESULTS_DIR}/candidate_sensitivity_retention_matrix.tsv"
+CANDIDATE_SENSITIVITY_METADATA="${RESULTS_DIR}/candidate_sensitivity_metadata.tsv"
 
 # ======================================================================
 # Export
