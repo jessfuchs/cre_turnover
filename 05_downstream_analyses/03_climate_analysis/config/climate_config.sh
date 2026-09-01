@@ -51,3 +51,10 @@ CRE_TURNOVER_MATRIX="${CLASSIFICATION_ROOT}/results/cre_turnover_matrix.tsv"
 FOCAL_CLADES_FILE="${CANDIDATE_ANALYSIS_ROOT}/config/focal_clades.tsv"
 FOCAL_TIER1_CANDIDATES="${RESULTS_DIR}/focal_tier1_candidates.tsv"
 FOCAL_TIER1_ENRICHMENT="${RESULTS_DIR}/focal_tier1_enrichment.tsv"
+
+# ======================================================================
+# Figures
+# ======================================================================
+
+FOCAL_TIER1_ENRICHMENT_PNG="${FIGURES_DIR}/focal_tier1_enrichment.png"
+FOCAL_TIER1_ENRICHMENT_PDF="${FIGURES_DIR}/focal_tier1_enrichment.pdf"
