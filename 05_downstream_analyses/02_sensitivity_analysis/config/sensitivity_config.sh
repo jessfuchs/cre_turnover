@@ -99,3 +99,6 @@ FIGURES_DIR="${RESULTS_DIR}/figures"
 TIER1_ROBUSTNESS_RANKED_PNG="${FIGURES_DIR}/tier1_candidate_robustness_ranked.png"
 TIER1_ROBUSTNESS_RANKED_PDF="${FIGURES_DIR}/tier1_candidate_robustness_ranked.pdf"
 
+TIER1_SENSITIVITY_MATRIX_PNG="${FIGURES_DIR}/tier1_sensitivity_matrix.png"
+TIER1_SENSITIVITY_MATRIX_PDF="${FIGURES_DIR}/tier1_sensitivity_matrix.pdf"
+
