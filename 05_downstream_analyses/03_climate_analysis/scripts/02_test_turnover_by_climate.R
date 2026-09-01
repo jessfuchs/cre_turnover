@@ -3,22 +3,27 @@
 # ============================================================
 # Phylogenetically controlled climate analysis
 #
+# Purpose:
+#   Test whether species-level CRE turnover differs among
+#   climatic zones while accounting for phylogenetic
+#   non-independence.
+#
 # Response:
-#   empirical-logit transformed turnover_rate_evaluable
+#   Empirical-logit transformed evaluable turnover rate:
+#
+#       logit((turnover_candidate + 0.5) / (mapped + 1))
 #
 # Model:
 #   logit turnover rate ~ climatic_zone
 #
 # Phylogenetic covariance:
-#   Pagel's lambda
+#   Pagel's lambda estimated by GLS.
 #
-# Input:
-#   results/climate_turnover_summary.tsv
+# Null and climate models are fitted by maximum likelihood
+# because models with different fixed effects are compared.
 #
-# Outputs:
-#   results/pgls_climate_model_comparison.tsv
-#   results/pgls_climate_coefficients.tsv
-#   results/pgls_climate_summary.txt
+# Input/output paths are supplied by the climate-analysis
+# configuration via the pipeline wrapper.
 # ============================================================
 
 
@@ -26,170 +31,55 @@
 # Packages
 # ============================================================
 
-required_packages <- c(
-    "ape",
-    "nlme"
-)
-
+required_packages <- c("ape", "nlme")
 
 missing_packages <- required_packages[
-    !vapply(
-        required_packages,
-        requireNamespace,
-        logical(1),
-        quietly = TRUE
-    )
+    !vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)
 ]
 
-
 if (length(missing_packages) > 0) {
-
     stop(
-        paste0(
-            "Missing R packages: ",
-            paste(
-                missing_packages,
-                collapse = ", "
-            ),
-            "\nInstall with:\n",
-            "install.packages(c(",
-            paste(
-                sprintf(
-                    "\"%s\"",
-                    missing_packages
-                ),
-                collapse = ", "
-            ),
-            "))"
-        )
+        "Missing R packages: ",
+        paste(missing_packages, collapse = ", ")
     )
 }
 
 
-library(ape)
-library(nlme)
-
-
 # ============================================================
-# Paths
+# Arguments
 # ============================================================
 
-args <- commandArgs(
-    trailingOnly = FALSE
-)
+args <- commandArgs(trailingOnly = TRUE)
 
+get_arg <- function(name) {
+    position <- match(name, args)
 
-file_arg <- grep(
-    "^--file=",
-    args,
-    value = TRUE
-)
+    if (is.na(position) || position == length(args)) {
+        stop("Missing required argument: ", name)
+    }
 
-
-if (length(file_arg) != 1) {
-
-    stop(
-        "Could not determine script path."
-    )
+    args[position + 1]
 }
 
-
-script_file <- sub(
-    "^--file=",
-    "",
-    file_arg
-)
-
-
-SCRIPT_DIR <- dirname(
-    normalizePath(
-        script_file
-    )
-)
-
-
-ANALYSIS_DIR <- dirname(
-    SCRIPT_DIR
-)
-
-
-DOWNSTREAM_DIR <- dirname(
-    ANALYSIS_DIR
-)
-
-
-PROJECT_DIR <- dirname(
-    DOWNSTREAM_DIR
-)
-
-
-CLASS_DIR <- file.path(
-    PROJECT_DIR,
-    "cre_classification"
-)
-
-
-RESULTS_DIR <- file.path(
-    ANALYSIS_DIR,
-    "results"
-)
-
-
-INPUT_FILE <- file.path(
-    RESULTS_DIR,
-    "climate_turnover_summary.tsv"
-)
-
-
-TREE_FILE <- file.path(
-    CLASS_DIR,
-    "phylogeny",
-    "results",
-    "301Fly_HOG_UCLDtree_40species.nw"
-)
-
-
-OUT_MODEL <- file.path(
-    RESULTS_DIR,
-    "pgls_climate_model_comparison.tsv"
-)
-
-
-OUT_COEFFICIENTS <- file.path(
-    RESULTS_DIR,
-    "pgls_climate_coefficients.tsv"
-)
-
-
-OUT_SUMMARY <- file.path(
-    RESULTS_DIR,
-    "pgls_climate_summary.txt"
-)
+INPUT_FILE <- get_arg("--input")
+TREE_FILE <- get_arg("--tree")
+OUT_MODEL <- get_arg("--out-model")
+OUT_COEFFICIENTS <- get_arg("--out-coefficients")
+OUT_SUMMARY <- get_arg("--out-summary")
 
 
 # ============================================================
 # Input checks
 # ============================================================
 
-if (!file.exists(INPUT_FILE)) {
-
-    stop(
-        paste(
-            "Missing input file:",
-            INPUT_FILE
-        )
-    )
+for (path in c(INPUT_FILE, TREE_FILE)) {
+    if (!file.exists(path)) {
+        stop("Required file not found: ", path)
+    }
 }
 
-
-if (!file.exists(TREE_FILE)) {
-
-    stop(
-        paste(
-            "Missing phylogenetic tree:",
-            TREE_FILE
-        )
-    )
+for (path in c(OUT_MODEL, OUT_COEFFICIENTS, OUT_SUMMARY)) {
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 }
 
 
@@ -203,7 +93,6 @@ dat <- read.delim(
     check.names = FALSE
 )
 
-
 required_columns <- c(
     "tree_name",
     "climatic_zone",
@@ -211,99 +100,103 @@ required_columns <- c(
     "mapped"
 )
 
-
-missing_columns <- setdiff(
-    required_columns,
-    colnames(dat)
-)
-
+missing_columns <- setdiff(required_columns, names(dat))
 
 if (length(missing_columns) > 0) {
-
     stop(
-        paste(
-            "Missing columns:",
-            paste(
-                missing_columns,
-                collapse = ", "
-            )
-        )
+        "Missing columns: ",
+        paste(missing_columns, collapse = ", ")
     )
+}
+
+if (nrow(dat) == 0) {
+    stop("Climate turnover table is empty.")
+}
+
+if (anyDuplicated(dat$tree_name)) {
+    stop("Duplicate tree_name values in climate turnover table.")
 }
 
 
 # ============================================================
-# Response variable
-#
-# Empirical logit:
-#
-#   (turnover + 0.5) / (mapped + 1)
-#
-# This avoids ±Inf if a species has a turnover proportion
-# exactly equal to 0 or 1.
+# Prepare response variable
 # ============================================================
 
+dat$turnover_candidate <- as.numeric(dat$turnover_candidate)
+dat$mapped <- as.numeric(dat$mapped)
+
+if (anyNA(dat$turnover_candidate) || anyNA(dat$mapped)) {
+    stop("Non-numeric turnover_candidate or mapped values.")
+}
+
+if (any(dat$mapped <= 0)) {
+    stop("All species must have at least one mapped CRE.")
+}
+
+if (
+    any(dat$turnover_candidate < 0) ||
+    any(dat$turnover_candidate > dat$mapped)
+) {
+    stop("Invalid turnover_candidate counts.")
+}
+
+# Empirical-logit correction avoids infinite values when the
+# observed turnover proportion is exactly zero or one.
 dat$turnover_rate_adjusted <- (
     dat$turnover_candidate + 0.5
 ) / (
     dat$mapped + 1
 )
 
-
-dat$logit_turnover_rate <- qlogis(
-    dat$turnover_rate_adjusted
-)
-
-
-dat$climatic_zone <- factor(
-    dat$climatic_zone,
-    levels = c(
-        "TROP",
-        "ARID",
-        "TEMP",
-        "BORE"
-    )
-)
+dat$logit_turnover_rate <- qlogis(dat$turnover_rate_adjusted)
 
 
 # ============================================================
-# Load and prune tree
+# Climatic-zone predictor
 # ============================================================
 
-tree <- read.tree(
-    TREE_FILE
+CLIMATE_LEVELS <- c("TROP", "ARID", "TEMP", "BORE")
+
+unknown_climates <- setdiff(
+    unique(dat$climatic_zone),
+    CLIMATE_LEVELS
 )
 
-
-data_species <- dat$tree_name
-
-
-missing_from_tree <- setdiff(
-    data_species,
-    tree$tip.label
-)
-
-
-if (length(missing_from_tree) > 0) {
-
+if (length(unknown_climates) > 0) {
     stop(
-        paste(
-            "Species missing from tree:",
-            paste(
-                missing_from_tree,
-                collapse = ", "
-            )
-        )
+        "Unknown climatic-zone values: ",
+        paste(unknown_climates, collapse = ", ")
     )
 }
 
+# TROP is the reference level of the climate model.
+dat$climatic_zone <- factor(
+    dat$climatic_zone,
+    levels = CLIMATE_LEVELS
+)
 
-tree <- drop.tip(
-    tree,
-    setdiff(
-        tree$tip.label,
-        data_species
+
+# ============================================================
+# Load and prune phylogeny
+# ============================================================
+
+tree <- ape::read.tree(TREE_FILE)
+
+missing_from_tree <- setdiff(
+    dat$tree_name,
+    tree$tip.label
+)
+
+if (length(missing_from_tree) > 0) {
+    stop(
+        "Species missing from phylogenetic tree: ",
+        paste(missing_from_tree, collapse = ", ")
     )
+}
+
+tree <- ape::drop.tip(
+    tree,
+    setdiff(tree$tip.label, dat$tree_name)
 )
 
 
@@ -312,31 +205,30 @@ tree <- drop.tip(
 # ============================================================
 
 dat <- dat[
-    match(
-        tree$tip.label,
-        dat$tree_name
-    ),
+    match(tree$tip.label, dat$tree_name),
 ]
 
-
-if (!all(
-    dat$tree_name == tree$tip.label
-)) {
-
-    stop(
-        "ERROR: tree and data order do not match."
-    )
+if (!all(dat$tree_name == tree$tip.label)) {
+    stop("Tree and species-data order do not match.")
 }
-
 
 dat$species_id <- dat$tree_name
 
 
 # ============================================================
-# Correlation structures
+# Pagel-lambda correlation structures
 # ============================================================
 
-cor_null <- corPagel(
+# Separate correlation objects are used because lambda is
+# estimated independently for each GLS model.
+cor_null <- ape::corPagel(
+    value = 0.5,
+    phy = tree,
+    fixed = FALSE,
+    form = ~ species_id
+)
+
+cor_climate <- ape::corPagel(
     value = 0.5,
     phy = tree,
     fixed = FALSE,
@@ -344,34 +236,25 @@ cor_null <- corPagel(
 )
 
 
-cor_climate <- corPagel(
-    value = 0.5,
-    phy = tree,
-    fixed = FALSE,
-    form = ~ species_id
-)
-
-
 # ============================================================
-# Models
-#
-# ML is used because models with different fixed effects
-# are compared.
+# PGLS models
 # ============================================================
 
-model_null <- gls(
+# ML is used because the two models differ in fixed effects.
+model_null <- nlme::gls(
     logit_turnover_rate ~ 1,
     data = dat,
     correlation = cor_null,
-    method = "ML"
+    method = "ML",
+    na.action = na.fail
 )
 
-
-model_climate <- gls(
+model_climate <- nlme::gls(
     logit_turnover_rate ~ climatic_zone,
     data = dat,
     correlation = cor_climate,
-    method = "ML"
+    method = "ML",
+    na.action = na.fail
 )
 
 
@@ -384,16 +267,12 @@ comparison <- anova(
     model_climate
 )
 
-
 comparison_df <- data.frame(
-    model = rownames(
-        comparison
-    ),
+    model = c("null", "climate"),
     comparison,
     row.names = NULL,
     check.names = FALSE
 )
-
 
 write.table(
     comparison_df,
@@ -405,23 +284,17 @@ write.table(
 
 
 # ============================================================
-# Coefficients
+# Climate-model coefficients
 # ============================================================
 
-coef_table <- summary(
-    model_climate
-)$tTable
-
+coef_table <- summary(model_climate)$tTable
 
 coef_df <- data.frame(
-    term = rownames(
-        coef_table
-    ),
+    term = rownames(coef_table),
     coef_table,
     row.names = NULL,
     check.names = FALSE
 )
-
 
 write.table(
     coef_df,
@@ -436,9 +309,11 @@ write.table(
 # Pagel lambda
 # ============================================================
 
-lambda_estimate <- coef(
-    model_climate$modelStruct$corStruct,
-    unconstrained = FALSE
+lambda_estimate <- as.numeric(
+    coef(
+        model_climate$modelStruct$corStruct,
+        unconstrained = FALSE
+    )
 )
 
 
@@ -446,81 +321,30 @@ lambda_estimate <- coef(
 # Human-readable report
 # ============================================================
 
-sink(
-    OUT_SUMMARY
-)
+sink(OUT_SUMMARY)
 
+cat("Phylogenetically controlled CRE turnover analysis\n")
+cat("=================================================\n\n")
 
-cat(
-    "Phylogenetically controlled CRE turnover analysis\n"
-)
+cat("Response:\n")
+cat("logit((turnover_candidate + 0.5) / (mapped + 1))\n\n")
 
-cat(
-    "=================================================\n\n"
-)
+cat("Predictor:\n")
+cat("climatic_zone\n\n")
 
+cat("Reference climatic zone:\n")
+cat("TROP\n\n")
 
-cat(
-    "Response:\n"
-)
+cat("Number of species: ", nrow(dat), "\n", sep = "")
+cat("Estimated Pagel lambda: ", lambda_estimate, "\n\n", sep = "")
 
-cat(
-    "logit((turnover_candidate + 0.5) / (mapped + 1))\n\n"
-)
+cat("MODEL COMPARISON\n")
+cat("----------------\n")
+print(comparison)
 
-
-cat(
-    "Predictor:\n"
-)
-
-cat(
-    "climatic_zone\n\n"
-)
-
-
-cat(
-    "Number of species: ",
-    nrow(dat),
-    "\n",
-    sep = ""
-)
-
-
-cat(
-    "Estimated Pagel lambda: ",
-    lambda_estimate,
-    "\n\n",
-    sep = ""
-)
-
-
-cat(
-    "MODEL COMPARISON\n"
-)
-
-cat(
-    "----------------\n"
-)
-
-print(
-    comparison
-)
-
-
-cat(
-    "\n\nFULL CLIMATE MODEL\n"
-)
-
-cat(
-    "------------------\n"
-)
-
-print(
-    summary(
-        model_climate
-    )
-)
-
+cat("\n\nFULL CLIMATE MODEL\n")
+cat("------------------\n")
+print(summary(model_climate))
 
 sink()
 
@@ -529,47 +353,19 @@ sink()
 # Console summary
 # ============================================================
 
-cat(
-    "\n============================================================\n"
-)
+cat("\n============================================================\n")
+cat("PGLS CLIMATE ANALYSIS COMPLETE\n")
+cat("============================================================\n")
 
-cat(
-    "PGLS CLIMATE ANALYSIS COMPLETE\n"
-)
+cat("Species: ", nrow(dat), "\n", sep = "")
+cat("Estimated Pagel lambda: ", lambda_estimate, "\n\n", sep = "")
 
-cat(
-    "============================================================\n\n"
-)
-
-
-cat(
-    "Species: ",
-    nrow(dat),
-    "\n",
-    sep = ""
-)
-
-
-cat(
-    "Estimated Pagel lambda: ",
-    lambda_estimate,
-    "\n\n",
-    sep = ""
-)
-
-
-print(
-    comparison
-)
-
+print(comparison)
 
 cat(
     "\nWrote:\n",
-    OUT_MODEL,
-    "\n",
-    OUT_COEFFICIENTS,
-    "\n",
-    OUT_SUMMARY,
-    "\n",
+    OUT_MODEL, "\n",
+    OUT_COEFFICIENTS, "\n",
+    OUT_SUMMARY, "\n",
     sep = ""
 )
