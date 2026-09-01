@@ -1,159 +1,293 @@
 #!/usr/bin/env python3
 
+# ============================================================
+# Plot focal Tier-1 summary
+#
+# Purpose:
+#   Summarize clade-wide Tier-1 singleton contrasts by showing
+#   the fraction assigned to the predefined focal lineage.
+#
+# Focal events are separated into:
+#   - focal turnover_candidate
+#   - focal present
+#
+# Remaining singleton events are assigned to other species.
+# The vertical marker shows the expected focal share under
+# equal probability across all species in the clade.
+# ============================================================
+
 from pathlib import Path
-import pandas as pd
+import argparse
 
 import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import pandas as pd
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-ANALYSIS_DIR = SCRIPT_DIR.parent
 
-INPUT_FILE = ANALYSIS_DIR / "results" / "focal_tier1_enrichment.tsv"
-FIG_DIR = ANALYSIS_DIR / "results" / "figures"
-FIG_DIR.mkdir(parents=True, exist_ok=True)
-
-OUT_PNG = FIG_DIR / "focal_tier1_summary.png"
+# ============================================================
+# Plot settings
+# ============================================================
 
 TURNOVER_COLOR = "#E69F00"
 PRESENT_COLOR = "#0072B2"
 OTHER_COLOR = "#D9D9D9"
 EDGE_COLOR = "#333333"
 
-df = pd.read_csv(INPUT_FILE, sep="\t")
 
-required = {
-    "clade_display",
-    "n_tier1_singletons",
-    "n_focal_tier1",
-    "n_focal_turnover",
-    "n_focal_present",
-    "observed_focal_share",
-    "expected_focal_share",
-}
-missing = required - set(df.columns)
-if missing:
-    raise SystemExit(
-        "Missing columns:\n" + "\n".join(sorted(missing))
+# ============================================================
+# Arguments
+# ============================================================
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Plot focal Tier-1 singleton composition by clade."
+    )
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--out-png", type=Path, required=True)
+    parser.add_argument("--out-pdf", type=Path, required=True)
+    return parser.parse_args()
+
+
+# ============================================================
+# Helpers
+# ============================================================
+
+def require_columns(df, required):
+    missing = sorted(set(required) - set(df.columns))
+
+    if missing:
+        raise SystemExit(
+            "ERROR: focal Tier-1 enrichment table missing columns:\n"
+            + "\n".join(missing)
+        )
+
+
+# ============================================================
+# Main
+# ============================================================
+
+def main():
+    args = parse_args()
+
+    if not args.input.is_file():
+        raise SystemExit(f"ERROR: input file not found:\n{args.input}")
+
+    args.out_png.parent.mkdir(parents=True, exist_ok=True)
+    args.out_pdf.parent.mkdir(parents=True, exist_ok=True)
+
+    df = pd.read_csv(args.input, sep="\t")
+
+    require_columns(
+        df,
+        {
+            "clade_display",
+            "n_tier1_singletons",
+            "n_focal_tier1",
+            "n_focal_turnover",
+            "n_focal_present",
+            "observed_focal_share",
+            "expected_focal_share",
+        },
     )
 
-df["focal_turnover_share"] = (
-    df["n_focal_turnover"] / df["n_tier1_singletons"]
-)
-df["focal_present_share"] = (
-    df["n_focal_present"] / df["n_tier1_singletons"]
-)
-df["other_share"] = (
-    1.0
-    - df["focal_turnover_share"]
-    - df["focal_present_share"]
-)
+    if df.empty:
+        raise SystemExit("ERROR: focal Tier-1 enrichment table is empty.")
 
-fig, ax = plt.subplots(figsize=(10.2, 5.8))
+    numeric_columns = [
+        "n_tier1_singletons",
+        "n_focal_tier1",
+        "n_focal_turnover",
+        "n_focal_present",
+        "observed_focal_share",
+        "expected_focal_share",
+    ]
 
-y = range(len(df))
-height = 0.68
+    for column in numeric_columns:
+        df[column] = pd.to_numeric(df[column], errors="raise")
 
-turnover_pct = df["focal_turnover_share"] * 100
-present_pct = df["focal_present_share"] * 100
-other_pct = df["other_share"] * 100
-observed_pct = df["observed_focal_share"] * 100
-expected_pct = df["expected_focal_share"] * 100
+    # The focal count must equal the sum of both focal directions.
+    if not (
+        df["n_focal_tier1"]
+        == df["n_focal_turnover"] + df["n_focal_present"]
+    ).all():
+        raise SystemExit(
+            "ERROR: n_focal_tier1 does not equal "
+            "n_focal_turnover + n_focal_present."
+        )
 
-ax.barh(
-    y,
-    turnover_pct,
-    height=height,
-    color=TURNOVER_COLOR,
-    edgecolor="white",
-    linewidth=1.0,
-)
+    # Clades without singleton events have no defined composition.
+    plot_df = df.loc[df["n_tier1_singletons"] > 0].copy()
 
-ax.barh(
-    y,
-    present_pct,
-    left=turnover_pct,
-    height=height,
-    color=PRESENT_COLOR,
-    edgecolor="white",
-    linewidth=1.0,
-)
+    if plot_df.empty:
+        raise SystemExit("ERROR: no Tier-1 singleton events available to plot.")
 
-ax.barh(
-    y,
-    other_pct,
-    left=observed_pct,
-    height=height,
-    color=OTHER_COLOR,
-    edgecolor="white",
-    linewidth=1.0,
-)
-
-for i, value in enumerate(expected_pct):
-    ax.plot(
-        [value, value],
-        [i - height / 2 - 0.08, i + height / 2 + 0.08],
-        color=EDGE_COLOR,
-        linewidth=2.0,
-        zorder=5,
+    plot_df["focal_turnover_share"] = (
+        plot_df["n_focal_turnover"] / plot_df["n_tier1_singletons"]
     )
 
-for i, row in df.iterrows():
-    label = f"{int(row['n_focal_tier1'])}/{int(row['n_tier1_singletons'])}"
-    ax.text(
-        101.2,
-        i,
-        label,
-        va="center",
-        ha="left",
-        fontsize=10,
+    plot_df["focal_present_share"] = (
+        plot_df["n_focal_present"] / plot_df["n_tier1_singletons"]
     )
 
-ax.set_yticks(list(y))
-ax.set_yticklabels(df["clade_display"], fontsize=11)
-ax.invert_yaxis()
-ax.set_xlim(0, 108)
+    plot_df["other_share"] = (
+        1
+        - plot_df["focal_turnover_share"]
+        - plot_df["focal_present_share"]
+    )
 
-ax.set_xlabel(
-    "Share of clade-wide singleton Tier-1 contrasts (%)",
-    fontsize=11,
-)
+    # ========================================================
+    # Plot
+    # ========================================================
 
-ax.set_title(
-    "Concentration of lineage-specific Tier-1 contrasts in focal species",
-    fontsize=14,
-    pad=12,
-)
+    fig_height = max(4.8, len(plot_df) * 0.75)
+    fig, ax = plt.subplots(figsize=(10.2, fig_height))
 
-ax.grid(axis="x", linestyle=":", linewidth=0.6, alpha=0.35)
-ax.set_axisbelow(True)
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
+    y = range(len(plot_df))
+    height = 0.68
 
-handles = [
-    Line2D([0], [0], color=TURNOVER_COLOR, linewidth=10, label="Focal turnover"),
-    Line2D([0], [0], color=PRESENT_COLOR, linewidth=10, label="Focal present"),
-    Line2D([0], [0], color=OTHER_COLOR, linewidth=10, label="Other singleton"),
-    Line2D([0], [0], color=EDGE_COLOR, linewidth=2.5, label="Expected focal share"),
-]
+    turnover_pct = plot_df["focal_turnover_share"] * 100
+    present_pct = plot_df["focal_present_share"] * 100
+    other_pct = plot_df["other_share"] * 100
+    observed_pct = plot_df["observed_focal_share"] * 100
+    expected_pct = plot_df["expected_focal_share"] * 100
 
-ax.legend(
-    handles=handles,
-    frameon=False,
-    loc="upper left",
-    bbox_to_anchor=(1.01, 1.00),
-    borderaxespad=0.0,
-    fontsize=10,
-)
+    ax.barh(
+        y,
+        turnover_pct,
+        height=height,
+        color=TURNOVER_COLOR,
+        edgecolor="white",
+        linewidth=1.0,
+    )
 
-plt.tight_layout()
-plt.subplots_adjust(right=0.79)
+    ax.barh(
+        y,
+        present_pct,
+        left=turnover_pct,
+        height=height,
+        color=PRESENT_COLOR,
+        edgecolor="white",
+        linewidth=1.0,
+    )
 
-fig.savefig(OUT_PNG, dpi=300, bbox_inches="tight")
-plt.close(fig)
+    ax.barh(
+        y,
+        other_pct,
+        left=observed_pct,
+        height=height,
+        color=OTHER_COLOR,
+        edgecolor="white",
+        linewidth=1.0,
+    )
 
-print("Wrote:")
-print(OUT_PNG)
+    # Expected focal share under equal lineage probability.
+    for i, value in enumerate(expected_pct):
+        ax.plot(
+            [value, value],
+            [i - height / 2 - 0.08, i + height / 2 + 0.08],
+            color=EDGE_COLOR,
+            linewidth=2.0,
+            zorder=5,
+        )
+
+    # Show focal / total singleton counts.
+    for i, row in enumerate(plot_df.itertuples()):
+        label = f"{int(row.n_focal_tier1)}/{int(row.n_tier1_singletons)}"
+
+        ax.text(
+            101.2,
+            i,
+            label,
+            va="center",
+            ha="left",
+            fontsize=9,
+        )
+
+    # ========================================================
+    # Formatting
+    # ========================================================
+
+    ax.set_yticks(list(y))
+    ax.set_yticklabels(plot_df["clade_display"], fontsize=10)
+    ax.invert_yaxis()
+
+    ax.set_xlim(0, 108)
+
+    ax.set_xlabel(
+        "Share of clade-wide singleton Tier-1 contrasts (%)",
+        fontsize=11,
+    )
+
+    ax.set_title(
+        "Concentration of lineage-specific Tier-1 contrasts in focal species",
+        fontsize=13,
+        pad=10,
+    )
+
+    ax.grid(axis="x", linestyle=":", linewidth=0.6, alpha=0.35)
+    ax.set_axisbelow(True)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    handles = [
+        Line2D(
+            [0], [0],
+            color=TURNOVER_COLOR,
+            linewidth=10,
+            label="Focal turnover",
+        ),
+        Line2D(
+            [0], [0],
+            color=PRESENT_COLOR,
+            linewidth=10,
+            label="Focal present",
+        ),
+        Line2D(
+            [0], [0],
+            color=OTHER_COLOR,
+            linewidth=10,
+            label="Other singleton",
+        ),
+        Line2D(
+            [0], [0],
+            color=EDGE_COLOR,
+            linewidth=2.5,
+            label="Expected focal share",
+        ),
+    ]
+
+    ax.legend(
+        handles=handles,
+        frameon=False,
+        loc="upper left",
+        bbox_to_anchor=(1.01, 1.0),
+        borderaxespad=0,
+        fontsize=9,
+    )
+
+    fig.tight_layout()
+    fig.subplots_adjust(right=0.79)
+
+    # ========================================================
+    # Save
+    # ========================================================
+
+    fig.savefig(args.out_png, dpi=300, bbox_inches="tight")
+    fig.savefig(args.out_pdf, bbox_inches="tight")
+    plt.close(fig)
+
+    print()
+    print("=" * 72)
+    print("FOCAL TIER-1 SUMMARY PLOT")
+    print("=" * 72)
+    print(f"Clades plotted: {len(plot_df)}")
+    print()
+    print(f"Wrote PNG:\n{args.out_png}")
+    print(f"Wrote PDF:\n{args.out_pdf}")
+
+
+if __name__ == "__main__":
+    main()
