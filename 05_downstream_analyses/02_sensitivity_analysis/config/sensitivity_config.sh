@@ -29,6 +29,7 @@ BASELINE_TURNOVER_DIR="${CLASSIFICATION_ROOT}/results/turnover_by_species"
 CANDIDATE_TIER1_TABLE="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized.tsv"
 FOCAL_CLADES_FILE="${CANDIDATE_ANALYSIS_ROOT}/config/focal_clades.tsv"
 
+CANDIDATES_WITH_SENSITIVITY="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized_with_sensitivity.tsv"
 
 # ======================================================================
 # Sensitivity parameters
@@ -54,6 +55,8 @@ EXPECTED_REFERENCE_CRES="${EXPECTED_REFERENCE_CRES:-337}"
 FOCAL_RECURRENCE_MIN_CLADES="${FOCAL_RECURRENCE_MIN_CLADES:-2}"
 SECONDARY_RECURRENCE_MIN_CLADES="${SECONDARY_RECURRENCE_MIN_CLADES:-2}"
 
+# Minimum retention percentage classified as moderate robustness.
+CANDIDATE_MODERATE_ROBUSTNESS_MIN="${CANDIDATE_MODERATE_ROBUSTNESS_MIN:-66.6}"
 
 # ======================================================================
 # Results
@@ -85,6 +88,7 @@ CANDIDATE_SENSITIVITY_SUMMARY="${RESULTS_DIR}/candidate_sensitivity_summary.tsv"
 CANDIDATE_SENSITIVITY_PRIORITY_MATRIX="${RESULTS_DIR}/candidate_sensitivity_priority_matrix.tsv"
 CANDIDATE_SENSITIVITY_RETENTION_MATRIX="${RESULTS_DIR}/candidate_sensitivity_retention_matrix.tsv"
 CANDIDATE_SENSITIVITY_METADATA="${RESULTS_DIR}/candidate_sensitivity_metadata.tsv"
+CANDIDATE_SENSITIVITY_MERGE_METADATA="${RESULTS_DIR}/candidate_sensitivity_merge_metadata.tsv"
 
 # ======================================================================
 # Export
