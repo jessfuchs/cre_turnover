@@ -10,7 +10,7 @@ source config/config.sh
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate "$SCRM_ENV"
 
-python scripts/download_extract_zenodo.py \
+python scripts/01_download_extract_zenodo.py \
     --species "$SPECIES_FILE" \
     --data-dir "$DATA_DIR" \
     --record-id "$ZENODO_RECORD_ID" \
