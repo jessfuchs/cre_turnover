@@ -41,3 +41,13 @@ PHYLOGENY_TREE="${CLASSIFICATION_ROOT}/phylogeny/results/301Fly_HOG_UCLDtree_40s
 PGLS_CLIMATE_MODEL_COMPARISON="${RESULTS_DIR}/pgls_climate_model_comparison.tsv"
 PGLS_CLIMATE_COEFFICIENTS="${RESULTS_DIR}/pgls_climate_coefficients.tsv"
 PGLS_CLIMATE_SUMMARY="${RESULTS_DIR}/pgls_climate_summary.txt"
+
+# ======================================================================
+# Focal Tier-1 enrichment
+# ======================================================================
+
+CANDIDATE_ANALYSIS_ROOT="${DOWNSTREAM_ROOT}/01_candidate_analysis"
+CRE_TURNOVER_MATRIX="${CLASSIFICATION_ROOT}/results/cre_turnover_matrix.tsv"
+FOCAL_CLADES_FILE="${CANDIDATE_ANALYSIS_ROOT}/config/focal_clades.tsv"
+FOCAL_TIER1_CANDIDATES="${RESULTS_DIR}/focal_tier1_candidates.tsv"
+FOCAL_TIER1_ENRICHMENT="${RESULTS_DIR}/focal_tier1_enrichment.tsv"
