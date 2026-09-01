@@ -53,6 +53,15 @@ FOCAL_TIER1_CANDIDATES="${RESULTS_DIR}/focal_tier1_candidates.tsv"
 FOCAL_TIER1_ENRICHMENT="${RESULTS_DIR}/focal_tier1_enrichment.tsv"
 
 # ======================================================================
+# Azteca focal candidates
+# ======================================================================
+
+CANDIDATE_ANALYSIS_ROOT="${DOWNSTREAM_ROOT}/01_candidate_analysis"
+CANDIDATES_WITH_SENSITIVITY="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized_with_sensitivity.tsv"
+AZTECA_FOCAL_CLADE="${AZTECA_FOCAL_CLADE:-azteca_affinis_miranda_group}"
+AZTECA_FOCAL_CANDIDATES="${RESULTS_DIR}/azteca_focal_tier1_candidates.tsv"
+
+# ======================================================================
 # Figures
 # ======================================================================
 
