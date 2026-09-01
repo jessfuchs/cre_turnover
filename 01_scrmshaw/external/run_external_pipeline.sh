@@ -31,19 +31,19 @@ echo
 
 
 [[ -s "$SPECIES_FILE" ]] || {
-    echo "FEHLER: Species-Datei fehlt oder ist leer:" >&2
+    echo "ERROR: Species file is missing or empty:" >&2
     echo "  $SPECIES_FILE" >&2
     exit 1
 }
 
 [[ -d "$EXTERNAL_BED_DIR" ]] || {
-    echo "FEHLER: External-BED-Verzeichnis fehlt:" >&2
+    echo "ERROR: External BED directory is missing:" >&2
     echo "  $EXTERNAL_BED_DIR" >&2
     exit 1
 }
 
 [[ -d "$SOURCE_GFF_ROOT" ]] || {
-    echo "FEHLER: selected-Verzeichnis fehlt:" >&2
+    echo "ERROR: selected directory is missing:" >&2
     echo "  $SOURCE_GFF_ROOT" >&2
     exit 1
 }
@@ -71,7 +71,7 @@ N_SPECIES="$(
 
 
 if [[ "$N_SPECIES" -lt 1 ]]; then
-    echo "FEHLER: Keine Arten in $SPECIES_FILE gefunden." >&2
+    echo "ERROR: No species found in $SPECIES_FILE." >&2
     exit 1
 fi
 
@@ -129,7 +129,7 @@ python "$ROOT/scripts/03_validate_bed_gff_and_manifest.py" \
 
 
 [[ -s "$EXTERNAL_MANIFEST" ]] || {
-    echo "FEHLER: Manifest wurde nicht erzeugt:" >&2
+    echo "ERROR: Manifest was not created:" >&2
     echo "  $EXTERNAL_MANIFEST" >&2
     exit 1
 }
@@ -144,7 +144,7 @@ N_MANIFEST="$(
 
 
 if [[ "$N_MANIFEST" -ne "$N_SPECIES" ]]; then
-    echo "FEHLER: Species-Zahl stimmt nicht überein." >&2
+    echo "ERROR: Species count does not match." >&2
     echo "  species_external.txt : $N_SPECIES" >&2
     echo "  external manifest    : $N_MANIFEST" >&2
     exit 1
@@ -189,7 +189,7 @@ done < "$EXTERNAL_MANIFEST"
 
 
 if [[ "$N_DONE" -ne "$N_MANIFEST" ]]; then
-    echo "FEHLER: Nicht alle externen Arten wurden verarbeitet." >&2
+    echo "ERROR: Not all external species were processed." >&2
     echo "  expected : $N_MANIFEST" >&2
     echo "  processed: $N_DONE" >&2
     exit 1
