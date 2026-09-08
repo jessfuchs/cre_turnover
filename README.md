@@ -18,95 +18,11 @@ The workflow consists of five major stages:
 
 ## Workflow overview
 
-```mermaid
-%%{init: {
-  "theme": "base",
-  "flowchart": {
-    "curve": "basis",
-    "nodeSpacing": 35,
-    "rankSpacing": 45
-  },
-  "themeVariables": {
-    "primaryTextColor": "#111111",
-    "lineColor": "#707070"
-  }
-}}%%
-
-flowchart TD
-
-    A1["Genome FASTA"]
-    A2["GFF3 annotations"]
-    A3["External SCRMshaw predictions"]
-
-    B1["01 · SCRMshaw generation<br/>Generate predictions"]
-    B2["01 · External predictions<br/>Filter and standardize"]
-
-    C["Standardized prediction framework<br/>combined_manifest.tsv"]
-
-    D["02 · Ortholog mapping"]
-
-    D1["Ortholog-annotated predictions<br/>SO_all_species_fbgn.tsv"]
-    D2["337 D. melanogaster<br/>reference CREs"]
-
-    E["03 · Pairwise WGA<br/>and liftOver"]
-
-    E1["Lifted reference CREs<br/>39 target species"]
-
-    F["04 · CRE-state classification"]
-
-    G["CRE × species state matrix<br/>present · turnover_candidate ·<br/>no_detected_CRE · uncertain"]
-
-    H1["Candidate<br/>analysis"]
-    H2["Sensitivity<br/>analysis"]
-    H3["Climate<br/>analysis"]
-
-    %% Input row
-    A1 ~~~ A2
-    A2 ~~~ A3
-
-    %% Prediction stage
-    A1 --> B1
-    A2 --> B1
-    A3 --> B2
-
-    B1 --> C
-    B2 --> C
-
-    %% Ortholog mapping
-    C --> D
-    D --> D1
-    D --> D2
-
-    %% Whole-genome alignment
-    A1 --> E
-    D2 --> E
-    E --> E1
-
-    %% Classification
-    D1 --> F
-    D2 --> F
-    E1 --> F
-
-    F --> G
-
-    %% Downstream analyses
-    G --> H1
-    G --> H2
-    G --> H3
-
-    %% Node styles
-    classDef input fill:#f7f7f7,stroke:#999999,stroke-width:1px;
-    classDef process fill:#edf4f8,stroke:#70879a,stroke-width:1.2px;
-    classDef output fill:#f7f7f7,stroke:#888888,stroke-width:1px;
-    classDef result fill:#eef5ee,stroke:#758875,stroke-width:1.2px;
-    classDef downstream fill:#edf4f8,stroke:#70879a,stroke-width:1.2px;
-
-    class A1,A2,A3 input;
-    class B1,B2,D,E,F process;
-    class C,D1,D2,E1 output;
-    class G result;
-    class H1,H2,H3 downstream;
-```
+<p align="center">
+  <img src="docs/workflow_overview.svg"
+       alt="Overview of the comparative CRE turnover workflow"
+       width="700">
+</p>
 
 Stages are intended to be executed sequentially. Validated intermediate results can be reused, so computationally expensive SCRMshaw scans and pairwise whole-genome alignments do not need to be repeated when only downstream analyses are rerun.
 
