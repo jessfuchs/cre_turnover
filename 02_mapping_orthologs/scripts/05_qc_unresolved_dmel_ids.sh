@@ -16,7 +16,7 @@ set -euo pipefail
 #
 # Output:
 #   - unresolved_dmel_qc_summary.tsv
-#   - detailed QC files in ortholog_results/unresolved_dmel_qc/
+#   - detailed QC files in results/unresolved_dmel_qc/
 #
 # Configuration:
 #   config/ortholog_config.sh
