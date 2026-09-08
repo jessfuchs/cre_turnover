@@ -24,6 +24,7 @@ The workflow consists of five major stages:
        width="700">
 </p>
 
+The workflow starts from standardized SCRMshaw prediction outputs. Their generation, filtering, post-processing, and integration are described in detail in [`01_scrmshaw/`](01_scrmshaw/).
 Stages are intended to be executed sequentially. Validated intermediate results can be reused, so computationally expensive SCRMshaw scans and pairwise whole-genome alignments do not need to be repeated when only downstream analyses are rerun.
 
 ---
