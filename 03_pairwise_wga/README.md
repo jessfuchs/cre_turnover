@@ -480,22 +480,8 @@ Changes to the upstream *D. melanogaster* reference CRE definition require the `
 
 ## Reproducibility
 
-The workflow keeps each pairwise comparison independent and retains the intermediate alignment representations required to trace the final coordinate projections:
+Each target species is aligned independently against the same *D. melanogaster* reference genome using a consistent LASTZ and UCSC chain/net configuration.
 
-```text
-genome FASTA
-    ↓
-2bit
-    ↓
-LASTZ AXT
-    ↓
-chain
-    ↓
-syntenic net
-    ↓
-liftOver chain
-    ↓
-mapped / unmapped reference CREs
-```
+Intermediate alignment files and the final synteny-filtered chain files are retained, allowing individual pairwise alignments and CRE projections to be inspected or recomputed independently.
 
-This design allows individual target species to be inspected or recomputed independently while preserving a common *D. melanogaster*-centered coordinate framework for the downstream CRE-state classification.
+Mapped and unmapped reference CREs are stored separately for every target species so that downstream CRE-state classification can distinguish successful coordinate projection from non-evaluable reference positions.
