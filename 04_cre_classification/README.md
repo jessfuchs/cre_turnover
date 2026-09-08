@@ -194,16 +194,7 @@ For the primary dataset, every target-species result must contain exactly 337 re
 
 ---
 
-## Classification logic
-
-Each reference CRE–species comparison is assigned exactly one state:
-
-| State | Operational definition |
-|---|---|
-| `positional_match` | The homologous interval is mapped and a target-species SCRMshaw prediction satisfies the reciprocal 50% overlap criterion. |
-| `turnover_candidate` | The homologous interval is mapped and no positional match is detected, but another prediction associated with the same FBgn target gene occurs within 24 kb of that gene. |
-| `no_detected_CRE` | The homologous interval is mapped, but neither a positional match nor a qualifying local same-FBgn prediction is detected. |
-| `uncertain` | The reference CRE cannot be successfully projected into the target genome. |
+## Classification criteria
 
 For mapped CREs, all SCRMshaw predictions on the corresponding target sequence are evaluated for positional overlap. The best overlapping prediction is retained together with the overlap in base pairs and the overlap fraction relative to both intervals.
 
