@@ -5,7 +5,7 @@ This directory contains the SCRMshaw workflows used to obtain standardized speci
 Two complementary routes are available:
 
 1. **de novo generation** of SCRMshaw-HD predictions;
-2. **integration of existing SCRMshaw predictions**.
+2. integration of **existing SCRMshaw predictions**.
 
 Which route is required depends on the availability of prediction data for the species being analyzed.
 
