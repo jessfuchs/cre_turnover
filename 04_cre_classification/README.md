@@ -25,7 +25,7 @@ For each *D. melanogaster* reference CRE, the workflow first determines whether 
        width="800">
 </p>
 
-<p align="center">
+<p align="left">
   <em>
   Operational CRE states used for cross-species classification.
   (A) <code>positional_match</code>: a target-species prediction fulfills the reciprocal 50% overlap criterion at the projected homologous position.
@@ -33,7 +33,6 @@ For each *D. melanogaster* reference CRE, the workflow first determines whether 
   (C) <code>no_detected_CRE</code>: neither a positional match nor a qualifying local same-gene prediction is detected.
   (D) <code>uncertain</code>: the reference CRE cannot be reliably projected into the target genome.
   States represent computational evidence rather than direct evidence of regulatory function.
-  Conceptually based on Kalay et al. (2010) and Arnold et al. (2014).
   </em>
 </p>
 
