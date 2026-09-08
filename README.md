@@ -207,8 +207,8 @@ The workflow combines SCRMshaw-HD, comparative-genomics command-line tools, Pyth
 | UCSC Kent utilities | — | 2bit conversion, chain/net processing, and coordinate projection |
 | Python | 3.10.20 | Workflow, data processing, statistical analysis, and plotting |
 | R | 4.2.2 | Phylogenetically controlled climate analysis |
-| Bash | — | Pipeline orchestration and configuration |
-| SLURM | — | Workload scheduling for computationally intensive species-wise analyses |
+| Bash | 5.2.15 | Pipeline orchestration and configuration |
+| SLURM | 22.05.8 | Workload scheduling for computationally intensive species-wise analyses |
 
 Pairwise whole-genome alignments were generated with LASTZ and subsequently processed with UCSC Kent utilities. The workflow uses the following UCSC tools:
 
@@ -221,6 +221,8 @@ Pairwise whole-genome alignments were generated with LASTZ and subsequently proc
 - `netSyntenic`
 - `netChainSubset`
 - `liftOver`
+
+The locally installed UCSC binaries did not report an explicit software version through their command-line interfaces.
 
 ### Python dependencies
 
