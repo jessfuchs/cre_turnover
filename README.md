@@ -19,35 +19,90 @@ The workflow consists of five major stages:
 ## Workflow overview
 
 ```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryTextColor": "#111111",
+    "lineColor": "#707070",
+    "clusterBkg": "#ffffff",
+    "clusterBorder": "#b0b0b0"
+  }
+}}%%
+
 flowchart TD
-    A[Genome FASTA + GFF3 annotations] --> B1[01_scrmshaw/generation<br/>Generate SCRMshaw predictions]
-    C[Previously generated<br/>SCRMshaw predictions] --> B2[01_scrmshaw/external<br/>Filter and standardize predictions]
 
-    B1 --> D[Standardized species-specific<br/>peaks_AllSets.bed]
-    B2 --> D
-    D --> E[combined_manifest.tsv<br/>40-species prediction framework]
+    subgraph INPUT["Input data"]
+        direction LR
+        A1["Genome FASTA"]
+        A2["GFF3 annotations"]
+        A3["External SCRMshaw<br/>predictions"]
+    end
 
-    E --> F[02_mapping_orthologs<br/>Map predictions to Dmel orthologs]
-    F --> G[SO_all_species_fbgn.tsv]
-    F --> H[337 Dmel reference CREs]
+    subgraph PRED["01 · SCRMshaw predictions"]
+        direction LR
+        B1["Generate<br/>predictions"]
+        B2["Filter and standardize<br/>external predictions"]
+    end
 
-    A --> I[03_pairwise_wga<br/>Dmel vs target whole-genome alignments]
-    H --> I
-    I --> J[Lifted reference CRE coordinates<br/>39 target species]
+    C["Standardized predictions<br/>combined_manifest.tsv"]
 
-    G --> K[04_cre_classification]
-    H --> K
-    J --> K
+    subgraph COMP["Comparative mapping"]
+        direction LR
+        D["02 · Ortholog mapping"]
+        E["03 · Pairwise WGA<br/>and liftOver"]
+    end
 
-    K --> L[CRE x species state matrix<br/>present / turnover_candidate /<br/>no_detected_CRE / uncertain]
+    D1["Ortholog-annotated predictions<br/>SO_all_species_fbgn.tsv"]
+    D2["337 D. melanogaster<br/>reference CREs"]
+    E1["Lifted reference CREs<br/>39 target species"]
 
-    L --> M1[05_downstream_analyses<br/>01_candidate_analysis]
-    L --> M2[05_downstream_analyses<br/>02_sensitivity_analysis]
-    L --> M3[05_downstream_analyses<br/>03_climate_analysis]
+    F["04 · CRE-state classification"]
 
-    M1 --> N[Tier-1 CRE candidates<br/>and target-gene summaries]
-    M2 --> O[Robustness across overlap<br/>and distance scenarios]
-    M3 --> P[Climate summaries, PGLS,<br/>focal-lineage enrichment]
+    G["CRE × species state matrix<br/>present · turnover_candidate ·<br/>no_detected_CRE · uncertain"]
+
+    subgraph DOWN["05 · Downstream analyses"]
+        direction LR
+        H1["Candidate<br/>analysis"]
+        H2["Sensitivity<br/>analysis"]
+        H3["Climate<br/>analysis"]
+    end
+
+    A1 --> B1
+    A2 --> B1
+    A3 --> B2
+
+    B1 --> C
+    B2 --> C
+
+    C --> D
+    A1 --> E
+
+    D --> D1
+    D --> D2
+
+    D2 --> E
+    E --> E1
+
+    D1 --> F
+    D2 --> F
+    E1 --> F
+
+    F --> G
+
+    G --> H1
+    G --> H2
+    G --> H3
+
+    classDef input fill:#f7f7f7,stroke:#999999,stroke-width:1px;
+    classDef process fill:#eef4f8,stroke:#6f8290,stroke-width:1.2px;
+    classDef output fill:#f7f7f7,stroke:#777777,stroke-width:1px;
+    classDef result fill:#eef5ee,stroke:#718071,stroke-width:1.2px;
+
+    class A1,A2,A3 input;
+    class B1,B2,D,E,F,H1,H2,H3 process;
+    class C,D1,D2,E1 output;
+    class G result;
 ```
 
 Stages are intended to be executed sequentially. Validated intermediate results can be reused, so computationally expensive SCRMshaw scans and pairwise whole-genome alignments do not need to be repeated when only downstream analyses are rerun.
@@ -103,7 +158,7 @@ Each reference-CRE/target-species comparison is assigned one of four operational
 
 | State                | Interpretation                                                                                                                                                                                                           |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `present`            | The reference CRE was successfully mapped and a target-species SCRMshaw prediction satisfied the positional reciprocal-overlap criterion.                                                                                |
+| `positional_match`   | The reference CRE was successfully mapped and a target-species SCRMshaw prediction satisfied the positional reciprocal-overlap criterion.                                                                                |
 | `turnover_candidate` | The homologous reference interval was mapped but lacked a positional CRE match, while a different SCRMshaw prediction associated with the same orthologous target gene was detected within the local distance threshold. |
 | `no_detected_CRE`    | The homologous interval was mapped, but neither a positional CRE prediction nor a qualifying local same-target-gene prediction was detected.                                                                             |
 | `uncertain`          | The reference CRE could not be reliably projected into the target genome and therefore cannot be evaluated for CRE conservation or turnover.                                                                             |
@@ -130,57 +185,62 @@ Exact filenames, expected directory locations, preprocessing requirements, and e
 
 ---
 
-## Requirements
+## Software and computational environment
 
-The workflow combines Python, R, SCRMshaw-HD, comparative-genomics command-line tools, and SLURM-based compute jobs.
+The workflow combines SCRMshaw-HD, comparative-genomics command-line tools, Python, R, Bash, and SLURM-based workload scheduling. The software versions used for the final analysis are listed below.
 
-### Python
+### Core software
 
-Common dependencies include:
+| Software | Version | Purpose |
+|---|---:|---|
+| SCRMshaw-HD | 1.1 | CRE prediction |
+| LASTZ | 1.04.58 | Pairwise whole-genome alignment |
+| UCSC Kent utilities | — | 2bit conversion, chain/net processing, and coordinate projection |
+| Python | 3.10.20 | Workflow, data processing, statistical analysis, and plotting |
+| R | 4.2.2 | Phylogenetically controlled climate analysis |
+| Bash | — | Pipeline orchestration and configuration |
+| SLURM | — | Workload scheduling for computationally intensive species-wise analyses |
 
-* Python 3
-* pandas
-* numpy
-* matplotlib
-* scipy
-* Biopython
+Pairwise whole-genome alignments were generated with LASTZ and subsequently processed with UCSC Kent utilities. The workflow uses the following UCSC tools:
 
-Additional stage-specific dependencies are documented within the respective workflow directories.
+- `faToTwoBit`
+- `twoBitInfo`
+- `axtChain`
+- `chainSort`
+- `chainPreNet`
+- `chainNet`
+- `netSyntenic`
+- `netChainSubset`
+- `liftOver`
 
-### R
+### Python dependencies
 
-The phylogenetically controlled climate analysis requires:
+The final analysis used the following Python packages:
 
-* `ape`
-* `nlme`
+| Package | Version |
+|---|---:|
+| pandas | 1.5.3 |
+| NumPy | 1.23.5 |
+| SciPy | 1.15.2 |
+| Matplotlib | 3.6.3 |
+| Biopython | 1.86 |
 
-### Comparative-genomics tools
+### R dependencies
 
-Pairwise whole-genome alignment and coordinate projection require LASTZ and UCSC command-line utilities.
+The phylogenetically controlled climatic-zone analysis was implemented in R using:
 
-The primary workflow uses LASTZ 1.04.58 together with:
+| Package | Version |
+|---|---:|
+| `ape` | 5.8-1 |
+| `nlme` | 3.1-170 |
 
-* `faToTwoBit`
-* `twoBitInfo`
-* `axtChain`
-* `chainSort`
-* `chainPreNet`
-* `chainNet`
-* `netSyntenic`
-* `netChainSubset`
-* `liftOver`
+### Reproducible environments
 
-### SCRMshaw
-
-The de novo prediction stage uses SCRMshaw-HD and its associated post-processing tools.
-
-Environment definitions are provided under:
+The SCRMshaw generation workflow uses separate software environments for CRE prediction and post-processing. The corresponding environment definitions are provided under:
 
 ```text
 01_scrmshaw/generation/envs/
 ```
-
-### Compute environment
 
 SCRMshaw generation and pairwise whole-genome alignment are designed for execution on a SLURM cluster.
 
