@@ -445,16 +445,6 @@ Because the workflow does not remove the complete `results/` directory before re
 
 ## Reproducibility
 
-The workflow keeps the major identifier transformations explicit:
+The workflow retains the intermediate ortholog-mapping tables, FBgn-normalized outputs, unresolved identifier reports, and QC summaries required to trace the final target-gene assignments back to the underlying SCRMshaw predictions and species-specific genome annotations.
 
-```text
-species-specific gene
-        ↓
-D. melanogaster ortholog identifier
-        ↓
-FlyBase FBgn identifier
-        ↓
-reference CRE target-gene annotation
-```
-
-Intermediate mapping tables, unresolved identifiers, and QC reports are retained so that the final reference CREs and their target-gene assignments can be traced back to the underlying SCRMshaw predictions and genome annotations.
+The final *D. melanogaster* reference CRE set is generated deterministically from the FBgn-normalized table using a fixed reference-species identifier and stable sorting criteria, allowing the same reference CRE IDs and associated target-gene annotations to be reproduced from the same upstream inputs and configuration.
