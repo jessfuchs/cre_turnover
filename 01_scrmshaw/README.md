@@ -10,7 +10,7 @@ Two complementary routes are available:
 Which route is required depends on the availability of prediction data for the species being analyzed.
 
 <p align="center">
-  <img src="docs/scrmshaw_workflow.svg"
+  <img src="../docs/scrmshaw_workflow.svg"
        alt="Overview of the SCRMshaw prediction workflows"
        width="750">
 </p>
