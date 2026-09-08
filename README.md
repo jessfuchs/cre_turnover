@@ -2,12 +2,14 @@
 
 A reproducible comparative-genomics workflow for identifying and characterizing cis-regulatory element (CRE) conservation and turnover across a 40-species *Drosophila* framework.
 
-The analysis is anchored on a fixed set of 337 *Drosophila melanogaster* reference CREs. SCRMshaw predictions are standardized across species, linked to *D. melanogaster* orthologous target genes, projected through independent pairwise whole-genome alignments, and classified into four operational CRE states. Downstream analyses identify recurrent focal-lineage candidates, assess parameter sensitivity, and evaluate associations between regulatory divergence and climatic zone.
+The analysis is anchored on a fixed set of 337 *Drosophila melanogaster* reference CREs. Species-specific SCRMshaw predictions are standardized and linked through their *D. melanogaster* FBgn target-gene assignments, while homologous reference positions are identified using independent pairwise whole-genome alignments. These complementary sources of evidence are combined to classify each reference-CRE/species comparison into one of four operational CRE states.
 
-The workflow consists of five major stages:
+Downstream analyses identify recurrent focal-lineage candidates, assess the robustness of CRE-state assignments, and evaluate associations between regulatory divergence and climatic zone.
+
+The workflow is organized into five major stages:
 
 1. SCRMshaw prediction generation and integration
-2. Ortholog mapping and construction of the reference CRE set
+2. FBgn target-gene mapping and construction of the reference CRE set
 3. Pairwise whole-genome alignment and CRE liftover
 4. CRE-state classification
 5. Candidate, sensitivity, and climate analyses
@@ -24,8 +26,7 @@ The workflow consists of five major stages:
        width="700">
 </p>
 
-The workflow starts from standardized SCRMshaw prediction outputs. Their generation, filtering, post-processing, and integration are described in detail in [`01_scrmshaw/`](01_scrmshaw/).
-Stages are intended to be executed sequentially. Validated intermediate results can be reused, so computationally expensive SCRMshaw scans and pairwise whole-genome alignments do not need to be repeated when only downstream analyses are rerun.
+SCRMshaw prediction generation, filtering, post-processing, and integration are documented in detail in [`01_scrmshaw/`](01_scrmshaw/). Each subsequent workflow stage contains its own README describing stage-specific inputs, parameters, QC procedures, outputs, and adaptation points.
 
 ---
 
@@ -35,40 +36,36 @@ Stages are intended to be executed sequentially. Validated intermediate results 
 cre_turnover/
 ├── 01_scrmshaw/
 │   ├── generation/          # de novo SCRMshaw-HD prediction
-│   └── external/            # filtering and standardization of existing predictions
-├── 02_mapping_orthologs/    # ortholog annotation and Dmel reference CRE set
+│   └── external/            # integration of existing SCRMshaw predictions
+├── 02_mapping_orthologs/    # FBgn target-gene mapping and Dmel reference CRE set
 ├── 03_pairwise_wga/         # pairwise Dmel-target alignments and liftOver
-├── 04_cre_classification/   # CRE-state classification, phylogeny data, and global QC
+├── 04_cre_classification/   # CRE-state classification, phylogeny, and global QC
 └── 05_downstream_analyses/
     ├── 01_candidate_analysis/
     ├── 02_sensitivity_analysis/
     └── 03_climate_analysis/
 ```
 
-Each major workflow directory contains its own `README.md` with detailed input schemas, configuration options, QC procedures, and output descriptions.
+The numbered directories reflect the intended execution order of the workflow.
 
 ---
 
 ## Core analysis defaults
 
-| Component                        | Default                                |
-| -------------------------------- | -------------------------------------- |
-| Species framework                | 40 species including *D. melanogaster* |
-| Target species                   | 39                                     |
-| Reference CREs                   | 337                                    |
-| SCRMshaw training set            | `adult_muscle`                         |
-| SCRMshaw scoring method          | `imm`                                  |
-| SCRMshaw-HD offsets              | 25 offsets, 0–240 bp in 10-bp steps    |
-| SCRMshaw hit depth               | `--thitw 10000`                        |
-| Retained ranked hits             | top 5,000 per offset                   |
-| Positional CRE criterion         | reciprocal overlap ≥ 0.50              |
-| Local same-target-gene distance  | 24 kb                                  |
-| liftOver minimum mapped fraction | 0.50                                   |
-| Sensitivity overlap grid         | 0.25, 0.50, 0.75                       |
-| Sensitivity distance grid        | 12 kb, 24 kb, 48 kb                    |
-| Primary sensitivity scenario     | `ov050_dist24000`                      |
+The primary analysis uses the following central settings:
 
-User-adjustable paths, biological thresholds, and compute settings are defined in the relevant configuration files rather than in the analysis workers wherever possible.
+| Component | Default |
+|---|---|
+| Species framework | 40 species including *D. melanogaster* |
+| Target species | 39 |
+| Reference CREs | 337 |
+| SCRMshaw training set | `adult_muscle` |
+| SCRMshaw scoring method | `imm` |
+| Positional CRE criterion | reciprocal overlap ≥ 0.50 |
+| Local same-target-gene distance | 24 kb |
+| liftOver minimum mapped fraction | 0.50 |
+
+Additional SCRMshaw, sensitivity-analysis, computational-resource, and QC parameters are documented in the corresponding stage READMEs and configuration files.
 
 ---
 
@@ -76,210 +73,146 @@ User-adjustable paths, biological thresholds, and compute settings are defined i
 
 Each reference-CRE/target-species comparison is assigned one of four operational states.
 
-| State                | Interpretation                                                                                                                                                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `positional_match`   | The reference CRE was successfully mapped and a target-species SCRMshaw prediction satisfied the positional reciprocal-overlap criterion.                                                                                |
-| `turnover_candidate` | The homologous reference interval was mapped but lacked a positional CRE match, while a different SCRMshaw prediction associated with the same orthologous target gene was detected within the local distance threshold. |
-| `no_detected_CRE`    | The homologous interval was mapped, but neither a positional CRE prediction nor a qualifying local same-target-gene prediction was detected.                                                                             |
-| `uncertain`          | The reference CRE could not be reliably projected into the target genome and therefore cannot be evaluated for CRE conservation or turnover.                                                                             |
+| State | Interpretation |
+|---|---|
+| `positional_match` | The reference CRE was successfully mapped and a target-species SCRMshaw prediction satisfied the positional reciprocal-overlap criterion. |
+| `turnover_candidate` | The homologous reference interval was mapped but lacked a positional CRE match, while another SCRMshaw prediction associated with the same FBgn target gene was detected within the local distance threshold. |
+| `no_detected_CRE` | The homologous interval was mapped, but neither a positional CRE prediction nor a qualifying local same-target-gene prediction was detected. |
+| `uncertain` | The reference CRE could not be reliably projected into the target genome and therefore cannot be evaluated for CRE conservation or turnover. |
 
-These labels describe computational evidence only. In particular, absence of a detected prediction is not interpreted as definitive biological loss.
+These states describe computational evidence. In particular, absence of a detected CRE prediction is not interpreted as definitive biological loss.
 
 ---
 
 ## Input data
 
-The full workflow requires several genomic and comparative-genomics resources. Large source datasets are not stored directly in the repository.
+The complete workflow requires several genomic and comparative-genomics resources. Large source datasets are not stored directly in the repository.
 
-| Input | Purpose | Used in |
-|---|---|---|
-| Species list | Lists the species included in the analysis and provides the species identifiers used by the workflow | Throughout the workflow |
-| Genome FASTA files | SCRMshaw scanning and pairwise whole-genome alignment | `01_scrmshaw`, `03_pairwise_wga` |
-| GFF3 genome annotations | Gene coordinates and SCRMshaw preprocessing | `01_scrmshaw` |
-| Existing SCRMshaw predictions | Integration of externally generated prediction sets | `01_scrmshaw/external` |
-| SCRMshaw predictions with FBgn target-gene annotations | Provides species-specific CRE predictions and *D. melanogaster* target-gene identifiers; the *D. melanogaster* subset is used to construct the fixed reference CRE set | `01_scrmshaw`, `02_mapping_orthologs` |
-| Species phylogeny in Newick format | Defines phylogenetic relationships and species ordering and supports phylogenetically controlled analyses | `04_cre_classification`, `05_downstream_analyses` |
-| Species climate annotations | Climatic-zone assignment and focal-lineage analyses | `04_cre_classification`, `05_downstream_analyses/03_climate_analysis` |
+| Input | Purpose |
+|---|---|
+| Species list | Defines the species included in the analysis and their workflow identifiers |
+| Genome FASTA files | SCRMshaw prediction and pairwise whole-genome alignment |
+| GFF3 genome annotations | Gene-coordinate information and SCRMshaw post-processing |
+| Existing SCRMshaw predictions | Previously generated predictions incorporated into the common prediction framework |
+| SCRMshaw-associated FBgn target-gene assignments | Cross-species comparison of CREs associated with the same *D. melanogaster* target gene |
+| Species phylogeny (Newick) | Species relationships, ordering, and phylogenetically controlled analyses |
+| Species climate annotations | Climatic-zone and focal-lineage analyses |
 
-The species list defines which species are included in the analysis. Species slugs should be used consistently across the relevant genomic input files, prediction files, manifests, and downstream metadata.
+The species list defines which species are included in the analysis. Species identifiers must follow the naming conventions expected by the individual workflow stages and associated metadata.
 
-The phylogenetic tree must be provided in Newick format and contain the species included in the analysis using matching species identifiers.
+The phylogenetic tree must contain the analyzed species in Newick format. Where file slugs and tree labels differ, the corresponding mapping is handled by the relevant metadata files.
 
-Target-gene assignments used for cross-species comparison are derived from FBgn identifiers already present in the SCRMshaw-associated data; no separate external orthology database is required by the final workflow.
+No separate external orthology database is required by the final workflow; the target-gene associations used here are derived from FBgn identifiers already present in the SCRMshaw-associated data.
 
-Exact filenames, expected directory locations, preprocessing requirements, and external data sources are documented in the README of the corresponding workflow stage.
+Exact filenames, directory layouts, and source-data requirements are documented in the corresponding stage READMEs.
 
 ---
 
 ## Software and computational environment
 
-The workflow combines SCRMshaw-HD, comparative-genomics command-line tools, Python, R, Bash, and SLURM-based workload scheduling. The software versions used for the final analysis are listed below.
+The final workflow was executed using the following core software:
 
-### Core software
-
-| Software | Version | Purpose |
+| Software | Version | Main use |
 |---|---:|---|
 | SCRMshaw-HD | 1.1 | CRE prediction |
 | LASTZ | 1.04.58 | Pairwise whole-genome alignment |
-| UCSC Kent utilities | — | 2bit conversion, chain/net processing, and coordinate projection |
-| Python | 3.10.20 | Workflow, data processing, statistical analysis, and plotting |
+| UCSC Kent utilities | version not reported by installed binaries | Chain/net processing and coordinate projection |
+| Python | 3.10.20 | Workflow and downstream analyses |
 | R | 4.2.2 | Phylogenetically controlled climate analysis |
-| Bash | 5.2.15 | Pipeline orchestration and configuration |
-| SLURM | 22.05.8 | Workload scheduling for computationally intensive species-wise analyses |
+| GNU Bash | 5.2.15 | Pipeline orchestration |
+| SLURM | 22.05.8 | Scheduling of computationally intensive species-wise jobs |
 
-Pairwise whole-genome alignments were generated with LASTZ and subsequently processed with UCSC Kent utilities. The workflow uses the following UCSC tools:
-
-- `faToTwoBit`
-- `twoBitInfo`
-- `axtChain`
-- `chainSort`
-- `chainPreNet`
-- `chainNet`
-- `netSyntenic`
-- `netChainSubset`
-- `liftOver`
-
-The locally installed UCSC binaries did not report an explicit software version through their command-line interfaces.
-
-### Python dependencies
-
-The final analysis used the following Python packages:
-
-| Package | Version |
-|---|---:|
-| pandas | 1.5.3 |
-| NumPy | 1.23.5 |
-| SciPy | 1.15.2 |
-| Matplotlib | 3.6.3 |
-| Biopython | 1.86 |
-
-### R dependencies
-
-The phylogenetically controlled climatic-zone analysis was implemented in R using:
-
-| Package | Version |
-|---|---:|
-| `ape` | 5.8-1 |
-| `nlme` | 3.1-170 |
-
-### Reproducible environments
-
-The SCRMshaw generation workflow uses separate software environments for CRE prediction and post-processing. The corresponding environment definitions are provided under:
+SCRMshaw generation uses dedicated reproducible software environments provided under:
 
 ```text
 01_scrmshaw/generation/envs/
 ```
 
-SCRMshaw generation and pairwise whole-genome alignment are designed for execution on a SLURM cluster.
-
-Before running the workflow, verify the configured:
-
-* input-data paths;
-* species lists and manifests;
-* SCRMshaw installation;
-* LASTZ and UCSC utilities;
-* orthology resources;
-* SLURM resources;
-* phylogeny and climate metadata.
+Stage-specific software dependencies and configuration requirements are documented in the corresponding README files.
 
 ---
 
-## How to run the complete workflow
+## Running the workflow
 
-The project is split into independent stages rather than a single monolithic runner. This makes long-running jobs easier to inspect, restart, validate, and reproduce.
+The project is divided into independent stages rather than a single monolithic runner. Computationally expensive intermediate results can therefore be validated and reused without repeating unrelated upstream analyses.
 
-Run the stages in the following order.
+### 1. Generate and integrate SCRMshaw predictions
 
-### 1. Generate de novo SCRMshaw predictions
+#### Generate de novo predictions
 
 ```bash
 cd 01_scrmshaw/generation
 bash submit_pipeline.sh
 ```
 
-**Input:** genome FASTA files, genome annotations, and SCRMshaw training data.
+Generates and post-processes SCRMshaw predictions for species analyzed directly within this project.
 
-**Main output:** species-specific SCRMshaw predictions, including standardized `peaks_AllSets.bed` files.
+See [`01_scrmshaw/generation/`](01_scrmshaw/generation/) for input preparation, SCRMshaw parameters, SLURM execution, and QC.
 
-SCRMshaw scanning and post-processing may run as multiple SLURM jobs. Verify successful completion using the stage-specific QC checks before continuing.
-
----
-
-### 2. Standardize external predictions and build the combined prediction framework
+#### Integrate external predictions
 
 ```bash
 cd ../external
 bash run_external_pipeline.sh
 ```
 
-**Input:** previously generated external predictions and de novo predictions from Stage 1.
+Filters, validates, and post-processes previously generated SCRMshaw predictions and combines them with the newly generated species.
 
 **Main outputs:**
 
 ```text
-combined_results/
 combined_manifest.tsv
+combined_results/<species>/peaks_AllSets.bed
 ```
 
-All prediction sets are filtered into a consistent representation and integrated into the common species framework.
-
-Before continuing, confirm that all intended species are represented in `combined_manifest.tsv`.
+See [`01_scrmshaw/external/`](01_scrmshaw/external/) for external input formats, filtering criteria, QC, and restart behavior.
 
 ---
 
-### 3. Map predictions to *D. melanogaster* orthologs
+### 2. Build the FBgn-linked prediction dataset and reference CRE set
 
 ```bash
 cd ../../02_mapping_orthologs
 bash scripts/run_ortholog_pipeline.sh
 ```
 
-**Input:** standardized SCRMshaw predictions and orthology mapping resources.
+Standardizes the existing FBgn target-gene associations across species and constructs the fixed set of 337 *D. melanogaster* reference CREs.
 
-**Main outputs:**
+**Main outputs include:**
 
 ```text
 SO_all_species_fbgn.tsv
 ```
 
-and the fixed set of 337 *D. melanogaster* reference CREs.
+and the reference-CRE dataset used by all subsequent stages.
 
-Species-specific predictions are linked to orthologous *D. melanogaster* target-gene identifiers, providing a common FBgn-based reference system for cross-species comparison.
+See [`02_mapping_orthologs/`](02_mapping_orthologs/) for identifier handling, reference-set construction, and QC.
 
 ---
 
-### 4. Build pairwise whole-genome alignments and project reference CREs
+### 3. Build pairwise whole-genome alignments and project reference CREs
 
 ```bash
 cd ../03_pairwise_wga
 bash run_pairwise_wga_pipeline.sh
 ```
 
-**Input:** *D. melanogaster* and target-species genome FASTA files, together with the reference CRE set.
+Generates independent *D. melanogaster*–target-species alignments and projects the reference CRE coordinates into each target genome.
 
-**Main outputs:**
+**Main outputs:** pairwise alignment chains and mapped/unmapped reference-CRE intervals for the 39 target species.
 
-* pairwise *D. melanogaster*–target chain files;
-* successfully lifted CRE intervals;
-* unmapped CRE intervals;
-* per-species mapping summaries.
-
-Independent pairwise whole-genome alignments are generated using LASTZ followed by the UCSC chain/net workflow. The resulting syntenic chains are used with `liftOver` to project each reference CRE into the corresponding target genome.
-
-Unmapped CREs are retained as non-evaluable rather than interpreted as losses.
-
-Before continuing, verify that mapped and unmapped CRE counts are consistent with the complete reference set.
+See [`03_pairwise_wga/`](03_pairwise_wga/) for alignment parameters, chain/net processing, liftOver settings, and mapping QC.
 
 ---
 
-### 5. Classify CRE states
+### 4. Classify CRE states
 
 ```bash
 cd ../04_cre_classification
 bash scripts/run_cre_classification_pipeline.sh
 ```
 
-**Input:** ortholog-annotated SCRMshaw predictions, reference CREs, and lifted homologous intervals.
+Combines positional homology, SCRMshaw prediction evidence, and FBgn target-gene associations to assign one CRE state to each reference-CRE/target-species comparison.
 
 **Main output:**
 
@@ -287,19 +220,11 @@ bash scripts/run_cre_classification_pipeline.sh
 results/cre_turnover_matrix.tsv
 ```
 
-The matrix contains one operational CRE state for each reference-CRE/target-species comparison.
-
-The primary classification uses:
-
-* reciprocal positional overlap ≥ 0.50;
-* local same-target-gene distance ≤ 24 kb;
-* liftOver minimum mapped fraction of 0.50.
-
-Species-level evidence and QC summaries are retained so that each state assignment can be traced back to its supporting data.
+See [`04_cre_classification/`](04_cre_classification/) for classification logic, QC, phylogenetic metadata, and state-level evidence.
 
 ---
 
-### 6. Run downstream analyses
+### 5. Run downstream analyses
 
 #### Candidate analysis
 
@@ -308,7 +233,7 @@ cd ../05_downstream_analyses/01_candidate_analysis
 bash run_candidate_analysis.sh
 ```
 
-Identifies recurrent focal-lineage CRE patterns and summarizes Tier-1 candidate CREs and associated target genes.
+Identifies recurrent focal-lineage CRE patterns and candidate turnover events.
 
 #### Sensitivity analysis
 
@@ -317,20 +242,7 @@ cd ../02_sensitivity_analysis
 bash run_sensitivity_analysis.sh
 ```
 
-Evaluates the robustness of CRE-state assignments and downstream conclusions across alternative overlap and distance thresholds.
-
-Default grid:
-
-```text
-Overlap:  0.25, 0.50, 0.75
-Distance: 12 kb, 24 kb, 48 kb
-```
-
-Primary scenario:
-
-```text
-ov050_dist24000
-```
+Evaluates whether conclusions remain stable across alternative CRE-classification thresholds.
 
 #### Climate analysis
 
@@ -339,21 +251,23 @@ cd ../03_climate_analysis
 bash run_climate_pipeline.sh
 ```
 
-Evaluates associations between regulatory divergence and climatic zone using descriptive summaries, focal-lineage comparisons, enrichment analyses, and phylogenetically controlled models where applicable.
+Evaluates associations between regulatory divergence and climatic zone, including phylogenetically controlled analyses.
+
+Detailed methods, parameters, statistical tests, and outputs are documented within the corresponding downstream-analysis directories.
 
 ---
 
 ## Key outputs
 
-The central result of the workflow is:
+The central comparative result is:
 
 ```text
 04_cre_classification/results/cre_turnover_matrix.tsv
 ```
 
-This matrix contains the primary CRE-state assignment for every reference-CRE/target-species comparison and serves as the main input for all downstream analyses.
+which contains the CRE-state assignment for every reference-CRE/target-species comparison.
 
-Additional biological results are written to:
+The principal downstream results are produced under:
 
 ```text
 05_downstream_analyses/01_candidate_analysis/
@@ -361,63 +275,22 @@ Additional biological results are written to:
 05_downstream_analyses/03_climate_analysis/
 ```
 
-These directories contain, respectively:
-
-* recurrent focal-lineage and Tier-1 CRE candidates;
-* robustness results across alternative classification thresholds;
-* climate-associated summaries and phylogenetically controlled analyses.
-
-Intermediate evidence and QC files are retained throughout the workflow to support traceability of final candidate calls and figures.
+These directories contain the candidate, robustness, and climate-associated analyses used for biological interpretation.
 
 ---
 
 ## Adapting the workflow
 
-Paths, biological thresholds, species definitions, and compute resources should be changed through the relevant configuration files rather than directly in worker scripts.
+Paths, species definitions, biological thresholds, and compute resources are controlled through stage-specific configuration files wherever possible.
 
-Common adaptations include:
-
-* adding or removing species;
-* changing the SCRMshaw training set or scoring method;
-* changing retained prediction depth;
-* changing SLURM memory, node, partition, or concurrency;
-* changing the reciprocal-overlap criterion;
-* changing the local same-target-gene distance threshold;
-* editing focal-clade definitions;
-* changing the sensitivity-analysis grid;
-* updating climatic-zone annotations.
-
-Focal-clade definitions are maintained in:
-
-```text
-05_downstream_analyses/01_candidate_analysis/config/focal_clades.tsv
-```
-
-Climate and species-trait annotations used by the current analysis are stored in:
-
-```text
-04_cre_classification/phylogeny/data/species_traits.tsv
-```
-
-Changes to species composition, SCRMshaw settings, or primary CRE-classification thresholds require regeneration of the affected downstream products. Purely visual changes to plotting scripts do not require statistical analyses or biological classifications to be rerun.
+Changes should be made in the configuration or metadata files documented by the relevant workflow stage rather than directly in worker scripts. When an upstream biological parameter or species set is changed, all dependent downstream products should be regenerated.
 
 ---
 
 ## Reproducibility
 
-The workflow keeps data preparation, CRE prediction, orthology mapping, coordinate projection, classification, QC, statistical analysis, and plotting as separate steps.
+The workflow separates CRE prediction, data harmonization, target-gene annotation, coordinate projection, CRE-state classification, quality control, statistical analysis, and plotting.
 
-Plotting scripts consume precomputed analysis tables rather than independently recalculating biological classifications or statistical models.
+Intermediate results are retained where needed for traceability, allowing final candidate calls, statistical results, and figures to be linked back to their underlying species-level evidence.
 
-Intermediate files are retained where they are useful for auditability, including:
-
-* standardized SCRMshaw predictions;
-* ortholog mapping tables;
-* reference-CRE definitions;
-* pairwise alignment chains;
-* mapped and unmapped liftOver intervals;
-* per-species CRE classifications;
-* QC summaries;
-* sensitivity-scenario outputs.
-
-This structure allows final candidates, statistical results, and figures to be traced back to the species-level evidence from which they were derived.
+For implementation details and exact reproducibility requirements, refer to the README within the corresponding workflow directory.
