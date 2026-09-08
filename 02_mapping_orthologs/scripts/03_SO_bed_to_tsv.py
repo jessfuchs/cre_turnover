@@ -9,7 +9,7 @@
 #   metadata from the combined manifest.
 #
 # Input:
-#   - ortholog_results/<species>/SO_all_peaks.bed
+#   - results/<species>/SO_all_peaks.bed
 #   - combined_manifest.tsv
 #
 # Output:
@@ -64,7 +64,7 @@ HEADER = [
 if len(sys.argv) != 3:
     sys.exit(
         "Usage: 03_SO_bed_to_tsv.py "
-        "ORTHOLOG_RESULTS_DIR COMBINED_MANIFEST"
+        "RESULTS_DIR COMBINED_MANIFEST"
     )
 
 results_dir = Path(sys.argv[1])
