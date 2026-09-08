@@ -21,53 +21,50 @@ The workflow consists of five major stages:
 ```mermaid
 %%{init: {
   "theme": "base",
+  "flowchart": {
+    "curve": "basis",
+    "nodeSpacing": 35,
+    "rankSpacing": 45
+  },
   "themeVariables": {
-    "background": "#ffffff",
     "primaryTextColor": "#111111",
-    "lineColor": "#707070",
-    "clusterBkg": "#ffffff",
-    "clusterBorder": "#b0b0b0"
+    "lineColor": "#707070"
   }
 }}%%
 
 flowchart TD
 
-    subgraph INPUT["Input data"]
-        direction LR
-        A1["Genome FASTA"]
-        A2["GFF3 annotations"]
-        A3["External SCRMshaw<br/>predictions"]
-    end
+    A1["Genome FASTA"]
+    A2["GFF3 annotations"]
+    A3["External SCRMshaw predictions"]
 
-    subgraph PRED["01 · SCRMshaw predictions"]
-        direction LR
-        B1["Generate<br/>predictions"]
-        B2["Filter and standardize<br/>external predictions"]
-    end
+    B1["01 · SCRMshaw generation<br/>Generate predictions"]
+    B2["01 · External predictions<br/>Filter and standardize"]
 
-    C["Standardized predictions<br/>combined_manifest.tsv"]
+    C["Standardized prediction framework<br/>combined_manifest.tsv"]
 
-    subgraph COMP["Comparative mapping"]
-        direction LR
-        D["02 · Ortholog mapping"]
-        E["03 · Pairwise WGA<br/>and liftOver"]
-    end
+    D["02 · Ortholog mapping"]
 
     D1["Ortholog-annotated predictions<br/>SO_all_species_fbgn.tsv"]
     D2["337 D. melanogaster<br/>reference CREs"]
+
+    E["03 · Pairwise WGA<br/>and liftOver"]
+
     E1["Lifted reference CREs<br/>39 target species"]
 
     F["04 · CRE-state classification"]
 
     G["CRE × species state matrix<br/>present · turnover_candidate ·<br/>no_detected_CRE · uncertain"]
 
-    subgraph DOWN["05 · Downstream analyses"]
-        direction LR
-        H1["Candidate<br/>analysis"]
-        H2["Sensitivity<br/>analysis"]
-        H3["Climate<br/>analysis"]
-    end
+    H1["Candidate<br/>analysis"]
+    H2["Sensitivity<br/>analysis"]
+    H3["Climate<br/>analysis"]
 
+    %% Input row
+    A1 ~~~ A2
+    A2 ~~~ A3
+
+    %% Prediction stage
     A1 --> B1
     A2 --> B1
     A3 --> B2
@@ -75,34 +72,40 @@ flowchart TD
     B1 --> C
     B2 --> C
 
+    %% Ortholog mapping
     C --> D
-    A1 --> E
-
     D --> D1
     D --> D2
 
+    %% Whole-genome alignment
+    A1 --> E
     D2 --> E
     E --> E1
 
+    %% Classification
     D1 --> F
     D2 --> F
     E1 --> F
 
     F --> G
 
+    %% Downstream analyses
     G --> H1
     G --> H2
     G --> H3
 
+    %% Node styles
     classDef input fill:#f7f7f7,stroke:#999999,stroke-width:1px;
-    classDef process fill:#eef4f8,stroke:#6f8290,stroke-width:1.2px;
-    classDef output fill:#f7f7f7,stroke:#777777,stroke-width:1px;
-    classDef result fill:#eef5ee,stroke:#718071,stroke-width:1.2px;
+    classDef process fill:#edf4f8,stroke:#70879a,stroke-width:1.2px;
+    classDef output fill:#f7f7f7,stroke:#888888,stroke-width:1px;
+    classDef result fill:#eef5ee,stroke:#758875,stroke-width:1.2px;
+    classDef downstream fill:#edf4f8,stroke:#70879a,stroke-width:1.2px;
 
     class A1,A2,A3 input;
-    class B1,B2,D,E,F,H1,H2,H3 process;
+    class B1,B2,D,E,F process;
     class C,D1,D2,E1 output;
     class G result;
+    class H1,H2,H3 downstream;
 ```
 
 Stages are intended to be executed sequentially. Validated intermediate results can be reused, so computationally expensive SCRMshaw scans and pairwise whole-genome alignments do not need to be repeated when only downstream analyses are rerun.
@@ -169,17 +172,23 @@ These labels describe computational evidence only. In particular, absence of a d
 
 ## Input data
 
-The full workflow requires several external genomic and comparative-genomics resources. Large source datasets are not stored directly in the repository.
+The full workflow requires several genomic and comparative-genomics resources. Large source datasets are not stored directly in the repository.
 
-| Input                                  | Purpose                                                                     | Used in                                                               |
-| -------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Genome FASTA files                     | SCRMshaw scanning and pairwise whole-genome alignment                       | `01_scrmshaw`, `03_pairwise_wga`                                      |
-| GFF3 genome annotations                | Gene coordinates and SCRMshaw preprocessing                                 | `01_scrmshaw`                                                         |
-| Existing SCRMshaw predictions          | Integration of externally generated prediction sets                         | `01_scrmshaw/external`                                                |
-| Orthology mapping data                 | Mapping species-specific target genes to *D. melanogaster* FBgn identifiers | `02_mapping_orthologs`                                                |
-| *D. melanogaster* SCRMshaw predictions | Construction of the reference CRE set                                       | `02_mapping_orthologs`                                                |
-| Species phylogeny                      | Species ordering and phylogenetically controlled analyses                   | `04_cre_classification`, `05_downstream_analyses`                     |
-| Species climate annotations            | Climate-zone and focal-lineage analyses                                     | `04_cre_classification`, `05_downstream_analyses/03_climate_analysis` |
+| Input | Purpose | Used in |
+|---|---|---|
+| Species list | Lists the species included in the analysis and provides the species identifiers used by the workflow | Throughout the workflow |
+| Genome FASTA files | SCRMshaw scanning and pairwise whole-genome alignment | `01_scrmshaw`, `03_pairwise_wga` |
+| GFF3 genome annotations | Gene coordinates and SCRMshaw preprocessing | `01_scrmshaw` |
+| Existing SCRMshaw predictions | Integration of externally generated prediction sets | `01_scrmshaw/external` |
+| SCRMshaw predictions with FBgn target-gene annotations | Provides species-specific CRE predictions and *D. melanogaster* target-gene identifiers; the *D. melanogaster* subset is used to construct the fixed reference CRE set | `01_scrmshaw`, `02_mapping_orthologs` |
+| Species phylogeny in Newick format | Defines phylogenetic relationships and species ordering and supports phylogenetically controlled analyses | `04_cre_classification`, `05_downstream_analyses` |
+| Species climate annotations | Climatic-zone assignment and focal-lineage analyses | `04_cre_classification`, `05_downstream_analyses/03_climate_analysis` |
+
+The species list defines which species are included in the analysis. Species slugs should be used consistently across the relevant genomic input files, prediction files, manifests, and downstream metadata.
+
+The phylogenetic tree must be provided in Newick format and contain the species included in the analysis using matching species identifiers.
+
+Target-gene assignments used for cross-species comparison are derived from FBgn identifiers already present in the SCRMshaw-associated data; no separate external orthology database is required by the final workflow.
 
 Exact filenames, expected directory locations, preprocessing requirements, and external data sources are documented in the README of the corresponding workflow stage.
 
