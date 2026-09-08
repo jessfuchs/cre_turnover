@@ -94,7 +94,7 @@ PLOT_SUMMARY_OUT.parent.mkdir(parents=True, exist_ok=True)
 # ============================================================
 DMEL_SLUG = 'd_melanogaster'
 STATE_COLORS = {
-    "present": "#0072B2", "turnover_candidate": "#E69F00", "no_detected_CRE": "#E5E5E5",
+    "positional_match": "#0072B2", "turnover_candidate": "#E69F00", "no_detected_CRE": "#E5E5E5",
     "uncertain": "#9E9E9E", "reference": "#FFFFFF",
 }
 SOURCE_MARKERS = {'generated': 'o', 'external': '^'}
@@ -104,11 +104,11 @@ CLIMATE_COLORS = {"TROP": "#D55E00", "ARID": "#F0E442", "TEMP": "#009E73",  "BOR
 CLIMATE_LABELS = {'TROP': 'Tropical', 'ARID': 'Arid', 'TEMP': 'Temperate', 'BORE': 'Boreal'}
 VALID_CLIMATE_ZONES = set(CLIMATE_COLORS)
 STATE_LABELS = {
-    "present": "Positional match", "turnover_candidate": "Turnover candidate",
+    "positional_match": "Positional match", "turnover_candidate": "Turnover candidate",
     "no_detected_CRE": "No CRE detected", "uncertain": "Uncertain",
     "reference": r"$D.\ melanogaster$ reference",
 }
-VALID_STATES = {'present', 'turnover_candidate', 'no_detected_CRE', 'uncertain'}
+VALID_STATES = {'positional_match', 'turnover_candidate', 'no_detected_CRE', 'uncertain'}
 
 # ============================================================
 # Plot typography and legend layout
@@ -638,25 +638,25 @@ if qc is not None:
         ax.set_ylabel('Number of SCRMshaw predictions')
         ax.set_xlabel('Species in phylogenetic order')
         save_figure(fig, 'scrmshaw_peak_count_phylogenetic')
-evaluable = summary['present'] + summary['turnover_candidate'] + summary['no_detected_CRE']
+evaluable = summary['positional_match'] + summary['turnover_candidate'] + summary['no_detected_CRE']
 if (evaluable == 0).any():
     bad = summary.loc[evaluable == 0, 'species'].tolist()
     raise SystemExit('ERROR: species with zero evaluable CREs:\n' + '\n'.join(bad))
-present_pct = summary['present'] / evaluable * 100
+positional_match_pct = summary['positional_match'] / evaluable * 100
 turnover_pct = summary['turnover_candidate'] / evaluable * 100
 nodetect_pct = summary['no_detected_CRE'] / evaluable * 100
-present_dict = dict(zip(summary['species'], present_pct))
+positional_match_dict = dict(zip(summary['species'], positional_match_pct))
 turnover_dict = dict(zip(summary['species'], turnover_pct))
 nodetect_dict = dict(zip(summary['species'], nodetect_pct))
-present_values = insert_reference_placeholder(present_dict, plot_order)
+positional_match_values = insert_reference_placeholder(positional_match_dict, plot_order)
 turnover_values = insert_reference_placeholder(turnover_dict, plot_order)
 nodetect_values = insert_reference_placeholder(nodetect_dict, plot_order)
-p_stack = np.nan_to_num(present_values, nan=0.0)
+p_stack = np.nan_to_num(positional_match_values, nan=0.0)
 t_stack = np.nan_to_num(turnover_values, nan=0.0)
 n_stack = np.nan_to_num(nodetect_values, nan=0.0)
 fig, ax = plt.subplots(figsize=(14, 6.2))
 x = set_species_axis(ax, plot_order, manifest)
-bars_present = ax.bar(x, p_stack, label=STATE_LABELS['present'], color=STATE_COLORS['present'])
+bars_positional_match = ax.bar(x, p_stack, label=STATE_LABELS['positional_match'], color=STATE_COLORS['positional_match'])
 bars_turnover = ax.bar(
     x, t_stack, bottom=p_stack, label=STATE_LABELS["turnover_candidate"],
     color=STATE_COLORS["turnover_candidate"],
@@ -666,7 +666,7 @@ bars_nodetect = ax.bar(
     color=STATE_COLORS["no_detected_CRE"],
 )
 add_climate_strip(ax, plot_order, slug_to_climate)
-for container in [bars_present, bars_turnover, bars_nodetect]:
+for container in [bars_positional_match, bars_turnover, bars_nodetect]:
     container[dmel_position].set_visible(False)
 add_reference_marker(ax, dmel_position)
 ax.set_ylabel('CRE state among evaluable loci (%)')
@@ -676,7 +676,7 @@ finalize_species_plot(fig)
 add_reference_legend(fig, anchor=(FIGURE_LEGEND_X, FIGURE_REFERENCE_Y))
 state_legend = fig.legend(
     handles=[
-        Patch(facecolor=STATE_COLORS["present"], label=STATE_LABELS["present"]),
+        Patch(facecolor=STATE_COLORS["positional_match"], label=STATE_LABELS["positional_match"]),
         Patch(facecolor=STATE_COLORS["turnover_candidate"], label=STATE_LABELS["turnover_candidate"]),
         Patch(facecolor=STATE_COLORS["no_detected_CRE"], label=STATE_LABELS["no_detected_CRE"]),
     ],
@@ -726,13 +726,13 @@ save_figure(fig, 'mapping_evaluability')
 
 cre_summary = pd.DataFrame(index=matrix.index)
 cre_summary.index.name = 'dmel_cre_id'
-cre_summary['n_present'] = (matrix == 'present').sum(axis=1)
+cre_summary['n_positional_match'] = (matrix == 'positional_match').sum(axis=1)
 cre_summary['n_turnover_candidate'] = (matrix == 'turnover_candidate').sum(axis=1)
 cre_summary['n_no_detected_CRE'] = (matrix == 'no_detected_CRE').sum(axis=1)
 cre_summary['n_uncertain'] = (matrix == 'uncertain').sum(axis=1)
 cre_summary['n_evaluable'] = n_target_species - cre_summary['n_uncertain']
 cre_summary["positional_conservation_rate_evaluable"] = np.where(
-    cre_summary["n_evaluable"] > 0, cre_summary["n_present"] / cre_summary["n_evaluable"], np.nan
+    cre_summary["n_evaluable"] > 0, cre_summary["n_positional_match"] / cre_summary["n_evaluable"], np.nan
 )
 cre_summary["turnover_candidate_rate_evaluable"] = np.where(
     cre_summary["n_evaluable"] > 0,
@@ -740,9 +740,9 @@ cre_summary["turnover_candidate_rate_evaluable"] = np.where(
 )
 cre_summary.reset_index().to_csv(CRE_SUMMARY_OUT, sep='\t', index=False)
 print(f'Wrote: {CRE_SUMMARY_OUT}')
-present_counts = Counter(cre_summary['n_present'])
+positional_match_counts = Counter(cre_summary['n_positional_match'])
 xs = np.arange(0, n_target_species + 1)
-ys = np.asarray([present_counts.get(i, 0) for i in xs])
+ys = np.asarray([positional_match_counts.get(i, 0) for i in xs])
 fig, ax = plt.subplots(figsize=(8.5, 5.5))
 ax.bar(xs, ys)
 ax.set_xlabel('Number of target species with a positional CRE match')
@@ -759,25 +759,25 @@ ax.set_xlim(0, 1)
 fig.tight_layout()
 save_figure(fig, 'CRE_conservation_rate_evaluable')
 if qc is not None:
-    required = {'n_scrmshaw_peaks', 'present_rate_evaluable'}
+    required = {'n_scrmshaw_peaks', 'positional_match_rate_evaluable'}
     if required.issubset(qc.columns):
         qc_plot = qc.copy()
         qc_plot['climatic_zone'] = qc_plot['species'].map(slug_to_climate)
         slug_to_source = dict(zip(manifest['slug'], manifest['source']))
         qc_plot['source'] = qc_plot['species'].map(slug_to_source)
         qc_plot['n_scrmshaw_peaks'] = pd.to_numeric(qc_plot['n_scrmshaw_peaks'], errors='coerce')
-        qc_plot['present_rate_pct'] = pd.to_numeric(qc_plot['present_rate_evaluable'], errors='coerce') * 100
+        qc_plot['positional_match_rate_pct'] = pd.to_numeric(qc_plot['positional_match_rate_evaluable'], errors='coerce') * 100
         qc_plot = qc_plot.dropna(
-            subset=["n_scrmshaw_peaks", "present_rate_pct", "climatic_zone", "source"]
+            subset=["n_scrmshaw_peaks", "positional_match_rate_pct", "climatic_zone", "source"]
         ).copy()
         unknown_sources = sorted(set(qc_plot['source']) - set(SOURCE_MARKERS))
         if unknown_sources:
             raise SystemExit('ERROR: unknown SCRMshaw source categories:\n' + '\n'.join(unknown_sources))
         qc_plot["is_outlier"] = identify_scatter_outliers(
-            qc_plot, x_col="n_scrmshaw_peaks", y_col="present_rate_pct", iqr_factor=1.5
+            qc_plot, x_col="n_scrmshaw_peaks", y_col="positional_match_rate_pct", iqr_factor=1.5
         )
         top_x_species = set(qc_plot.nlargest(2, 'n_scrmshaw_peaks')['species'])
-        top_y_species = set(qc_plot.nlargest(2, 'present_rate_pct')['species'])
+        top_y_species = set(qc_plot.nlargest(2, 'positional_match_rate_pct')['species'])
         qc_plot["label_point"] = (
             qc_plot["is_outlier"] | qc_plot["species"].isin(top_x_species)
             | qc_plot["species"].isin(top_y_species)
@@ -785,8 +785,8 @@ if qc is not None:
         outliers = qc_plot[qc_plot['label_point']].copy()
         x_min = qc_plot['n_scrmshaw_peaks'].min()
         x_max = qc_plot['n_scrmshaw_peaks'].max()
-        y_min = qc_plot['present_rate_pct'].min()
-        y_max = qc_plot['present_rate_pct'].max()
+        y_min = qc_plot['positional_match_rate_pct'].min()
+        y_max = qc_plot['positional_match_rate_pct'].max()
         fig, ax = plt.subplots(figsize=(9.0, 6.5))
         for zone in ['TROP', 'ARID', 'TEMP', 'BORE']:
             for source in ['generated', 'external']:
@@ -794,14 +794,14 @@ if qc is not None:
                 if subset.empty:
                     continue
                 ax.scatter(
-                    subset["n_scrmshaw_peaks"], subset["present_rate_pct"], color=CLIMATE_COLORS[zone],
+                    subset["n_scrmshaw_peaks"], subset["positional_match_rate_pct"], color=CLIMATE_COLORS[zone],
                     marker=SOURCE_MARKERS[source], s=65, alpha=0.9, edgecolors="black", linewidths=0.4,
                 )
-        labelled = outliers.sort_values('present_rate_pct', ascending=False).copy()
+        labelled = outliers.sort_values('positional_match_rate_pct', ascending=False).copy()
         previous_y = None
         for _, row in labelled.iterrows():
             x_val = row['n_scrmshaw_peaks']
-            y_val = row['present_rate_pct']
+            y_val = row['positional_match_rate_pct']
             style = get_label_position(x_val, y_val, x_min, x_max, y_min, y_max)
             if previous_y is not None:
                 if abs(y_val - previous_y) < 2.0:
@@ -844,7 +844,7 @@ if qc is not None:
         ax.set_xlabel('Number of SCRMshaw predictions')
         ax.set_ylabel('Positional CRE matches among evaluable loci (%)')
         fig.subplots_adjust(right=0.76, bottom=0.14, top=0.9)
-        save_figure(fig, 'scrmshaw_peaks_vs_present_rate')
+        save_figure(fig, 'scrmshaw_peaks_vs_positional_match_rate')
         print()
         print('Scatterplot outliers labelled:')
         if outliers.empty:
@@ -856,7 +856,7 @@ if qc is not None:
                     + short_species_name(row["species"], manifest)
                     + " "
                     + f"(peaks={row['n_scrmshaw_peaks']:.0f}, "
-                    + f"present={row['present_rate_pct']:.1f}%)"
+                    + f"positional_match={row['positional_match_rate_pct']:.1f}%)"
                 )
 if qc is not None:
     required = {'turnover_candidate', 'unique_turnover_target_peaks'}

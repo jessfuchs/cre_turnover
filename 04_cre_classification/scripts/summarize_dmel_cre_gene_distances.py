@@ -195,7 +195,7 @@ with INFILE.open(
                 continue
 
             # One distance is retained for each valid FBgn
-            # association represented in the input table.
+            # association repositional_matched in the input table.
             distances.extend(
                 distance
                 for _ in fbgns

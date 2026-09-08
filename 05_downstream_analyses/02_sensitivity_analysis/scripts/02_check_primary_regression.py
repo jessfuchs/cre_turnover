@@ -19,7 +19,7 @@ import pandas as pd
 
 
 VALID_STATES = {
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",

@@ -50,7 +50,7 @@ def main():
     required_qc = {
         "species",
         "n_scrmshaw_peaks",
-        "present_rate_evaluable",
+        "positional_match_rate_evaluable",
     }
 
     required_manifest = {
@@ -165,11 +165,11 @@ def main():
             "source",
             "n_scrmshaw_peaks",
             "mapping_rate",
-            "present",
+            "positional_match",
             "turnover_candidate",
             "no_detected_CRE",
             "uncertain",
-            "present_rate_evaluable",
+            "positional_match_rate_evaluable",
             "turnover_rate_evaluable",
             "qc_flags",
         ]

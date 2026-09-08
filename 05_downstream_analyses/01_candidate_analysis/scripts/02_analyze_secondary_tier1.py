@@ -9,7 +9,7 @@
 #   species.
 #
 # Categories:
-#   - tier1: present <-> turnover_candidate
+#   - tier1: positional_match <-> turnover_candidate
 #   - tier2: positive CRE state <-> no_detected_CRE
 #   - tier3: other singleton contrasts
 #   - other_pattern: no valid singleton contrast
@@ -31,8 +31,8 @@ import pandas as pd
 # CRE-state definitions
 # ============================================================
 
-VALID_STATES = {"present", "turnover_candidate", "no_detected_CRE", "uncertain"}
-POSITIVE_STATES = {"present", "turnover_candidate"}
+VALID_STATES = {"positional_match", "turnover_candidate", "no_detected_CRE", "uncertain"}
+POSITIVE_STATES = {"positional_match", "turnover_candidate"}
 OUTPUT_TIERS = ["tier1", "tier2", "tier3", "other_pattern"]
 
 # ============================================================
@@ -152,14 +152,14 @@ def classify_secondary_pattern(row, species):
 
     # --------------------------------------------------------
     # Tier 1:
-    # present <-> turnover_candidate
+    # positional_match <-> turnover_candidate
     # --------------------------------------------------------
     if (
         discordant_state in POSITIVE_STATES
         and consensus_state in POSITIVE_STATES
         and discordant_state != consensus_state
     ):
-        pattern_class, tier = "present_vs_turnover", "tier1"
+        pattern_class, tier = "positional_match_vs_turnover", "tier1"
 
     # --------------------------------------------------------
     # Tier 2:

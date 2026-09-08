@@ -31,12 +31,12 @@ import pandas as pd
 # ============================================================
 
 POSITIVE_STATES = {
-    "present",
+    "positional_match",
     "turnover_candidate",
 }
 
 VALID_STATES = {
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",
@@ -219,7 +219,7 @@ def is_focal_tier1(
 ):
     """
     Focal Tier 1 requires unanimous comparison species and a
-    present <-> turnover_candidate contrast with the focal species.
+    positional_match <-> turnover_candidate contrast with the focal species.
     """
 
     if len(set(comparison_states)) != 1:

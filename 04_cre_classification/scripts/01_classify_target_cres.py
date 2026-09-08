@@ -613,7 +613,7 @@ for cre_id, ref in reference.items():
 
     if positional:
 
-        cls = "present"
+        cls = "positional_match"
 
     elif same_fbgn_local:
 
@@ -875,7 +875,7 @@ print(
 )
 
 for cls in [
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",

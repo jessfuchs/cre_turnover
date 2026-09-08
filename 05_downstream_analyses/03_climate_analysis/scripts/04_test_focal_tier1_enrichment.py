@@ -8,7 +8,7 @@
 #   the discordant species among Tier-1 singleton contrasts.
 #
 # Tier-1 singleton:
-#   - all species are present or turnover_candidate
+#   - all species are positional_match or turnover_candidate
 #   - exactly one species differs from all remaining species
 #
 # Null model:
@@ -21,7 +21,7 @@
 # Hochberg correction.
 #
 # The test is exploratory because CRE events are not guaranteed
-# to represent independent evolutionary events.
+# to repositional_match independent evolutionary events.
 #
 # Input/output paths and focal-clade definitions are supplied
 # by the climate-analysis configuration via the wrapper.
@@ -35,7 +35,7 @@ import pandas as pd
 from scipy.stats import binomtest
 
 
-POSITIVE_STATES = {"present", "turnover_candidate"}
+POSITIVE_STATES = {"positional_match", "turnover_candidate"}
 
 CLADE_LABELS = {
     "rufa_group": "Rufa group",
@@ -134,7 +134,7 @@ def load_groups(path):
 def get_singleton_tier1(row):
     """
     Return discordant species and state direction for a strict
-    present <-> turnover_candidate singleton contrast.
+    positional_match <-> turnover_candidate singleton contrast.
     """
 
     if not all(state in POSITIVE_STATES for state in row.values):
@@ -236,15 +236,15 @@ def main():
             if is_focal:
                 if (
                     discordant_state == "turnover_candidate"
-                    and consensus_state == "present"
+                    and consensus_state == "positional_match"
                 ):
                     focal_direction = "focal_turnover"
 
                 elif (
-                    discordant_state == "present"
+                    discordant_state == "positional_match"
                     and consensus_state == "turnover_candidate"
                 ):
-                    focal_direction = "focal_present"
+                    focal_direction = "focal_positional_match"
 
             event = {
                 "dmel_cre_id": cre_id,
@@ -281,14 +281,14 @@ def main():
             n_focal_turnover = int(
                 (focal_events["focal_direction"] == "focal_turnover").sum()
             )
-            n_focal_present = int(
-                (focal_events["focal_direction"] == "focal_present").sum()
+            n_focal_positional_match = int(
+                (focal_events["focal_direction"] == "focal_positional_match").sum()
             )
 
         else:
             n_focal = 0
             n_focal_turnover = 0
-            n_focal_present = 0
+            n_focal_positional_match = 0
 
         n_species = len(species)
         expected_share = 1 / n_species
@@ -325,7 +325,7 @@ def main():
             "n_tier1_singletons": n_all,
             "n_focal_tier1": n_focal,
             "n_focal_turnover": n_focal_turnover,
-            "n_focal_present": n_focal_present,
+            "n_focal_positional_match": n_focal_positional_match,
             "observed_focal_share": observed_share,
             "expected_focal_share": expected_share,
             "enrichment_ratio": enrichment_ratio,
@@ -364,7 +364,7 @@ def main():
         "n_tier1_singletons",
         "n_focal_tier1",
         "n_focal_turnover",
-        "n_focal_present",
+        "n_focal_positional_match",
         "observed_focal_share",
         "expected_focal_share",
         "enrichment_ratio",
@@ -378,7 +378,7 @@ def main():
     print()
     print(
         "NOTE: exact binomial enrichment is exploratory because "
-        "CRE events may not represent independent evolutionary events."
+        "CRE events may not repositional_match independent evolutionary events."
     )
 
     print()

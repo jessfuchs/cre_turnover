@@ -26,7 +26,7 @@ import pandas as pd
 
 
 VALID_STATES = {
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",
@@ -356,8 +356,8 @@ def main():
             "n_changed": n_changed,
             "percent_stable":
                 100 * n_same / len(x),
-            "present":
-                int(counts.get("present", 0)),
+            "positional_match":
+                int(counts.get("positional_match", 0)),
             "turnover_candidate":
                 int(counts.get("turnover_candidate", 0)),
             "no_detected_CRE":

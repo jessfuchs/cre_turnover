@@ -1,4 +1,4 @@
-species	n_reference_cres	mapped	unmapped	mapping_rate	present	turnover_candidate	no_detected_CRE	uncertain	present_rate_all	present_rate_evaluable	turnover_rate_all	turnover_rate_evaluable	no_detected_rate_all	no_detected_rate_evaluable	present_shared_fbgn	present_discordant_fbgn	present_other_gene_support
+species	n_reference_cres	mapped	unmapped	mapping_rate	positional_match	turnover_candidate	no_detected_CRE	uncertain	positional_match_rate_all	positional_match_rate_evaluable	turnover_rate_all	turnover_rate_evaluable	no_detected_rate_all	no_detected_rate_evaluable	positional_match_shared_fbgn	positional_match_discordant_fbgn	positional_match_other_gene_support
 dazt	337	262	75	0.777448	46	68	148	75	0.136499	0.175573	0.201780	0.259542	0.439169	0.564885	35	11	0
 dbif	337	252	85	0.747774	37	50	165	85	0.109792	0.146825	0.148368	0.198413	0.489614	0.654762	27	10	0
 dbir	337	310	27	0.919881	53	63	194	27	0.157270	0.170968	0.186944	0.203226	0.575668	0.625806	44	9	0

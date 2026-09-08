@@ -117,15 +117,15 @@ echo "============================================================"
 echo "[3/5] Validating external inputs"
 echo "============================================================"
 
-python "$ROOT/scripts/03_validate_bed_gff_and_manifest.py" \
+python3 "$ROOT/scripts/03_validate_bed_gff_and_manifest.py" \
     --bed-dir "$FILTERED_BED_DIR" \
     --gff-dir "$EXTERNAL_GFF_DIR" \
     --species-file "$SPECIES_FILE" \
     --manifest "$EXTERNAL_MANIFEST" \
     --training "$TRAINING_SET" \
     --method "$METHOD" \
-    --expected-offsets 25 \
-    --max-rank 5000
+    --expected-offsets "$EXPECTED_OFFSETS" \
+    --max-rank "$MAX_RANK"
 
 
 [[ -s "$EXTERNAL_MANIFEST" ]] || {

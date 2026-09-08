@@ -127,9 +127,9 @@ CLADES = {
 # Color palettes
 # ============================================================
 
-STATE_COLORS = {"present": "#0072B2", "turnover_candidate": "#E69F00"}
-STATE_TO_NUM = {"present": 0, "turnover_candidate": 1}
-STATE_CMAP = ListedColormap([STATE_COLORS["present"], STATE_COLORS["turnover_candidate"]])
+STATE_COLORS = {"positional_match": "#0072B2", "turnover_candidate": "#E69F00"}
+STATE_TO_NUM = {"positional_match": 0, "turnover_candidate": 1}
+STATE_CMAP = ListedColormap([STATE_COLORS["positional_match"], STATE_COLORS["turnover_candidate"]])
 STATE_NORM = BoundaryNorm([-0.5, 0.5, 1.5], STATE_CMAP.N)
 
 CLIMATE_COLORS = {"TROP": "#D55E00", "ARID": "#F0E442", "TEMP": "#009E73",  "BORE": "#56B4E9"}
@@ -230,8 +230,8 @@ def count_turnover_states(row):
 def contrast_direction(discordant_state):
     if discordant_state == "turnover_candidate":
         return "discordant_turnover"
-    if discordant_state == "present":
-        return "discordant_present"
+    if discordant_state == "positional_match":
+        return "discordant_positional_match"
     raise ValueError(f"Unexpected discordant state: {discordant_state}")
 
 
@@ -240,22 +240,22 @@ def contrast_direction(discordant_state):
 # ============================================================
 
 def is_focal_tier1(row, focal, comparison_species):
-    """Test whether the focal species is the strict present/turnover singleton."""
+    """Test whether the focal species is the strict positional_match/turnover singleton."""
     focal_state = row[focal]
     comparison_states = [row[species] for species in comparison_species]
 
     focal_turnover = focal_state == "turnover_candidate" and all(
-        state == "present" for state in comparison_states
+        state == "positional_match" for state in comparison_states
     )
-    focal_present = focal_state == "present" and all(
+    focal_positional_match = focal_state == "positional_match" and all(
         state == "turnover_candidate" for state in comparison_states
     )
-    return focal_turnover or focal_present
+    return focal_turnover or focal_positional_match
 
 
 def get_singleton_tier1_info(row):
     """Return (discordant_species, discordant_state, consensus_state) for a strict singleton."""
-    allowed_states = {"present", "turnover_candidate"}
+    allowed_states = {"positional_match", "turnover_candidate"}
     if not all(state in allowed_states for state in row.values):
         return None
 
@@ -452,7 +452,7 @@ def build_clade_data(matrix, tree_file, slug_to_tree, tree_to_slug):
                 "consensus_state": consensus_state,
                 "contrast_direction": contrast_direction(discordant_state),
                 "n_turnover_states": n_turnover,
-                "n_present_states": len(declared_species) - n_turnover,
+                "n_positional_match_states": len(declared_species) - n_turnover,
             })
 
     return clade_data, pd.DataFrame(summary_rows)
@@ -634,7 +634,7 @@ def add_figure_legends(fig):
         Patch(facecolor=CLIMATE_COLORS["BORE"], edgecolor="none", label="Boreal"),
     ]
     state_handles = [
-        Patch(facecolor=STATE_COLORS["present"], edgecolor="none", label="Positional match"),
+        Patch(facecolor=STATE_COLORS["positional_match"], edgecolor="none", label="Positional match"),
         Patch(facecolor=STATE_COLORS["turnover_candidate"], edgecolor="none", label="Turnover candidate"),
     ]
 

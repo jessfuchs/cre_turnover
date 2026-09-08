@@ -365,8 +365,8 @@ def main():
     # Candidate points
     # ========================================================
 
-    # Marker shape represents the original candidate priority.
-    # Color represents sensitivity robustness.
+    # Marker shape repositional_matchs the original candidate priority.
+    # Color repositional_matchs sensitivity robustness.
     # A black outline indicates an unchanged priority category
     # across all sensitivity scenarios.
     for row in df.itertuples():

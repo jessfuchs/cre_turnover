@@ -116,7 +116,7 @@ DMEL_TREE_NAME = "DROSOPHILA_MELANOGASTER"
 # ============================================================
 
 STATE_COLORS = {
-    "present": "#0072B2",
+    "positional_match": "#0072B2",
     "turnover_candidate": "#E69F00",
     "no_detected_CRE": "#E5E5E5",
     "uncertain": "#9E9E9E",
@@ -124,7 +124,7 @@ STATE_COLORS = {
 }
 
 STATE_LABELS = {
-    "present": "Positional match",
+    "positional_match": "Positional match",
     "turnover_candidate": "Turnover candidate",
     "no_detected_CRE": "No CRE detected",
     "uncertain": "Uncertain",
@@ -134,7 +134,7 @@ STATE_LABELS = {
 STATE_TO_NUM = {
     "no_detected_CRE": 0,
     "turnover_candidate": 1,
-    "present": 2,
+    "positional_match": 2,
     "uncertain": 3,
     "reference": 4,
 }
@@ -448,7 +448,7 @@ if DMEL_SLUG in target_species:
 
 
 allowed_states = {
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",
@@ -493,8 +493,8 @@ if missing_species:
 # Sort CREs
 # ============================================================
 
-n_present = (
-    matrix == "present"
+n_positional_match = (
+    matrix == "positional_match"
 ).sum(axis=1)
 
 n_turnover = (
@@ -512,7 +512,7 @@ n_evaluable = (
 
 
 cre_sort = pd.DataFrame({
-    "n_present": n_present,
+    "n_positional_match": n_positional_match,
     "n_turnover": n_turnover,
     "n_evaluable": n_evaluable,
 })
@@ -522,7 +522,7 @@ cre_order = (
     cre_sort
     .sort_values(
         [
-            "n_present",
+            "n_positional_match",
             "n_turnover",
             "n_evaluable",
         ],
@@ -748,7 +748,7 @@ for i, (
         )
 
         state_info = (
-            f"present={counts.get('present', 0):3d}  "
+            f"positional_match={counts.get('positional_match', 0):3d}  "
             f"turnover={counts.get('turnover_candidate', 0):3d}  "
             f"no_detected={counts.get('no_detected_CRE', 0):3d}  "
             f"uncertain={counts.get('uncertain', 0):3d}"
@@ -779,7 +779,7 @@ for tip in tree.get_terminals():
 state_cmap = ListedColormap([
     STATE_COLORS["no_detected_CRE"],
     STATE_COLORS["turnover_candidate"],
-    STATE_COLORS["present"],
+    STATE_COLORS["positional_match"],
     STATE_COLORS["uncertain"],
     STATE_COLORS["reference"],
 ])
@@ -1194,8 +1194,8 @@ ax_legend.axis("off")
 
 cre_handles = [
     Patch(
-        facecolor=STATE_COLORS["present"],
-        label=STATE_LABELS["present"],
+        facecolor=STATE_COLORS["positional_match"],
+        label=STATE_LABELS["positional_match"],
     ),
     Patch(
         facecolor=STATE_COLORS["turnover_candidate"],

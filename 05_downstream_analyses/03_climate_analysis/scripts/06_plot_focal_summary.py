@@ -9,7 +9,7 @@
 #
 # Focal events are separated into:
 #   - focal turnover_candidate
-#   - focal present
+#   - focal positional_match
 #
 # Remaining singleton events are assigned to other species.
 # The vertical marker shows the expected focal share under
@@ -102,7 +102,7 @@ def main():
             "n_tier1_singletons",
             "n_focal_tier1",
             "n_focal_turnover",
-            "n_focal_present",
+            "n_focal_positional_match",
             "observed_focal_share",
             "expected_focal_share",
         },
@@ -115,7 +115,7 @@ def main():
         "n_tier1_singletons",
         "n_focal_tier1",
         "n_focal_turnover",
-        "n_focal_present",
+        "n_focal_positional_match",
         "observed_focal_share",
         "expected_focal_share",
     ]
@@ -126,11 +126,11 @@ def main():
     # The focal count must equal the sum of both focal directions.
     if not (
         df["n_focal_tier1"]
-        == df["n_focal_turnover"] + df["n_focal_present"]
+        == df["n_focal_turnover"] + df["n_focal_positional_match"]
     ).all():
         raise SystemExit(
             "ERROR: n_focal_tier1 does not equal "
-            "n_focal_turnover + n_focal_present."
+            "n_focal_turnover + n_focal_positional_match."
         )
 
     # Clades without singleton events have no defined composition.
@@ -143,14 +143,14 @@ def main():
         plot_df["n_focal_turnover"] / plot_df["n_tier1_singletons"]
     )
 
-    plot_df["focal_present_share"] = (
-        plot_df["n_focal_present"] / plot_df["n_tier1_singletons"]
+    plot_df["focal_positional_match_share"] = (
+        plot_df["n_focal_positional_match"] / plot_df["n_tier1_singletons"]
     )
 
     plot_df["other_share"] = (
         1
         - plot_df["focal_turnover_share"]
-        - plot_df["focal_present_share"]
+        - plot_df["focal_positional_match_share"]
     )
 
     # ========================================================
@@ -164,7 +164,7 @@ def main():
     height = 0.68
 
     turnover_pct = plot_df["focal_turnover_share"] * 100
-    present_pct = plot_df["focal_present_share"] * 100
+    positional_match_pct = plot_df["focal_positional_match_share"] * 100
     other_pct = plot_df["other_share"] * 100
     observed_pct = plot_df["observed_focal_share"] * 100
     expected_pct = plot_df["expected_focal_share"] * 100
@@ -180,7 +180,7 @@ def main():
 
     ax.barh(
         y,
-        present_pct,
+        positional_match_pct,
         left=turnover_pct,
         height=height,
         color=PRESENT_COLOR,
@@ -253,7 +253,7 @@ def main():
             [0], [0],
             color=PRESENT_COLOR,
             linewidth=10,
-            label="Focal present",
+            label="Focal positional_match",
         ),
         Line2D(
             [0], [0],

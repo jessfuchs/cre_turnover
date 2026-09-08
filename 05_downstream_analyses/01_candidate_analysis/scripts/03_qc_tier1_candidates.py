@@ -8,9 +8,9 @@
 #   detailed per-species CRE-classification results.
 #
 # Checks:
-#   - expected present/turnover_candidate state pattern
+#   - expected positional_match/turnover_candidate state pattern
 #   - successful homologous-locus mapping
-#   - reciprocal positional overlap for present CREs
+#   - reciprocal positional overlap for positional_match CREs
 #   - local same-FBgn support for turnover candidates
 #   - consistency between focal and singleton analyses
 #
@@ -51,7 +51,7 @@ def parse_args():
 # CRE-state definitions
 # ============================================================
 
-VALID_TIER1_STATES = {"present", "turnover_candidate"}
+VALID_TIER1_STATES = {"positional_match", "turnover_candidate"}
 
 # ============================================================
 # Required columns
@@ -132,7 +132,7 @@ def validate_species_row(row, expected_state, min_reciprocal_overlap):
     Validate one CRE x species classification record.
 
     Tier-1 allows only:
-        present
+        positional_match
         turnover_candidate
     """
     flags = []
@@ -151,7 +151,7 @@ def validate_species_row(row, expected_state, min_reciprocal_overlap):
     if not mapped:
         flags.append('NOT_MAPPED')
         
-    if observed_class == 'present':
+    if observed_class == 'positional_match':
         if not positional:
             flags.append('PRESENT_WITHOUT_POSITIONAL_PEAK')
         if frac_lifted < min_reciprocal_overlap:
@@ -230,7 +230,7 @@ def main():
             raise SystemExit('ERROR: duplicate secondary group x CRE records.')
 
     # ========================================================
-    # Convert focal records into common evidence representation
+    # Convert focal records into common evidence repositional_matchation
     # ========================================================
 
     evidence = {}
@@ -373,7 +373,7 @@ def main():
         unique_expected_states = set(expected_states.values())
         if not unique_expected_states.issubset(VALID_TIER1_STATES):
             candidate_flags.append('INVALID_TIER1_STATE')
-        if unique_expected_states != {'present', 'turnover_candidate'}:
+        if unique_expected_states != {'positional_match', 'turnover_candidate'}:
             candidate_flags.append('NOT_PRESENT_VS_TURNOVER')
 
         # ----------------------------------------------------

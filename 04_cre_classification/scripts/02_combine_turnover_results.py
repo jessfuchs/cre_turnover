@@ -81,7 +81,7 @@ for path in (
 # ============================================================
 
 VALID_CLASSES = {
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",
@@ -190,9 +190,9 @@ for sp in species:
     mapped = 0
     unmapped = 0
 
-    present_shared_fbgn = 0
-    present_discordant_fbgn = 0
-    present_no_fbgn = 0
+    positional_match_shared_fbgn = 0
+    positional_match_discordant_fbgn = 0
+    positional_match_no_fbgn = 0
 
 
     # --------------------------------------------------------
@@ -238,7 +238,7 @@ for sp in species:
         # Gene support among positionally conserved CREs
         # ----------------------------------------------------
 
-        if cls == "present":
+        if cls == "positional_match":
 
             gene_support = row.get(
                 "gene_support_at_best_peak",
@@ -246,13 +246,13 @@ for sp in species:
             )
 
             if gene_support == "shared_fbgn":
-                present_shared_fbgn += 1
+                positional_match_shared_fbgn += 1
 
             elif gene_support == "discordant_fbgn":
-                present_discordant_fbgn += 1
+                positional_match_discordant_fbgn += 1
 
             else:
-                present_no_fbgn += 1
+                positional_match_no_fbgn += 1
 
 
     # --------------------------------------------------------
@@ -261,7 +261,7 @@ for sp in species:
 
     evaluable = mapped
 
-    present = counts["present"]
+    positional_match = counts["positional_match"]
     turnover = counts["turnover_candidate"]
     no_detected = counts["no_detected_CRE"]
     uncertain = counts["uncertain"]
@@ -287,17 +287,17 @@ for sp in species:
         "unmapped": unmapped,
         "mapping_rate": mapped / n_ref_cres,
 
-        "present": present,
+        "positional_match": positional_match,
         "turnover_candidate": turnover,
         "no_detected_CRE": no_detected,
         "uncertain": uncertain,
 
-        "present_rate_all": (
-            present / n_ref_cres
+        "positional_match_rate_all": (
+            positional_match / n_ref_cres
         ),
 
-        "present_rate_evaluable": (
-            present / evaluable
+        "positional_match_rate_evaluable": (
+            positional_match / evaluable
             if evaluable
             else 0
         ),
@@ -322,16 +322,16 @@ for sp in species:
             else 0
         ),
 
-        "present_shared_fbgn": (
-            present_shared_fbgn
+        "positional_match_shared_fbgn": (
+            positional_match_shared_fbgn
         ),
 
-        "present_discordant_fbgn": (
-            present_discordant_fbgn
+        "positional_match_discordant_fbgn": (
+            positional_match_discordant_fbgn
         ),
 
-        "present_other_gene_support": (
-            present_no_fbgn
+        "positional_match_other_gene_support": (
+            positional_match_no_fbgn
         ),
     })
 
@@ -438,13 +438,13 @@ summary_fields = [
     "unmapped",
     "mapping_rate",
 
-    "present",
+    "positional_match",
     "turnover_candidate",
     "no_detected_CRE",
     "uncertain",
 
-    "present_rate_all",
-    "present_rate_evaluable",
+    "positional_match_rate_all",
+    "positional_match_rate_evaluable",
 
     "turnover_rate_all",
     "turnover_rate_evaluable",
@@ -452,9 +452,9 @@ summary_fields = [
     "no_detected_rate_all",
     "no_detected_rate_evaluable",
 
-    "present_shared_fbgn",
-    "present_discordant_fbgn",
-    "present_other_gene_support",
+    "positional_match_shared_fbgn",
+    "positional_match_discordant_fbgn",
+    "positional_match_other_gene_support",
 ]
 
 
@@ -479,8 +479,8 @@ with summary_out.open(
 
         for key in (
             "mapping_rate",
-            "present_rate_all",
-            "present_rate_evaluable",
+            "positional_match_rate_all",
+            "positional_match_rate_evaluable",
             "turnover_rate_all",
             "turnover_rate_evaluable",
             "no_detected_rate_all",

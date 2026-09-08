@@ -244,7 +244,7 @@ for sp in species:
     peak50 = 0
     reciprocal50 = 0
 
-    present = 0
+    positional_match = 0
     turnover_candidate = 0
     no_detected = 0
     uncertain = 0
@@ -329,8 +329,8 @@ for sp in species:
 
             cls = row["class"]
 
-            if cls == "present":
-                present += 1
+            if cls == "positional_match":
+                positional_match += 1
 
             elif cls == "turnover_candidate":
                 turnover_candidate += 1
@@ -382,8 +382,8 @@ for sp in species:
         else 0
     )
 
-    present_rate_evaluable = (
-        present / mapped
+    positional_match_rate_evaluable = (
+        positional_match / mapped
         if mapped
         else 0
     )
@@ -488,7 +488,7 @@ for sp in species:
         "reciprocal_overlap_rate_evaluable":
             reciprocal50_rate_evaluable,
 
-        "present": present,
+        "positional_match": positional_match,
 
         "turnover_candidate":
             turnover_candidate,
@@ -505,8 +505,8 @@ for sp in species:
         "same_fbgn_peak_local":
             same_fbgn_local,
 
-        "present_rate_evaluable":
-            present_rate_evaluable,
+        "positional_match_rate_evaluable":
+            positional_match_rate_evaluable,
 
         "turnover_rate_evaluable":
             turnover_rate_evaluable,
@@ -543,7 +543,7 @@ fields = [
     "reciprocal_overlap_ge_50pct",
     "reciprocal_overlap_rate_evaluable",
 
-    "present",
+    "positional_match",
     "turnover_candidate",
     "unique_turnover_target_peaks",
     "no_detected_CRE",
@@ -552,7 +552,7 @@ fields = [
     "same_fbgn_peak_anywhere",
     "same_fbgn_peak_local",
 
-    "present_rate_evaluable",
+    "positional_match_rate_evaluable",
     "turnover_rate_evaluable",
 
     "qc_flags",
@@ -584,7 +584,7 @@ with OUT.open(
             "lifted_seqid_overlap_fraction",
             "any_overlap_rate_evaluable",
             "reciprocal_overlap_rate_evaluable",
-            "present_rate_evaluable",
+            "positional_match_rate_evaluable",
             "turnover_rate_evaluable",
         ):
 
@@ -611,7 +611,7 @@ for row in rows_out:
         f"peaks={row['n_scrmshaw_peaks']:5d} "
         f"mapped={row['mapped']:3d} "
         f"any={row['any_positional_overlap']:3d} "
-        f"present={row['present']:3d} "
+        f"positional_match={row['positional_match']:3d} "
         f"turnover={row['turnover_candidate']:3d} "
         f"unique_turnover="
         f"{row['unique_turnover_target_peaks']:3d} "

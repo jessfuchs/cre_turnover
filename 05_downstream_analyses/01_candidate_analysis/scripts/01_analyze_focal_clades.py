@@ -8,7 +8,7 @@
 #   focal species and phylogenetically close comparison species.
 #
 # Categories:
-#   - tier1: present <-> turnover_candidate
+#   - tier1: positional_match <-> turnover_candidate
 #   - tier2: positive CRE state <-> no_detected_CRE
 #   - tier3: other focal contrasts with comparison consensus
 #   - comparison_mixed: comparison species do not agree
@@ -28,8 +28,8 @@ import pandas as pd
 # CRE-state definitions
 # ============================================================
 
-POSITIVE_STATES = {"present", "turnover_candidate"}
-VALID_STATES = {"present", "turnover_candidate", "no_detected_CRE", "uncertain"}
+POSITIVE_STATES = {"positional_match", "turnover_candidate"}
+VALID_STATES = {"positional_match", "turnover_candidate", "no_detected_CRE", "uncertain"}
 OUTPUT_CATEGORIES = ["tier1", "tier2", "tier3", "comparison_mixed", "all_same", "invalid"]
 
 # ============================================================
@@ -117,7 +117,7 @@ def classify_focal(row, focal, comparisons):
     """
     Classify one reference CRE within one focal clade.
     Tier 1 requires unanimous comparison species and a strict
-    present <-> turnover_candidate contrast with the focal species.
+    positional_match <-> turnover_candidate contrast with the focal species.
     """
     focal_state = row[focal]
     comparison_states = [row[sp] for sp in comparisons]

@@ -8,6 +8,8 @@ set -euo pipefail
 PIPELINE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_ROOT="$(cd "$PIPELINE_ROOT/.." && pwd)"
 
+SCRIPTS_DIR="${PIPELINE_ROOT}/scripts"
+
 MAPPING_ROOT="${PROJECT_ROOT}/02_mapping_orthologs"
 WGA_ROOT="${PROJECT_ROOT}/03_pairwise_wga"
 
@@ -30,11 +32,6 @@ TARGET_SPECIES_FILE="${WGA_ROOT}/target_species.txt"
 RESULTS_DIR="${PIPELINE_ROOT}/results"
 SENSITIVITY_DIR="${PIPELINE_ROOT}/sensitivity"
 
-TURNOVER_BY_SPECIES_DIR="${RESULTS_DIR}/turnover_by_species"
-
-CRE_TURNOVER_ALL_SPECIES="${RESULTS_DIR}/cre_turnover_all_species.tsv"
-CRE_TURNOVER_MATRIX="${RESULTS_DIR}/cre_turnover_matrix.tsv"
-
 # ======================================================================
 # Classification parameters
 # ======================================================================
@@ -47,7 +44,6 @@ LOCAL_GENE_DISTANCE="${LOCAL_GENE_DISTANCE:-24000}"
 # Classification outputs
 # ======================================================================
 
-RESULTS_DIR="${PIPELINE_ROOT}/results"
 TURNOVER_BY_SPECIES_DIR="${RESULTS_DIR}/turnover_by_species"
 
 CRE_TURNOVER_ALL_SPECIES="${RESULTS_DIR}/cre_turnover_all_species.tsv"
@@ -70,7 +66,7 @@ PHYLOGENY_DATA_DIR="${PHYLOGENY_ROOT}/data"
 PHYLOGENY_RESULTS_DIR="${PHYLOGENY_ROOT}/results"
 PHYLOGENY_SCRIPTS_DIR="${PHYLOGENY_ROOT}/scripts"
 
-# Adjust filenames to the files actually present in your project.
+# Adjust filenames to the files actually positional_match in your project.
 TREE_FILE="${PHYLOGENY_RESULTS_DIR}/301Fly_HOG_UCLDtree_40species.nw"
 
 # Species-level trait annotations, e.g. climate zone.
