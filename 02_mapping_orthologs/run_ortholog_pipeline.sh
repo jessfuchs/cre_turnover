@@ -311,8 +311,11 @@ echo "============================================================"
 echo
 
 python3 "$SCRIPTS_DIR/06_make_dmel_reference_cres.py" \
+    "$SO_ALL_SPECIES_FBGN" \
+    "$REFERENCE_CRES_TSV" \
+    "$REFERENCE_CRES_BED" \
+    "$DMEL_SLUG" \
     > "$REFERENCE_CRES_DIR/reference_qc.log"
-
 
 [[ -s "$REFERENCE_CRES_TSV" ]] || {
 
