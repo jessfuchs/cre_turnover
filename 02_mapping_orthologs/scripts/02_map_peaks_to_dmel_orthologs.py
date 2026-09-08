@@ -16,8 +16,8 @@
 #   - species-specific GFF3 annotations
 #
 # Output:
-#   - ortholog_results/<species>/SO_all_peaks.bed
-#   - ortholog_results/ortholog_mapping_qc.tsv
+#   - results/<species>/SO_all_peaks.bed
+#   - results/ortholog_mapping_qc.tsv
 #
 # Configuration:
 #   02_mapping_orthologs/config/ortholog_config.sh
@@ -58,7 +58,7 @@ COMBINED_RESULTS_DIR = get_env_path("COMBINED_RESULTS_DIR")
 GENERATED_GFF_ROOT = get_env_path("GENERATED_GFF_ROOT")
 EXTERNAL_GFF_ROOT = get_env_path("EXTERNAL_GFF_ROOT")
 
-ORTHOLOG_RESULTS_DIR = get_env_path("ORTHOLOG_RESULTS_DIR")
+RESULTS_DIR = get_env_path("RESULTS_DIR")
 
 
 # ============================================================
@@ -230,7 +230,7 @@ if not combined:
 # Prepare output directory
 # ============================================================
 
-ORTHOLOG_RESULTS_DIR.mkdir(
+RESULTS_DIR.mkdir(
     parents=True,
     exist_ok=True
 )
@@ -241,7 +241,7 @@ ORTHOLOG_RESULTS_DIR.mkdir(
 #
 # stderr is redirected by run_ortholog_pipeline.sh to:
 #
-#   ortholog_results/ortholog_mapping_qc.tsv
+#   results/ortholog_mapping_qc.tsv
 #
 # Keeping stderr restricted to the table ensures that the QC
 # output remains machine-readable.
@@ -353,7 +353,7 @@ for slug, info in combined.items():
     # --------------------------------------------------------
 
     output_dir = (
-        ORTHOLOG_RESULTS_DIR
+        RESULTS_DIR
         / slug
     )
 
