@@ -46,28 +46,66 @@ if (length(missing_packages) > 0) {
 
 
 # ============================================================
+# Repository-relative default paths
+# ============================================================
+
+# Resolve the directory of this R script even when it is launched
+# from another working directory.
+full_args <- commandArgs(trailingOnly = FALSE)
+file_arg <- grep("^--file=", full_args, value = TRUE)
+
+if (length(file_arg) != 1) {
+    stop("Could not determine the path of the running R script.")
+}
+
+SCRIPT_FILE <- normalizePath(sub("^--file=", "", file_arg), mustWork = TRUE)
+SCRIPT_DIR <- dirname(SCRIPT_FILE)
+CLIMATE_DIR <- normalizePath(file.path(SCRIPT_DIR, ".."), mustWork = FALSE)
+PROJECT_ROOT <- normalizePath(file.path(SCRIPT_DIR, "..", "..", ".."), mustWork = FALSE)
+RESULTS_DIR <- file.path(CLIMATE_DIR, "results")
+
+DEFAULT_INPUT_FILE <- file.path(RESULTS_DIR, "climate_turnover_summary.tsv")
+DEFAULT_TREE_FILE <- file.path(
+    PROJECT_ROOT,
+    "04_cre_classification",
+    "phylogeny",
+    "results",
+    "301Fly_HOG_UCLDtree_40species.nw"
+)
+DEFAULT_OUT_PREDICTIONS <- file.path(RESULTS_DIR, "pgls_climate_predictions.tsv")
+DEFAULT_OUT_STATS <- file.path(RESULTS_DIR, "pgls_climate_stats.tsv")
+DEFAULT_OUT_MODEL <- file.path(RESULTS_DIR, "pgls_climate_model_comparison.tsv")
+DEFAULT_OUT_COEFFICIENTS <- file.path(RESULTS_DIR, "pgls_climate_coefficients.tsv")
+DEFAULT_OUT_SUMMARY <- file.path(RESULTS_DIR, "pgls_climate_summary.txt")
+
+
+# ============================================================
 # Arguments
 # ============================================================
 
 args <- commandArgs(trailingOnly = TRUE)
 
-get_arg <- function(name) {
+get_arg <- function(name, default) {
     position <- match(name, args)
 
-    if (is.na(position) || position == length(args)) {
-        stop("Missing required argument: ", name)
+    if (is.na(position)) {
+        return(default)
+    }
+
+    if (position == length(args)) {
+        stop("Missing value for argument: ", name)
     }
 
     args[position + 1]
 }
 
-INPUT_FILE <- get_arg("--input")
-TREE_FILE <- get_arg("--tree")
-OUT_PREDICTIONS <- get_arg("--out-predictions")
-OUT_STATS <- get_arg("--out-stats")
-OUT_MODEL <- get_arg("--out-model")
-OUT_COEFFICIENTS <- get_arg("--out-coefficients")
-OUT_SUMMARY <- get_arg("--out-summary")
+INPUT_FILE <- get_arg("--input", DEFAULT_INPUT_FILE)
+TREE_FILE <- get_arg("--tree", DEFAULT_TREE_FILE)
+OUT_PREDICTIONS <- get_arg("--out-predictions", DEFAULT_OUT_PREDICTIONS)
+OUT_STATS <- get_arg("--out-stats", DEFAULT_OUT_STATS)
+OUT_MODEL <- get_arg("--out-model", DEFAULT_OUT_MODEL)
+OUT_COEFFICIENTS <- get_arg("--out-coefficients", DEFAULT_OUT_COEFFICIENTS)
+OUT_SUMMARY <- get_arg("--out-summary", DEFAULT_OUT_SUMMARY)
 
 
 # ============================================================

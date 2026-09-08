@@ -7,6 +7,9 @@ logit((turnover_candidate + 0.5) / (mapped + 1))
 Predictor:
 climatic_zone
 
+Reference climatic zone:
+TROP
+
 Number of species: 39
 Estimated Pagel lambda: 0.5137474
 

@@ -41,10 +41,26 @@ CLADE_LABELS = {
     "rufa_group": "Rufa group",
     "immigrans_group": "Immigrans group",
     "obscura_group": "Obscura group",
-    "azteca_affinis_miranda_group": "Azteca-affinis-miranda group",
+    "azteca_affinis_miranda_group": "Azteca group",
     "teissieri_group": "Teissieri group",
     "repleta_group": "Repleta group",
 }
+
+
+# ============================================================
+# Repository-relative default paths
+# ============================================================
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+CLIMATE_DIR = SCRIPT_DIR.parent
+DOWNSTREAM_DIR = CLIMATE_DIR.parent
+PROJECT_ROOT = DOWNSTREAM_DIR.parent
+RESULTS_DIR = CLIMATE_DIR / "results"
+
+DEFAULT_MATRIX = PROJECT_ROOT / "04_cre_classification" / "results" / "cre_turnover_matrix.tsv"
+DEFAULT_GROUPS = DOWNSTREAM_DIR / "01_candidate_analysis" / "config" / "focal_clades.tsv"
+DEFAULT_OUT_CANDIDATES = RESULTS_DIR / "focal_tier1_candidates.tsv"
+DEFAULT_OUT_ENRICHMENT = RESULTS_DIR / "focal_tier1_enrichment.tsv"
 
 
 # ============================================================
@@ -55,10 +71,10 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Test enrichment of focal Tier-1 singleton CRE contrasts."
     )
-    parser.add_argument("--matrix", type=Path, required=True)
-    parser.add_argument("--groups", type=Path, required=True)
-    parser.add_argument("--out-candidates", type=Path, required=True)
-    parser.add_argument("--out-enrichment", type=Path, required=True)
+    parser.add_argument("--matrix", type=Path, default=DEFAULT_MATRIX)
+    parser.add_argument("--groups", type=Path, default=DEFAULT_GROUPS)
+    parser.add_argument("--out-candidates", type=Path, default=DEFAULT_OUT_CANDIDATES)
+    parser.add_argument("--out-enrichment", type=Path, default=DEFAULT_OUT_ENRICHMENT)
     return parser.parse_args()
 
 

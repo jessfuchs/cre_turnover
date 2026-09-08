@@ -1,3 +1,3 @@
 model	call	Model	df	AIC	BIC	logLik	Test	L.Ratio	p-value
-model_null	gls(model = logit_turnover_rate ~ 1, data = dat, correlation = cor_null,     method = "ML")	1	3	-5.25874427969381	-0.26805934130487	5.6293721398469		NA	NA
-model_climate	gls(model = logit_turnover_rate ~ climatic_zone, data = dat,     correlation = cor_climate, method = "ML")	2	6	-1.44074323071604	8.54062664606183	6.72037161535802	1 vs 2	2.18199895102224	0.535502714308036
+null	nlme::gls(model = logit_turnover_rate ~ 1, data = dat, correlation = cor_null,     method = "ML", na.action = na.fail)	1	3	-5.25874427969381	-0.26805934130487	5.6293721398469		NA	NA
+climate	nlme::gls(model = logit_turnover_rate ~ climatic_zone, data = dat,     correlation = cor_climate, method = "ML", na.action = na.fail)	2	6	-1.44074323071604	8.54062664606183	6.72037161535802	1 vs 2	2.18199895102224	0.535502714308036

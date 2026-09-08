@@ -34,6 +34,27 @@ from scipy.stats import kruskal
 
 
 # ============================================================
+# Repository-relative default paths
+# ============================================================
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+CLIMATE_DIR = SCRIPT_DIR.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[3]  # ~/cre_turnover
+RESULTS_DIR = CLIMATE_DIR / "results"
+FIG_DIR = RESULTS_DIR / "figures"
+
+DEFAULT_SPECIES_SUMMARY = PROJECT_ROOT / "04_cre_classification" / "results" / "species_summary.tsv"
+DEFAULT_MANIFEST = PROJECT_ROOT / "01_scrmshaw" / "external" / "combined_manifest.tsv"
+DEFAULT_TRAITS = PROJECT_ROOT / "04_cre_classification" / "phylogeny" / "data" / "species_traits.tsv"
+
+DEFAULT_OUT_SUMMARY = RESULTS_DIR / "climate_turnover_summary.tsv"
+DEFAULT_OUT_DESCRIPTIVE = RESULTS_DIR / "climate_turnover_descriptive_statistics.tsv"
+DEFAULT_OUT_KRUSKAL = RESULTS_DIR / "climate_turnover_kruskal.tsv"
+DEFAULT_OUT_PNG = FIG_DIR / "turnover_rate_by_climate.png"
+DEFAULT_OUT_PDF = FIG_DIR / "turnover_rate_by_climate.pdf"
+
+
+# ============================================================
 # Analysis setup
 # ============================================================
 
@@ -54,10 +75,10 @@ CLIMATE_LABELS = {
 }
 
 CLIMATE_COLORS = {
-    "TROP": "#E41A1C",
-    "ARID": "#FBC02D",
-    "TEMP": "#009E73",
-    "BORE": "#0072B2",
+    "TROP": "#D55E00", 
+    "ARID": "#F0E442", 
+    "TEMP": "#009E73",  
+    "BORE": "#56B4E9"
 }
 
 
@@ -74,14 +95,14 @@ def parse_args():
         )
     )
 
-    parser.add_argument("--species-summary", type=Path, required=True)
-    parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--traits", type=Path, required=True)
-    parser.add_argument("--out-summary", type=Path, required=True)
-    parser.add_argument("--out-descriptive", type=Path, required=True)
-    parser.add_argument("--out-kruskal", type=Path, required=True)
-    parser.add_argument("--out-png", type=Path, required=True)
-    parser.add_argument("--out-pdf", type=Path, required=True)
+    parser.add_argument("--species-summary", type=Path, default=DEFAULT_SPECIES_SUMMARY)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--traits", type=Path, default=DEFAULT_TRAITS)
+    parser.add_argument("--out-summary", type=Path, default=DEFAULT_OUT_SUMMARY)
+    parser.add_argument("--out-descriptive", type=Path, default=DEFAULT_OUT_DESCRIPTIVE)
+    parser.add_argument("--out-kruskal", type=Path, default=DEFAULT_OUT_KRUSKAL)
+    parser.add_argument("--out-png", type=Path, default=DEFAULT_OUT_PNG)
+    parser.add_argument("--out-pdf", type=Path, default=DEFAULT_OUT_PDF)
 
     return parser.parse_args()
 

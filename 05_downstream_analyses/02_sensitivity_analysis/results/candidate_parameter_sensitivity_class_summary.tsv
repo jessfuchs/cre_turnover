@@ -1,0 +1,5 @@
+parameter_sensitivity_class	n_candidates	percent_candidates
+robust_to_both	24	55.8
+overlap_sensitive_only	16	37.2
+distance_sensitive_only	2	4.7
+sensitive_to_both	1	2.3

@@ -1,0 +1,3 @@
+source	n_species	median_peaks	q1_peaks	q3_peaks	min_peaks	max_peaks
+generated	25	519.0	465.0	558.0	362	734
+external	14	489.0	424.0	560.5	337	622

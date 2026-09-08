@@ -31,7 +31,7 @@ echo
 # Step 1: Species-level turnover by climatic zone
 # ============================================================
 
-echo "Step 1/7: Species-level turnover by climatic zone"
+echo "Step 1/6: Species-level turnover by climatic zone"
 
 python3 "${PIPELINE_ROOT}/01_plot_turnover_by_climate.py" \
     --species-summary "${SPECIES_SUMMARY}" \
@@ -49,7 +49,7 @@ python3 "${PIPELINE_ROOT}/01_plot_turnover_by_climate.py" \
 # ============================================================
 
 echo
-echo "Step 2/7: Phylogenetically controlled climate test"
+echo "Step 2/6: Phylogenetically controlled climate test"
 
 Rscript "${PIPELINE_ROOT}/02_test_turnover_by_climate.R" \
     --input "${CLIMATE_TURNOVER_SUMMARY}" \
@@ -66,7 +66,7 @@ Rscript "${PIPELINE_ROOT}/02_test_turnover_by_climate.R" \
 # ============================================================
 
 echo
-echo "Step 3/7: PGLS climate figure"
+echo "Step 3/6: PGLS climate figure"
 
 Rscript "${PIPELINE_ROOT}/03_plot_climate_pgls.R" \
     --input "${CLIMATE_TURNOVER_SUMMARY}" \
@@ -81,7 +81,7 @@ Rscript "${PIPELINE_ROOT}/03_plot_climate_pgls.R" \
 # ============================================================
 
 echo
-echo "Step 4/7: Focal Tier-1 enrichment"
+echo "Step 4/6: Focal Tier-1 enrichment"
 
 python3 "${PIPELINE_ROOT}/04_test_focal_tier1_enrichment.py" \
     --matrix "${CRE_TURNOVER_MATRIX}" \
@@ -95,7 +95,7 @@ python3 "${PIPELINE_ROOT}/04_test_focal_tier1_enrichment.py" \
 # ============================================================
 
 echo
-echo "Step 5/7: Focal Tier-1 enrichment figure"
+echo "Step 5/6: Focal Tier-1 enrichment figure"
 
 python3 "${PIPELINE_ROOT}/05_plot_focal_tier1_enrichment.py" \
     --input "${FOCAL_TIER1_ENRICHMENT}" \
@@ -108,26 +108,12 @@ python3 "${PIPELINE_ROOT}/05_plot_focal_tier1_enrichment.py" \
 # ============================================================
 
 echo
-echo "Step 6/7: Focal Tier-1 summary figure"
+echo "Step 6/6: Focal Tier-1 summary figure"
 
 python3 "${PIPELINE_ROOT}/06_plot_focal_summary.py" \
     --input "${FOCAL_TIER1_ENRICHMENT}" \
     --out-png "${FOCAL_TIER1_SUMMARY_PNG}" \
     --out-pdf "${FOCAL_TIER1_SUMMARY_PDF}"
-
-
-# ============================================================
-# Step 7: Export Azteca focal candidates
-# ============================================================
-
-echo
-echo "Step 7/7: Export Azteca focal Tier-1 candidates"
-
-python3 "${PIPELINE_ROOT}/07_export_azteca_focal_candidates.py" \
-    --candidates "${CANDIDATES_WITH_SENSITIVITY}" \
-    --focal-events "${FOCAL_TIER1_CANDIDATES}" \
-    --clade "${AZTECA_FOCAL_CLADE}" \
-    --out "${AZTECA_FOCAL_CANDIDATES}"
 
 
 echo

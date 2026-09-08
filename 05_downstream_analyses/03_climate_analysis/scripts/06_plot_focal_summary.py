@@ -28,9 +28,24 @@ import pandas as pd
 
 
 # ============================================================
+# Default paths
+# ============================================================
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+CLIMATE_DIR = SCRIPT_DIR.parent
+RESULTS_DIR = CLIMATE_DIR / "results"
+FIG_DIR = RESULTS_DIR / "figures"
+
+DEFAULT_INPUT = RESULTS_DIR / "focal_tier1_enrichment.tsv"
+DEFAULT_OUT_PNG = FIG_DIR / "focal_tier1_summary.png"
+DEFAULT_OUT_PDF = FIG_DIR / "focal_tier1_summary.pdf"
+
+
+# ============================================================
 # Plot settings
 # ============================================================
 
+# Colorblind-friendly palette used throughout the CRE figures.
 TURNOVER_COLOR = "#E69F00"
 PRESENT_COLOR = "#0072B2"
 OTHER_COLOR = "#D9D9D9"
@@ -45,9 +60,9 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Plot focal Tier-1 singleton composition by clade."
     )
-    parser.add_argument("--input", type=Path, required=True)
-    parser.add_argument("--out-png", type=Path, required=True)
-    parser.add_argument("--out-pdf", type=Path, required=True)
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--out-png", type=Path, default=DEFAULT_OUT_PNG)
+    parser.add_argument("--out-pdf", type=Path, default=DEFAULT_OUT_PDF)
     return parser.parse_args()
 
 
@@ -219,12 +234,7 @@ def main():
     ax.set_xlabel(
         "Share of clade-wide singleton Tier-1 contrasts (%)",
         fontsize=11,
-    )
-
-    ax.set_title(
-        "Concentration of lineage-specific Tier-1 contrasts in focal species",
-        fontsize=13,
-        pad=10,
+        labelpad=12,
     )
 
     ax.grid(axis="x", linestyle=":", linewidth=0.6, alpha=0.35)
@@ -265,7 +275,10 @@ def main():
         loc="upper left",
         bbox_to_anchor=(1.01, 1.0),
         borderaxespad=0,
-        fontsize=9,
+        fontsize=10,
+        labelspacing=0.8,
+        handletextpad=0.8,
+        handlelength=1.0,
     )
 
     fig.tight_layout()

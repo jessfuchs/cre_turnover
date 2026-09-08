@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 
 # ============================================================
-# Plot recurrence and sensitivity robustness of Tier-1 candidates
+# Plot recurrence and robustness of Tier-1 CRE candidates
 #
 # Purpose:
 #   Relate phylogenetic recurrence of Tier-1 support to candidate
 #   robustness across CRE-classification sensitivity scenarios.
 #
 # Encoding:
-#   - x: number of clades showing Tier-1 support
-#   - y: candidate retention across sensitivity scenarios
-#   - orange: candidate with focal Tier-1 support
-#   - grey: secondary-only Tier-1 support
+#   - x: number of analysed clades showing Tier-1 support
+#   - y: candidate retention across nine sensitivity scenarios
+#   - orange circles: candidates with focal Tier-1 support
+#   - grey squares: secondary-only Tier-1 support
+#   - thicker black outline: stable priority across all scenarios
+#   - larger, opaque symbols: recurrent candidates
 #
-# Recurrent and sensitivity-sensitive candidates are labelled.
-# Bold labels indicate stable candidate priority across scenarios.
+# Only recurrent candidates are labelled.
 # ============================================================
 
 from pathlib import Path
@@ -22,11 +23,29 @@ import argparse
 
 import matplotlib
 matplotlib.use("Agg")
-
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
+
+
+# ============================================================
+# Default paths
+# ============================================================
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+SENSITIVITY_DIR = SCRIPT_DIR.parent
+DOWNSTREAM_DIR = SENSITIVITY_DIR.parent
+CANDIDATE_DIR = DOWNSTREAM_DIR / "01_candidate_analysis"
+FIG_DIR = SENSITIVITY_DIR / "results" / "figures"
+
+DEFAULT_INPUT = (
+    CANDIDATE_DIR / "results" / "tables" /
+    "tier1_candidates_prioritized_with_sensitivity.tsv"
+)
+DEFAULT_OUT_PNG = FIG_DIR / "candidate_recurrence_robustness.png"
+DEFAULT_OUT_PDF = FIG_DIR / "candidate_recurrence_robustness.pdf"
+DEFAULT_MODERATE_ROBUSTNESS_MIN = 66.6
 
 
 # ============================================================
@@ -35,17 +54,41 @@ import pandas as pd
 
 FOCAL_COLOR = "#E69F00"
 SECONDARY_COLOR = "#BDBDBD"
-EDGE_COLOR = "#222222"
+STABLE_EDGE_COLOR = "#111111"
+VARIABLE_EDGE_COLOR = "#777777"
 LEADER_COLOR = "#777777"
 
-LABEL_OFFSETS = [
-    (8, 8),
-    (8, -10),
-    (-8, 8),
-    (-8, -10),
-    (12, 4),
-    (-12, 4),
-]
+FOCAL_MARKER = "o"
+SECONDARY_MARKER = "s"
+NONRECURRENT_SIZE = 48
+RECURRENT_SIZE = 88
+NONRECURRENT_ALPHA = 0.55
+RECURRENT_ALPHA = 0.98
+
+AXIS_LABEL_SIZE = 12
+TICK_SIZE = 11
+LEGEND_SIZE = 10
+LEGEND_TITLE_SIZE = 11
+ANNOT_SIZE = 9.5
+
+
+# ============================================================
+# Deterministic label placement
+# ============================================================
+
+LABEL_SPECS = {
+    "DMEL_CRE_00065": {"dx": -18, "dy": 18, "ha": "right", "va": "bottom"},
+    "DMEL_CRE_00078": {"dx": -18, "dy": -18, "ha": "right", "va": "top"},
+    "DMEL_CRE_00080": {"dx": 0, "dy": 26, "ha": "center", "va": "bottom"},
+    "DMEL_CRE_00275": {"dx": 0, "dy": -28, "ha": "center", "va": "top"},
+    "DMEL_CRE_00310": {"dx": 18, "dy": -18, "ha": "left", "va": "top"},
+    "DMEL_CRE_00152": {"dx": -18, "dy": 14, "ha": "right", "va": "bottom"},
+    "DMEL_CRE_00309": {"dx": 18, "dy": 14, "ha": "left", "va": "bottom"},
+    "DMEL_CRE_00052": {"dx": -18, "dy": 16, "ha": "right", "va": "bottom"},
+    "DMEL_CRE_00330": {"dx": 18, "dy": 16, "ha": "left", "va": "bottom"},
+    "DMEL_CRE_00151": {"dx": 18, "dy": 14, "ha": "left", "va": "bottom"},
+    "DMEL_CRE_00331": {"dx": 18, "dy": 14, "ha": "left", "va": "bottom"},
+}
 
 
 # ============================================================
@@ -54,12 +97,17 @@ LABEL_OFFSETS = [
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Plot Tier-1 candidate recurrence versus sensitivity robustness."
+        description="Plot cross-clade recurrence and sensitivity robustness of Tier-1 CRE candidates."
     )
-    parser.add_argument("--input", type=Path, required=True)
-    parser.add_argument("--out-png", type=Path, required=True)
-    parser.add_argument("--out-pdf", type=Path, required=True)
-    parser.add_argument("--moderate-robustness-min", type=float, required=True)
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--out-png", type=Path, default=DEFAULT_OUT_PNG)
+    parser.add_argument("--out-pdf", type=Path, default=DEFAULT_OUT_PDF)
+    parser.add_argument(
+        "--moderate-robustness-min",
+        type=float,
+        default=DEFAULT_MODERATE_ROBUSTNESS_MIN,
+        help="Minimum candidate-retention percentage defining moderate robustness.",
+    )
     return parser.parse_args()
 
 
@@ -69,11 +117,9 @@ def parse_args():
 
 def require_columns(df, required):
     missing = sorted(set(required) - set(df.columns))
-
     if missing:
         raise SystemExit(
-            "ERROR: candidate table missing columns:\n"
-            + "\n".join(missing)
+            "ERROR: candidate table missing columns:\n" + "\n".join(missing)
         )
 
 
@@ -94,7 +140,6 @@ def main():
 
     if not args.input.is_file():
         raise SystemExit(f"ERROR: input file not found:\n{args.input}")
-
     if not 0 <= args.moderate_robustness_min < 100:
         raise SystemExit(
             "ERROR: moderate-robustness-min must be between 0 and <100."
@@ -103,13 +148,7 @@ def main():
     args.out_png.parent.mkdir(parents=True, exist_ok=True)
     args.out_pdf.parent.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(
-        args.input,
-        sep="\t",
-        dtype=str,
-        keep_default_na=False,
-    )
-
+    df = pd.read_csv(args.input, sep="\t", dtype=str, keep_default_na=False)
     require_columns(
         df,
         {
@@ -124,7 +163,6 @@ def main():
 
     if df.empty:
         raise SystemExit("ERROR: candidate table is empty.")
-
     if df["dmel_cre_id"].duplicated().any():
         raise SystemExit("ERROR: duplicate CRE IDs in candidate table.")
 
@@ -134,14 +172,14 @@ def main():
     df["percent_candidate_retained"] = pd.to_numeric(
         df["percent_candidate_retained"], errors="raise"
     )
+    df["_retention_group"] = df["percent_candidate_retained"].round(4)
 
     unknown_robustness = sorted(
         set(df["robustness_class"]) - {"robust", "moderate", "sensitive"}
     )
     if unknown_robustness:
         raise SystemExit(
-            "ERROR: unknown robustness classes:\n"
-            + "\n".join(unknown_robustness)
+            "ERROR: unknown robustness classes:\n" + "\n".join(unknown_robustness)
         )
 
     unknown_stability = sorted(
@@ -149,127 +187,112 @@ def main():
     )
     if unknown_stability:
         raise SystemExit(
-            "ERROR: unknown priority-stability values:\n"
-            + "\n".join(unknown_stability)
+            "ERROR: unknown priority-stability values:\n" + "\n".join(unknown_stability)
         )
 
     df["is_focal"] = df["has_focal_support"].apply(as_bool)
+    df["is_recurrent"] = df["n_total_tier1_clades"] >= 2
+    df["is_stable"] = df["priority_stability"] == "stable"
 
-    # ========================================================
-    # Deterministic x offsets
-    # ========================================================
-
+    # Deterministic horizontal offsets for overlapping points.
     df = df.sort_values(
-        ["n_total_tier1_clades", "percent_candidate_retained", "dmel_cre_id"]
+        ["n_total_tier1_clades", "percent_candidate_retained", "dmel_cre_id"],
+        kind="mergesort",
     ).copy()
-
     df["x_plot"] = df["n_total_tier1_clades"].astype(float)
 
-    # Slight horizontal offsets separate candidates sharing the
-    # same recurrence count without introducing random jitter.
-    for n_clades in sorted(df["n_total_tier1_clades"].unique()):
-        idx = df.index[df["n_total_tier1_clades"] == n_clades]
-        offsets = (
-            np.array([0.0])
-            if len(idx) == 1
-            else np.linspace(-0.13, 0.13, len(idx))
-        )
-        df.loc[idx, "x_plot"] = float(n_clades) + offsets
+    for _, idx in df.groupby(
+        ["n_total_tier1_clades", "_retention_group"], sort=True
+    ).groups.items():
+        idx = list(idx)
+        if len(idx) == 1:
+            offsets = np.array([0.0])
+        else:
+            n_clades = int(df.loc[idx[0], "n_total_tier1_clades"])
+            width = 0.13 if n_clades == 1 else 0.10
+            offsets = np.linspace(-width, width, len(idx))
+        n_clades = float(df.loc[idx[0], "n_total_tier1_clades"])
+        df.loc[idx, "x_plot"] = n_clades + offsets
 
-    # ========================================================
-    # Candidate labels
-    # ========================================================
-
-    # Labels focus on candidates that are recurrent across clades
-    # or sensitive to the classification parameters.
-    df["label_this"] = (
-        (df["n_total_tier1_clades"] >= 2)
-        | (df["robustness_class"] == "sensitive")
-    )
-
-    secondary = df.loc[~df["is_focal"]]
-    focal = df.loc[df["is_focal"]]
+    df["label_this"] = df["is_recurrent"]
 
     # ========================================================
     # Plot
     # ========================================================
 
-    fig, ax = plt.subplots(figsize=(10.2, 6.4))
+    fig, ax = plt.subplots(figsize=(12.6, 7.2))
 
-    ax.scatter(
-        secondary["x_plot"],
-        secondary["percent_candidate_retained"],
-        s=62,
-        facecolor=SECONDARY_COLOR,
-        edgecolor=EDGE_COLOR,
-        linewidth=0.65,
-        alpha=0.82,
-        marker="o",
-        zorder=2,
+    def plot_candidates(subset, marker, facecolor, recurrent):
+        if subset.empty:
+            return
+        edgecolors = np.where(
+            subset["is_stable"], STABLE_EDGE_COLOR, VARIABLE_EDGE_COLOR
+        )
+        linewidths = np.where(subset["is_stable"], 1.8, 0.7)
+        ax.scatter(
+            subset["x_plot"],
+            subset["percent_candidate_retained"],
+            s=RECURRENT_SIZE if recurrent else NONRECURRENT_SIZE,
+            facecolor=facecolor,
+            edgecolor=edgecolors,
+            linewidths=linewidths,
+            alpha=RECURRENT_ALPHA if recurrent else NONRECURRENT_ALPHA,
+            marker=marker,
+            zorder=4 if recurrent else 2,
+        )
+
+    plot_candidates(
+        df.loc[df["is_focal"] & ~df["is_recurrent"]],
+        FOCAL_MARKER,
+        FOCAL_COLOR,
+        False,
+    )
+    plot_candidates(
+        df.loc[~df["is_focal"] & ~df["is_recurrent"]],
+        SECONDARY_MARKER,
+        SECONDARY_COLOR,
+        False,
+    )
+    plot_candidates(
+        df.loc[df["is_focal"] & df["is_recurrent"]],
+        FOCAL_MARKER,
+        FOCAL_COLOR,
+        True,
+    )
+    plot_candidates(
+        df.loc[~df["is_focal"] & df["is_recurrent"]],
+        SECONDARY_MARKER,
+        SECONDARY_COLOR,
+        True,
     )
 
-    ax.scatter(
-        focal["x_plot"],
-        focal["percent_candidate_retained"],
-        s=88,
-        facecolor=FOCAL_COLOR,
-        edgecolor=EDGE_COLOR,
-        linewidth=0.75,
-        alpha=0.96,
-        marker="o",
-        zorder=3,
-    )
-
-    # Robustness thresholds correspond to the classes assigned
-    # during candidate sensitivity analysis.
     ax.axhline(
         args.moderate_robustness_min,
         color="#AAAAAA",
         linestyle=":",
-        linewidth=1.0,
+        linewidth=0.9,
         zorder=1,
     )
+    ax.axhline(100, color="#777777", linestyle=":", linewidth=0.9, zorder=1)
 
-    ax.axhline(
-        100,
-        color="#666666",
-        linestyle=":",
-        linewidth=1.0,
-        zorder=1,
+    # Candidate labels: recurrent candidates only.
+    label_df = df.loc[df["label_this"]].sort_values(
+        ["n_total_tier1_clades", "percent_candidate_retained", "dmel_cre_id"],
+        ascending=[False, False, True],
     )
 
-    # ========================================================
-    # Labels
-    # ========================================================
-
-    label_df = df.loc[df["label_this"]].copy()
-
-    # Focal candidates are labelled first, followed by secondary
-    # candidates, to keep label placement deterministic.
-    label_df["_label_priority"] = np.where(label_df["is_focal"], 0, 1)
-
-    label_df = label_df.sort_values(
-        [
-            "_label_priority",
-            "n_total_tier1_clades",
-            "percent_candidate_retained",
-            "dmel_cre_id",
-        ],
-        ascending=[True, False, False, True],
-    )
-
-    for i, row in enumerate(label_df.itertuples()):
-        dx, dy = LABEL_OFFSETS[i % len(LABEL_OFFSETS)]
-
+    default_spec = {"dx": 10, "dy": 10, "ha": "left", "va": "bottom"}
+    for row in label_df.itertuples():
+        spec = LABEL_SPECS.get(row.dmel_cre_id, default_spec)
         ax.annotate(
             short_id(row.dmel_cre_id),
             xy=(row.x_plot, row.percent_candidate_retained),
-            xytext=(dx, dy),
+            xytext=(spec["dx"], spec["dy"]),
             textcoords="offset points",
-            fontsize=8.5,
-            ha="left" if dx > 0 else "right",
-            va="bottom" if dy > 0 else "top",
-            fontweight="bold" if row.priority_stability == "stable" else "normal",
+            fontsize=ANNOT_SIZE,
+            ha=spec["ha"],
+            va=spec["va"],
+            fontweight="normal",
             arrowprops={
                 "arrowstyle": "-",
                 "linewidth": 0.55,
@@ -277,85 +300,116 @@ def main():
                 "shrinkA": 2,
                 "shrinkB": 2,
             },
-            zorder=5,
+            zorder=6,
         )
 
     # ========================================================
-    # Formatting
+    # Axes and formatting
     # ========================================================
 
     max_clades = int(df["n_total_tier1_clades"].max())
-
     ax.set_xticks(range(1, max_clades + 1))
     ax.set_xlim(0.65, max_clades + 0.4)
-    ax.set_ylim(0, 104)
+
+    min_retention = float(df["percent_candidate_retained"].min())
+    ymin = max(0, np.floor(min_retention / 10) * 10 - 5)
+    ax.set_ylim(ymin, 105)
 
     ax.set_xlabel(
-        "Number of clades showing Tier-1 support",
-        fontsize=11,
+        "Number of analysed clades with Tier-1 support", fontsize=AXIS_LABEL_SIZE
     )
-
     ax.set_ylabel(
-        "Candidate retention across sensitivity scenarios (%)",
-        fontsize=11,
+        "Candidate retention across nine sensitivity scenarios (%)",
+        fontsize=AXIS_LABEL_SIZE,
     )
-
-    ax.set_title(
-        "Recurrence and robustness of Tier-1 CRE candidates",
-        fontsize=13,
-        pad=10,
-    )
-
-    ax.grid(
-        axis="both",
-        linestyle=":",
-        linewidth=0.6,
-        alpha=0.35,
-    )
-
+    ax.tick_params(axis="both", labelsize=TICK_SIZE)
+    ax.grid(axis="both", linestyle=":", linewidth=0.6, alpha=0.35)
     ax.set_axisbelow(True)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 
-    legend_handles = [
+    # ========================================================
+    # Legends
+    # ========================================================
+
+    support_handles = [
         Line2D(
-            [0], [0],
-            marker="o",
-            linestyle="none",
-            markerfacecolor=FOCAL_COLOR,
-            markeredgecolor=EDGE_COLOR,
-            markersize=8,
-            label="Focal Tier-1 support",
+            [0], [0], marker=FOCAL_MARKER, linestyle="none",
+            markerfacecolor=FOCAL_COLOR, markeredgecolor=VARIABLE_EDGE_COLOR,
+            markeredgewidth=0.7, markersize=8, label="Focal Tier-1 support",
         ),
         Line2D(
-            [0], [0],
-            marker="o",
-            linestyle="none",
-            markerfacecolor=SECONDARY_COLOR,
-            markeredgecolor=EDGE_COLOR,
-            markersize=8,
-            label="Secondary-only Tier-1 support",
+            [0], [0], marker=SECONDARY_MARKER, linestyle="none",
+            markerfacecolor=SECONDARY_COLOR, markeredgecolor=VARIABLE_EDGE_COLOR,
+            markeredgewidth=0.7, markersize=8, label="Secondary-only Tier-1 support",
         ),
     ]
 
-    ax.legend(
-        handles=legend_handles,
+    support_legend = ax.legend(
+        handles=support_handles,
+        title="Candidate support",
         frameon=False,
         loc="upper left",
-        bbox_to_anchor=(1.01, 1.0),
+        bbox_to_anchor=(1.03, 1.00),
         borderaxespad=0,
-        fontsize=9,
+        fontsize=LEGEND_SIZE,
+        title_fontsize=LEGEND_TITLE_SIZE,
+        handletextpad=0.7,
+        labelspacing=0.4,
     )
+    support_legend._legend_box.align = "left"
+    support_legend.get_title().set_ha("left")
+    ax.add_artist(support_legend)
 
-    fig.tight_layout()
-    fig.subplots_adjust(right=0.78)
+    stability_handles = [
+        Line2D(
+            [0], [0], marker="o", linestyle="none", markerfacecolor="white",
+            markeredgecolor=STABLE_EDGE_COLOR, markeredgewidth=1.8,
+            markersize=8, label="Stable priority",
+        ),
+        Line2D(
+            [0], [0], marker="o", linestyle="none", markerfacecolor="white",
+            markeredgecolor=VARIABLE_EDGE_COLOR, markeredgewidth=0.7,
+            markersize=8, label="Variable priority",
+        ),
+    ]
+
+    stability_legend = ax.legend(
+        handles=stability_handles,
+        title="Priority stability",
+        frameon=False,
+        loc="upper left",
+        bbox_to_anchor=(1.03, 0.79),
+        borderaxespad=0,
+        fontsize=LEGEND_SIZE,
+        title_fontsize=LEGEND_TITLE_SIZE,
+        handletextpad=0.7,
+        labelspacing=0.4,
+    )
+    stability_legend._legend_box.align = "left"
+    stability_legend.get_title().set_ha("left")
+
+    # No internal figure title; use the available vertical space.
+    fig.subplots_adjust(left=0.10, right=0.72, bottom=0.12, top=0.94)
 
     # ========================================================
     # Save
     # ========================================================
 
-    fig.savefig(args.out_png, dpi=300, bbox_inches="tight")
-    fig.savefig(args.out_pdf, bbox_inches="tight")
+    extra_artists = (support_legend, stability_legend)
+    fig.savefig(
+        args.out_png,
+        dpi=300,
+        bbox_inches="tight",
+        bbox_extra_artists=extra_artists,
+        pad_inches=0.25,
+    )
+    fig.savefig(
+        args.out_pdf,
+        bbox_inches="tight",
+        bbox_extra_artists=extra_artists,
+        pad_inches=0.25,
+    )
     plt.close(fig)
 
     print()
@@ -365,6 +419,8 @@ def main():
     print(f"Candidates plotted: {len(df)}")
     print(f"Candidates labelled: {int(df['label_this'].sum())}")
     print(f"Candidates with focal support: {int(df['is_focal'].sum())}")
+    print(f"Recurrent candidates: {int(df['is_recurrent'].sum())}")
+    print(f"Stable-priority candidates: {int(df['is_stable'].sum())}")
     print()
     print(f"Wrote PNG:\n{args.out_png}")
     print(f"Wrote PDF:\n{args.out_pdf}")
