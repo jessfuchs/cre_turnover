@@ -32,20 +32,20 @@ D. melanogaster reference CRE
        no              yes
         │               │
         ▼               ▼
-    uncertain     Positional SCRMshaw
-                    match?
-                  │           │
-                 yes          no
-                  │           │
-                  ▼           ▼
-            positional_   Local prediction
-              match       with same FBgn?
-                           │          │
-                          yes         no
-                           │           │
-                           ▼           ▼
-                     turnover_     no_detected_
-                     candidate        CRE
+    uncertain    Positional SCRMshaw
+                       match?
+                   │           │
+                  yes          no
+                   │           │
+                   ▼           ▼
+            positional_    Local prediction
+              match        with same FBgn?
+                            │           │
+                           yes          no
+                            │           │
+                            ▼           ▼
+                      turnover_     no_detected_
+                      candidate         CRE
 ```
 
 The complete core classification workflow is executed with:
