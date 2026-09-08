@@ -22,7 +22,7 @@ set -euo pipefail
 #     conservative technical minimum
 #
 # Output:
-#   ortholog_results/dmel_ortholog_annotation_qc.tsv
+#   results/dmel_ortholog_annotation_qc.tsv
 #
 # Exit status:
 #   0 = QC passed
@@ -58,7 +58,7 @@ OUTPUT="$DMEL_ORTHOLOG_QC"
     exit 1
 }
 
-mkdir -p "$ORTHOLOG_RESULTS_DIR"
+mkdir -p "$RESULTS_DIR"
 
 
 # ============================================================
