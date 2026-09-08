@@ -16,8 +16,8 @@ set -euo pipefail
 #
 # Main outputs:
 #
-#   ortholog_results/SO_all_species.tsv
-#   ortholog_results/SO_all_species_fbgn.tsv
+#   results/SO_all_species.tsv
+#   results/SO_all_species_fbgn.tsv
 #   reference_cres/dmel_reference_cres.tsv
 #   reference_cres/dmel_reference_cres.bed
 # ============================================================
@@ -37,7 +37,7 @@ source "$ROOT/config/ortholog_config.sh"
 # ============================================================
 
 mkdir -p \
-    "$ORTHOLOG_RESULTS_DIR" \
+    "$RESULTS_DIR" \
     "$REFERENCE_CRES_DIR"
 
 
@@ -117,8 +117,8 @@ echo "============================================================"
 echo
 
 python3 "$SCRIPTS_DIR/02_map_peaks_to_dmel_orthologs.py" \
-    > "$ORTHOLOG_RESULTS_DIR/ortholog_mapping.out" \
-    2> "$ORTHOLOG_RESULTS_DIR/ortholog_mapping_qc.tsv"
+    > "$RESULTS_DIR/ortholog_mapping.out" \
+    2> "$RESULTS_DIR/ortholog_mapping_qc.tsv"
 
 
 # ------------------------------------------------------------
@@ -126,7 +126,7 @@ python3 "$SCRIPTS_DIR/02_map_peaks_to_dmel_orthologs.py" \
 # ------------------------------------------------------------
 
 N_SO=$(
-    find "$ORTHOLOG_RESULTS_DIR" \
+    find "$RESULTS_DIR" \
         -mindepth 2 \
         -maxdepth 2 \
         -type f \
@@ -150,7 +150,7 @@ fi
 # ------------------------------------------------------------
 
 EMPTY_SO=$(
-    find "$ORTHOLOG_RESULTS_DIR" \
+    find "$RESULTS_DIR" \
         -mindepth 2 \
         -maxdepth 2 \
         -type f \
@@ -181,10 +181,10 @@ echo "============================================================"
 echo
 
 python3 "$SCRIPTS_DIR/03_SO_bed_to_tsv.py" \
-    "$ORTHOLOG_RESULTS_DIR" \
+    "$RESULTS_DIR" \
     "$COMBINED_MANIFEST" \
     > "$SO_ALL_SPECIES" \
-    2> "$ORTHOLOG_RESULTS_DIR/SO_bed_to_tsv_qc.log"
+    2> "$RESULTS_DIR/SO_bed_to_tsv_qc.log"
 
 
 [[ -s "$SO_ALL_SPECIES" ]] || {
@@ -254,7 +254,7 @@ python3 "$SCRIPTS_DIR/04_map_dmel_ids_to_fbgn.py" \
     "$SO_ALL_SPECIES" \
     "$DMEL_GFF" \
     "$SO_ALL_SPECIES_FBGN" \
-    2> "$ORTHOLOG_RESULTS_DIR/fbgn_mapping_qc.log"
+    2> "$RESULTS_DIR/fbgn_mapping_qc.log"
 
 
 [[ -s "$SO_ALL_SPECIES_FBGN" ]] || {
@@ -390,7 +390,7 @@ echo "  $DMEL_ORTHOLOG_QC"
 echo
 
 echo "Species-specific ortholog mapping:"
-echo "  $ORTHOLOG_RESULTS_DIR/<species>/SO_all_peaks.bed"
+echo "  $RESULTS_DIR/<species>/SO_all_peaks.bed"
 echo
 
 echo "Combined mapping:"
