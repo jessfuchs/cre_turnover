@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # ======================================================================
 # Climate-analysis configuration
@@ -29,11 +30,9 @@ PHYLOGENY_TREE="${CLASSIFICATION_ROOT}/phylogeny/results/301Fly_HOG_UCLDtree_40s
 CRE_TURNOVER_MATRIX="${CLASSIFICATION_ROOT}/results/cre_turnover_matrix.tsv"
 FOCAL_CLADES_FILE="${CANDIDATE_ANALYSIS_ROOT}/config/focal_clades.tsv"
 
-CANDIDATES_WITH_SENSITIVITY="${CANDIDATE_ANALYSIS_ROOT}/results/tables/tier1_candidates_prioritized_with_sensitivity.tsv"
-
 
 # ======================================================================
-# Species-level turnover by climatic zone
+# Species-level climate analysis
 # ======================================================================
 
 CLIMATE_TURNOVER_SUMMARY="${RESULTS_DIR}/climate_turnover_summary.tsv"
@@ -71,11 +70,3 @@ FOCAL_TIER1_ENRICHMENT_PDF="${FIGURES_DIR}/focal_tier1_enrichment.pdf"
 
 FOCAL_TIER1_SUMMARY_PNG="${FIGURES_DIR}/focal_tier1_summary.png"
 FOCAL_TIER1_SUMMARY_PDF="${FIGURES_DIR}/focal_tier1_summary.pdf"
-
-
-# ======================================================================
-# Azteca focal candidates
-# ======================================================================
-
-AZTECA_FOCAL_CLADE="${AZTECA_FOCAL_CLADE:-azteca_affinis_miranda_group}"
-AZTECA_FOCAL_CANDIDATES="${RESULTS_DIR}/azteca_focal_tier1_candidates.tsv"
