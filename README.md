@@ -1,6 +1,6 @@
 # Comparative CRE Turnover in Drosophila
 
-A reproducible comparative-genomics workflow for identifying and characterizing cis-regulatory element (CRE) conservation and turnover across a 40-species *Drosophila* framework.
+A reproducible comparative-genomics workflow for identifying and characterizing *cis*-regulatory element (CRE) conservation and turnover across a 40-species *Drosophila* framework.
 
 The analysis is anchored on a fixed set of 337 *Drosophila melanogaster* reference CREs. Species-specific SCRMshaw predictions are standardized and linked through their *D. melanogaster* FBgn target-gene assignments, while homologous reference positions are identified using independent pairwise whole-genome alignments. These complementary sources of evidence are combined to classify each reference-CRE/species comparison into one of four operational CRE states.
 
