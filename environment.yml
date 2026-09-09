@@ -1,0 +1,34 @@
+name: cre_turnover
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  # Core analysis environment
+  - python=3.10.20
+  - pandas=1.5.3
+  - numpy=1.23.5
+  - scipy=1.15.2
+  - matplotlib=3.6.3
+  - biopython=1.86
+
+  # R climate analysis
+  - r-base=4.2.2
+  - r-ape=5.8_1
+  - r-nlme=3.1_170
+
+  # Pairwise whole-genome alignment
+  - lastz=1.04.58
+
+  # UCSC Kent utilities
+  - ucsc-fatotwobit
+  - ucsc-twobitinfo
+  - ucsc-axtchain
+  - ucsc-chainsort
+  - ucsc-chainprenet
+  - ucsc-chainnet
+  - ucsc-netsyntenic
+  - ucsc-netchainsubset
+  - ucsc-liftover
