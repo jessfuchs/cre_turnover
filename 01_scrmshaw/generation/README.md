@@ -1,6 +1,6 @@
 # Multi-species SCRMshaw-HD Prediction Pipeline
 
-This workflow generates and post-processes SCRMshaw-HD cis-regulatory element (CRE) predictions for the species listed in `species.txt`.
+This workflow generates and post-processes SCRMshaw-HD *cis*-regulatory element (CRE) predictions for the species listed in `species.txt`.
 
 The pipeline standardizes genome acquisition, genome and annotation preparation, SCRMshaw-HD execution, and species-level peak calling across newly analyzed Drosophilidae species. The resulting `peaks_AllSets.bed` files are subsequently integrated with externally generated SCRMshaw predictions by the workflow in [`../external/`](../external/).
 
