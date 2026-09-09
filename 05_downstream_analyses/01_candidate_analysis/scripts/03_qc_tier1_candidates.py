@@ -153,11 +153,11 @@ def validate_species_row(row, expected_state, min_reciprocal_overlap):
         
     if observed_class == 'positional_match':
         if not positional:
-            flags.append('PRESENT_WITHOUT_POSITIONAL_PEAK')
+            flags.append('POSITIONAL_MATCH_WITHOUT_POSITIONAL_PEAK')
         if frac_lifted < min_reciprocal_overlap:
-            flags.append('PRESENT_LIFTED_OVERLAP_BELOW_THRESHOLD')
+            flags.append('POSITIONAL_MATCH_LIFTED_OVERLAP_BELOW_THRESHOLD')
         if frac_peak < min_reciprocal_overlap:
-            flags.append('PRESENT_PEAK_OVERLAP_BELOW_THRESHOLD')
+            flags.append('POSITIONAL_MATCH_PEAK_OVERLAP_BELOW_THRESHOLD')
 
     elif observed_class == 'turnover_candidate':
         if positional:
@@ -374,7 +374,7 @@ def main():
         if not unique_expected_states.issubset(VALID_TIER1_STATES):
             candidate_flags.append('INVALID_TIER1_STATE')
         if unique_expected_states != {'positional_match', 'turnover_candidate'}:
-            candidate_flags.append('NOT_PRESENT_VS_TURNOVER')
+            candidate_flags.append('NOT_MATCH_VS_TURNOVER')
 
         # ----------------------------------------------------
         # Dmel annotation
