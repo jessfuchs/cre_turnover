@@ -21,7 +21,7 @@
 # Hochberg correction.
 #
 # The test is exploratory because CRE events are not guaranteed
-# to repositional_match independent evolutionary events.
+# to represent_match independent evolutionary events.
 #
 # Input/output paths and focal-clade definitions are supplied
 # by the climate-analysis configuration via the wrapper.
@@ -378,7 +378,7 @@ def main():
     print()
     print(
         "NOTE: exact binomial enrichment is exploratory because "
-        "CRE events may not repositional_match independent evolutionary events."
+        "CRE events may not represent_match independent evolutionary events."
     )
 
     print()
