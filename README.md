@@ -122,7 +122,30 @@ The final workflow was executed using the following core software:
 | GNU Bash | 5.2.15 | Pipeline orchestration |
 | SLURM | 22.05.8 | Scheduling of computationally intensive species-wise jobs |
 
-SCRMshaw generation uses dedicated reproducible software environments provided under:
+A repository-wide Conda environment for the comparative-genomics and
+downstream analysis stages is defined in:
+
+```text
+environment.yml
+```
+Create the environment from the repository root using:
+
+```bash
+mamba env create -f environment.yml
+```
+or, alternatively:
+
+```bash
+conda env create -f environment.yml
+```
+Activate the environment before running the corresponding workflow stages:
+
+```bash
+conda activate cre_turnover
+```
+The repository-wide environment provides the Python and R dependencies, LASTZ, and the UCSC Kent utilities required by the ortholog-mapping, pairwise-alignment, CRE-classification, and downstream analysis workflows.
+
+The de novo SCRMshaw generation workflow uses separate environments because of its specific prediction and post-processing requirements provided under:
 
 ```text
 01_scrmshaw/generation/envs/
