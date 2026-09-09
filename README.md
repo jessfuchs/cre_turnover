@@ -317,3 +317,9 @@ The workflow separates CRE prediction, data harmonization, target-gene annotatio
 Intermediate results are retained where needed for traceability, allowing final candidate calls, statistical results, and figures to be linked back to their underlying species-level evidence.
 
 For implementation details and exact reproducibility requirements, refer to the README within the corresponding workflow directory.
+
+## License
+
+The original code and workflow documentation developed for this project are licensed under the MIT License. See the [`LICENSE`](LICENSE) file for details.
+
+Third-party software, external datasets, genome assemblies, annotations, and other externally sourced resources are not covered by this license and remain subject to their respective licenses and terms of use.
