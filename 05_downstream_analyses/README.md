@@ -27,7 +27,7 @@ species-level classifications
 01_candidate_analysis/        03_climate_analysis/
         │                              ▲
         ▼                              │
-Prioritized Tier-1 CREs               │
+Prioritized Tier-1 CREs                │
         │                              │
         ▼                              │
 02_sensitivity_analysis/ ──────────────┘
