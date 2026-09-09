@@ -53,7 +53,7 @@ focal-clade definitions
 The complete workflow is executed with:
 
 ```bash
-bash run_candidate_analysis.sh
+bash run_candidate_pipeline.sh
 ```
 
 ---
@@ -79,7 +79,7 @@ bash run_candidate_analysis.sh
 │   ├── secondary_clades/
 │   ├── qc/
 │   └── tables/
-└── run_candidate_analysis.sh
+└── run_candidate_pipeline.sh
 ```
 
 Paths and analysis parameters are defined in:
