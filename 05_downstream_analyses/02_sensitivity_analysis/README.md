@@ -49,13 +49,13 @@ Primary-scenario regression
 │   ├── 04_summarize_candidate_sensitivity.py
 │   ├── 05_add_sensitivity_to_prioritized_candidates.py
 │   ├── 06_summarize_parameter_sensitivity.py
-│   ├── plot_ranked_tier1.py
-│   ├── plot_recurrence_robustness.py
-│   └── plot_sensitivity_matrix.py
+│   ├──07_plot_sensitivity_matrix.py
+│   ├──08_plot_ranked_tier1.py
+│   └──09_plot_recurrence_robustness.py
 ├── results/
 │   ├── scenarios/
 │   └── figures/
-└── run_sensitivity_analysis.sh
+└── run_sensitivity_pipeline.sh
 ```
 
 Paths, parameter values, recurrence thresholds, and output locations are defined in:
@@ -154,7 +154,7 @@ From:
 execute:
 
 ```bash
-bash run_sensitivity_analysis.sh
+bash run_sensitivity_pipeline.sh
 ```
 
 The workflow generates the sensitivity classifications, verifies the primary scenario, summarizes global CRE-state stability, and evaluates Tier-1 candidate robustness.
@@ -234,11 +234,15 @@ Candidate robustness is classified as:
 | `moderate` | retained in at least 66.6% of scenarios |
 | `sensitive` | retained below 66.6% |
 
+
+For the primary scenario, the re-derived candidate priority must also match the original priority assigned in `01_candidate_analysis/`.
+This ensures that sensitivity is evaluated relative to the actual primary candidate analysis rather than to an independently reconstructed baseline.
+
 ### Parameter-specific sensitivity
 
-The effects of the two classification parameters are also considered separately.
+The effects of reciprocal overlap and local gene distance are also summarized separately.
 
-Reciprocal-overlap sensitivity is evaluated while holding the local distance at 24 kb, whereas local-distance sensitivity is evaluated while holding reciprocal overlap at 0.50.
+For each parameter dimension, the other classification parameter is held at its value in the primary scenario. Candidate retention and global CRE-state changes are then compared across the corresponding one-dimensional sensitivity series.
 
 This distinguishes candidates that are primarily sensitive to positional-overlap stringency from those affected by the local target-gene distance threshold.
 
@@ -257,6 +261,9 @@ This distinguishes candidates that are primarily sensitive to positional-overlap
 | `results/candidate_sensitivity_summary.tsv` | Tier-1 candidate robustness |
 | `results/candidate_sensitivity_retention_matrix.tsv` | candidate retention across scenarios |
 | `results/candidate_sensitivity_priority_matrix.tsv` | candidate priority across scenarios |
+| `results/candidate_parameter_sensitivity.tsv` | candidate-level sensitivity to each parameter dimension |
+| `results/candidate_parameter_sensitivity_summary.tsv` | parameter-level candidate robustness summary |
+| `results/candidate_parameter_sensitivity_class_summary.tsv` | counts of parameter-specific sensitivity classes |
 
 Sensitivity annotations are additionally merged into:
 
@@ -276,9 +283,11 @@ results/figures/
 
 ## Quality control
 
-The workflow verifies that every scenario contains the expected 337 reference CREs for each target species, accepts only the four defined CRE states, and requires unique CRE identifiers.
+The workflow verifies complete scenario outputs, the expected reference-CRE count, valid CRE states, and unique CRE identifiers.
 
-Most importantly, the primary sensitivity scenario must reproduce the original classification exactly before downstream sensitivity summaries are generated.
+The designated primary scenario must reproduce the original species-level CRE classification exactly. Candidate-level sensitivity additionally verifies that the Tier-1 candidates remain present in the primary scenario and that their re-derived primary candidate priorities agree with the original candidate analysis.
+
+These regression checks are completed before sensitivity results are interpreted.
 
 ---
 
