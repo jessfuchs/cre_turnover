@@ -9,7 +9,7 @@
 #
 # Encoding:
 #   - x: number of analysed clades showing Tier-1 support
-#   - y: candidate retention across nine sensitivity scenarios
+#   - y: candidate retention across sensitivity scenarios
 #   - orange circles: candidates with focal Tier-1 support
 #   - grey squares: secondary-only Tier-1 support
 #   - thicker black outline: stable priority across all scenarios
@@ -46,6 +46,13 @@ DEFAULT_INPUT = (
 DEFAULT_OUT_PNG = FIG_DIR / "candidate_recurrence_robustness.png"
 DEFAULT_OUT_PDF = FIG_DIR / "candidate_recurrence_robustness.pdf"
 DEFAULT_MODERATE_ROBUSTNESS_MIN = 66.6
+
+RECURRENT_PRIORITIES = {
+    "focal_recurrent",
+    "focal_plus_secondary_recurrent",
+    "secondary_recurrent",
+}
+VALID_PRIORITIES = RECURRENT_PRIORITIES | {"focal_single", "secondary_single"}
 
 
 # ============================================================
@@ -154,6 +161,7 @@ def main():
         {
             "dmel_cre_id",
             "n_total_tier1_clades",
+            "candidate_priority",
             "has_focal_support",
             "percent_candidate_retained",
             "robustness_class",
@@ -174,6 +182,12 @@ def main():
     )
     df["_retention_group"] = df["percent_candidate_retained"].round(4)
 
+    unknown_priorities = sorted(set(df["candidate_priority"]) - VALID_PRIORITIES)
+    if unknown_priorities:
+        raise SystemExit(
+            "ERROR: unknown candidate priorities:\n" + "\n".join(unknown_priorities)
+        )
+
     unknown_robustness = sorted(
         set(df["robustness_class"]) - {"robust", "moderate", "sensitive"}
     )
@@ -191,7 +205,7 @@ def main():
         )
 
     df["is_focal"] = df["has_focal_support"].apply(as_bool)
-    df["is_recurrent"] = df["n_total_tier1_clades"] >= 2
+    df["is_recurrent"] = df["candidate_priority"].isin(RECURRENT_PRIORITIES)
     df["is_stable"] = df["priority_stability"] == "stable"
 
     # Deterministic horizontal offsets for overlapping points.
@@ -319,7 +333,7 @@ def main():
         "Number of analysed clades with Tier-1 support", fontsize=AXIS_LABEL_SIZE
     )
     ax.set_ylabel(
-        "Candidate retention across nine sensitivity scenarios (%)",
+        "Candidate retention across sensitivity scenarios (%)",
         fontsize=AXIS_LABEL_SIZE,
     )
     ax.tick_params(axis="both", labelsize=TICK_SIZE)
