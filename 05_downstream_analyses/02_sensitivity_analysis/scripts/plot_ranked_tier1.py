@@ -21,6 +21,29 @@
 # supplied by config/sensitivity_config.sh via the wrapper.
 # ============================================================
 
+#!/usr/bin/env python3
+
+# ============================================================
+# Plot ranked Tier-1 candidate robustness
+#
+# Purpose:
+#   Visualize the sensitivity robustness of prioritized Tier-1
+#   CRE candidates.
+#
+# Encoding:
+#   - x position: candidate retention across scenarios
+#   - marker shape: primary candidate priority
+#   - marker color: robustness class
+#   - black outline: candidate priority stable across all scenarios
+#
+# Candidate categories and robustness classes are taken directly
+# from the sensitivity-annotated candidate table and are not
+# recalculated by this plotting script.
+#
+# Input/output paths and the moderate-robustness threshold are
+# supplied by config/sensitivity_config.sh via the wrapper.
+# ============================================================
+
 from pathlib import Path
 import argparse
 
@@ -365,8 +388,8 @@ def main():
     # Candidate points
     # ========================================================
 
-    # Marker shape repositional_matchs the original candidate priority.
-    # Color repositional_matchs sensitivity robustness.
+    # Marker shape represents the original candidate priority.
+    # Color represents sensitivity robustness.
     # A black outline indicates an unchanged priority category
     # across all sensitivity scenarios.
     for row in df.itertuples():
