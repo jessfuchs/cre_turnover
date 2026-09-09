@@ -76,7 +76,7 @@ Run with:
 
 ```bash
 cd 01_candidate_analysis
-bash run_candidate_analysis.sh
+bash run_candidate_pipeline.sh
 ```
 
 See:
