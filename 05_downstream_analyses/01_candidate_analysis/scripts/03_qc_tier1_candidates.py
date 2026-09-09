@@ -230,7 +230,7 @@ def main():
             raise SystemExit('ERROR: duplicate secondary group x CRE records.')
 
     # ========================================================
-    # Convert focal records into common evidence repositional_matchation
+    # Convert focal records into common evidence representation
     # ========================================================
 
     evidence = {}
