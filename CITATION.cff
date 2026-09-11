@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+
+title: "Comparative Analysis of Cis-Regulatory Element Turnover in Drosophila"
+type: software
+
+authors:
+  - given-names: Jessica
+    family-names: Fuchs
+
+abstract: >-
+  Computational workflow developed for the analysis of cis-regulatory
+  element turnover across Drosophila species. The pipeline integrates
+  SCRMshaw-based CRE predictions, orthology information, comparative
+  genomic mapping, phylogenetic information, and climate annotations
+  to classify and analyze patterns of regulatory conservation and
+  divergence.
+
+repository-code: "https://github.com/jessfuchs/cre_turnover"
+
+version: "1.0"
+
+license: MIT
+
+keywords:
+  - cis-regulatory elements
+  - enhancer evolution
+  - regulatory evolution
+  - Drosophila
+  - comparative genomics
+  - SCRMshaw
+  - phylogenetics
+  - bioinformatics
